@@ -72,8 +72,9 @@ public class PessoaContatoApplicationService {
         }
 
         validarContatos(novosContatos);
-        if (principaisInformados == 1) {
-            principalAtual.ifPresent(PessoaContato::desmarcarPrincipal);
+        if (principaisInformados == 1 && principalAtual.isPresent()) {
+            principalAtual.get().desmarcarPrincipal();
+            repository.flush();
         }
 
         List<PessoaContato> contatos = novosContatos.stream()
@@ -84,10 +85,12 @@ public class PessoaContatoApplicationService {
 
     private PessoaContato salvarContato(UUID tenantId, UUID pessoaId, NovoContato contato) {
         validarContato(contato);
-        if (contato.principal()) {
-            repository.findByTenantIdAndPessoaIdAndPrincipalTrue(tenantId, pessoaId)
-                    .ifPresent(PessoaContato::desmarcarPrincipal);
-        } else if (repository.findByTenantIdAndPessoaIdAndPrincipalTrue(tenantId, pessoaId).isEmpty()) {
+        Optional<PessoaContato> principalAtual =
+                repository.findByTenantIdAndPessoaIdAndPrincipalTrue(tenantId, pessoaId);
+        if (contato.principal() && principalAtual.isPresent()) {
+            principalAtual.get().desmarcarPrincipal();
+            repository.flush();
+        } else if (!contato.principal() && principalAtual.isEmpty()) {
             throw new RegraNegocioException("Um dos contatos deve permanecer definido como principal");
         }
         return repository.save(novoContato(tenantId, pessoaId, contato));

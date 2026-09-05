@@ -48,6 +48,10 @@ public class RbacApplicationService {
         return perfilRepository.findAllByTenantId(tenantId);
     }
 
+    public List<Permissao> listarPermissoes() {
+        return permissaoRepository.findAll();
+    }
+
     public List<String> listarPermissoesDoUsuario(UUID tenantId, UUID usuarioId) {
         validarUsuario(tenantId, usuarioId);
         return autorizacaoRepository.listarPermissoesEfetivas(tenantId, usuarioId);

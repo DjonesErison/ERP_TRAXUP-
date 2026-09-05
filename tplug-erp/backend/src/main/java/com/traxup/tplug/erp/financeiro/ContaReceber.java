@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.financeiro;
 
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -67,15 +68,15 @@ public class ContaReceber {
 
     public void receber(BigDecimal valor) {
         if (!("ABERTO".equals(status) || "PARCIAL".equals(status))) {
-            throw new IllegalArgumentException("Somente conta ABERTA ou PARCIAL pode receber baixa");
+            throw new RegraNegocioException("Somente conta ABERTA ou PARCIAL pode receber baixa");
         }
         if (valor == null || valor.signum() <= 0) {
-            throw new IllegalArgumentException("Valor do recebimento deve ser maior que zero");
+            throw new RegraNegocioException("Valor do recebimento deve ser maior que zero");
         }
 
         BigDecimal saldo = getSaldoAberto();
         if (valor.compareTo(saldo) > 0) {
-            throw new IllegalArgumentException("Valor do recebimento nao pode exceder o saldo aberto");
+            throw new RegraNegocioException("Valor do recebimento nao pode exceder o saldo aberto");
         }
 
         valorRecebido = valorRecebido.add(valor);
@@ -93,7 +94,9 @@ public class ContaReceber {
     }
 
     public void cancelar() {
-        if (!"ABERTO".equals(status)) throw new IllegalArgumentException("Somente conta ABERTA pode ser cancelada");
+        if (!"ABERTO".equals(status)) {
+            throw new RegraNegocioException("Somente conta ABERTA pode ser cancelada");
+        }
         status = "CANCELADO";
     }
 

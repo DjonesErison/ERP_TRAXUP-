@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.financeiro;
 
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -37,7 +38,7 @@ class ContaReceberTest {
     void naoDeveReceberValorMaiorQueSaldo() {
         ContaReceber conta = novaConta();
         conta.receber(new BigDecimal("30.00"));
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(RegraNegocioException.class,
                 () -> conta.receber(new BigDecimal("70.01")));
     }
 
@@ -45,7 +46,7 @@ class ContaReceberTest {
     void naoDeveReceberDuasVezesDepoisDeQuitada() {
         ContaReceber conta = novaConta();
         conta.receber();
-        assertThrows(IllegalArgumentException.class, conta::receber);
+        assertThrows(RegraNegocioException.class, conta::receber);
     }
 
     @Test
@@ -59,7 +60,7 @@ class ContaReceberTest {
     void naoDeveCancelarContaParcialmenteRecebida() {
         ContaReceber conta = novaConta();
         conta.receber(new BigDecimal("10.00"));
-        assertThrows(IllegalArgumentException.class, conta::cancelar);
+        assertThrows(RegraNegocioException.class, conta::cancelar);
     }
 
     private ContaReceber novaConta() {

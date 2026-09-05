@@ -6,7 +6,7 @@ A Fase 4 estabelece o nucleo financeiro desacoplado de bancos, boletos, adquiren
 
 ### Regras implementadas
 
-- Toda conta pertence a um tenant e a uma filial.
+- Toda conta pertence a um tenant e a uma filial, com integridade composta validada no PostgreSQL.
 - O cliente e obrigatorio, precisa existir no mesmo tenant, estar ativo e possuir papel de cliente.
 - O valor original deve ser maior que zero.
 - Estados: `ABERTO`, `PARCIAL`, `RECEBIDO`, `CANCELADO`.
@@ -17,6 +17,9 @@ A Fase 4 estabelece o nucleo financeiro desacoplado de bancos, boletos, adquiren
 - O endpoint de baixa integral permanece compativel e utiliza o saldo restante do titulo.
 - Titulos com qualquer recebimento nao podem ser cancelados; cancelamento e permitido somente em `ABERTO`.
 - Consulta do historico valida primeiro que o titulo pertence ao tenant corrente.
+- Concorrencia usa versao otimista; conflito simultaneo retorna HTTP 409 e reverte saldo e movimento.
+- Regras financeiras invalidas retornam HTTP 400.
+- Baixas integrais anteriores a V27 recebem um movimento historico na V28.
 - Criacao, baixa e cancelamento geram auditoria.
 
 ### RBAC

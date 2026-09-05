@@ -3,8 +3,11 @@ package com.traxup.tplug.erp.pessoa.contato;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface PessoaContatoRepository extends JpaRepository<PessoaContato, UUID> {
     List<PessoaContato> findAllByTenantIdAndPessoaIdOrderByPrincipalDescNomeAsc(UUID tenantId, UUID pessoaId);
+    Optional<PessoaContato> findByTenantIdAndPessoaIdAndPrincipalTrue(UUID tenantId, UUID pessoaId);
+    long countByTenantIdAndPessoaId(UUID tenantId, UUID pessoaId);
 }

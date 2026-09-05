@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.shared.api;
 
 import com.traxup.tplug.erp.shared.exception.AutenticacaoException;
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.http.HttpStatus;
@@ -29,10 +30,10 @@ public class ApiExceptionHandler {
         return problem;
     }
 
-    @ExceptionHandler(AutenticacaoException.class)
-    public ProblemDetail autenticacao(AutenticacaoException exception) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage());
-        problem.setTitle("Falha de autenticacao");
+    @ExceptionHandler(RegraNegocioException.class)
+    public ProblemDetail regraNegocio(RegraNegocioException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+        problem.setTitle("Regra de negocio violada");
         return problem;
     }
 

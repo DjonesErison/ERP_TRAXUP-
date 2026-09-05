@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,13 +40,15 @@ class FilialControllerIntegrationTest {
     private FilialApplicationService filialApplicationService;
 
     @Test
-    void deveCriarFilialNaEmpresaDoTenantDoJwt() throws Exception {
+    void deveCriarFilialNaEmpresaDoTenantDoJwtComPermissao() throws Exception {
         Tenant tenant = tenantRepository.save(new Tenant("Tenant Filial API"));
         Empresa empresa = empresaApplicationService.criar(
                 tenant.getId(), "Empresa Matriz Ltda", "Matriz", "22222222000122");
 
         mockMvc.perform(post("/api/v1/filiais")
-                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString())))
+                        .with(jwt()
+                                .jwt(token -> token.claim("tenant_id", tenant.getId().toString()))
+                                .authorities(new SimpleGrantedAuthority("FILIAL_CRIAR")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -63,6 +66,25 @@ class FilialControllerIntegrationTest {
     }
 
     @Test
+    void deveNegarCriacaoDeFilialSemPermissao() throws Exception {
+        Tenant tenant = tenantRepository.save(new Tenant("Tenant Filial Sem Permissao"));
+        Empresa empresa = empresaApplicationService.criar(
+                tenant.getId(), "Empresa Base Ltda", "Base", "66666666000166");
+
+        mockMvc.perform(post("/api/v1/filiais")
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "empresaId": "%s",
+                                  "nome": "Filial Bloqueada",
+                                  "cnpj": "66666666000247"
+                                }
+                                """.formatted(empresa.getId())))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void naoDeveCriarFilialUsandoEmpresaDeOutroTenant() throws Exception {
         Tenant tenantA = tenantRepository.save(new Tenant("Tenant A Filial"));
         Tenant tenantB = tenantRepository.save(new Tenant("Tenant B Filial"));
@@ -70,7 +92,9 @@ class FilialControllerIntegrationTest {
                 tenantA.getId(), "Empresa A Ltda", "Empresa A", "33333333000133");
 
         mockMvc.perform(post("/api/v1/filiais")
-                        .with(jwt().jwt(token -> token.claim("tenant_id", tenantB.getId().toString())))
+                        .with(jwt()
+                                .jwt(token -> token.claim("tenant_id", tenantB.getId().toString()))
+                                .authorities(new SimpleGrantedAuthority("FILIAL_CRIAR")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -93,7 +117,9 @@ class FilialControllerIntegrationTest {
                 tenantA.getId(), empresaA.getId(), "Filial A", "55555555000236");
 
         mockMvc.perform(get("/api/v1/filiais/{filialId}", filialA.getId())
-                        .with(jwt().jwt(token -> token.claim("tenant_id", tenantB.getId().toString()))))
+                        .with(jwt()
+                                .jwt(token -> token.claim("tenant_id", tenantB.getId().toString()))
+                                .authorities(new SimpleGrantedAuthority("FILIAL_LER"))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
     }

@@ -15,9 +15,11 @@ A arquitetura segue monólito modular. Regras de negócio ficam no backend e tod
 - Autenticação JWT com refresh token rotativo e revogação.
 - Tenant derivado exclusivamente do claim `tenant_id` do JWT.
 - RBAC com perfis e catálogo global de permissões.
-- Proteção por permissão nos endpoints de Empresa e Filial.
+- Proteção por permissão nos endpoints de Empresa, Filial e Usuário.
 - Auditoria multi-tenant e registro automático de operações críticas de criação/desativação em Empresa, Filial e Usuário.
-- PostgreSQL com migrations Flyway V1 a V7.
+- Consulta de auditoria protegida por `AUDITORIA_LER` e isolada pelo tenant do JWT.
+- Bootstrap seguro e opt-in do primeiro tenant/administrador, sem endpoint público.
+- PostgreSQL com migrations Flyway V1 a V9.
 - CI do backend no GitHub Actions com Java 21 e PostgreSQL 17 efêmero.
 
 ## Segurança
@@ -28,13 +30,23 @@ A arquitetura segue monólito modular. Regras de negócio ficam no backend e tod
 - `X-Tenant-Id` não é fonte confiável de tenant.
 - Permissões efetivas são carregadas no JWT como authorities.
 - Auditoria não deve armazenar senha, token bruto, segredo JWT ou credencial.
+- Bootstrap administrativo é desabilitado por padrão, depende de variáveis de ambiente e só pode executar quando ainda não existe tenant cadastrado.
+
+## Bootstrap do primeiro administrador
+
+O bootstrap não expõe rota HTTP. Para uma instalação nova, defina temporariamente:
+
+- `BOOTSTRAP_ADMIN_ENABLED=true`
+- `BOOTSTRAP_ADMIN_TENANT_NAME`
+- `BOOTSTRAP_ADMIN_NAME`
+- `BOOTSTRAP_ADMIN_EMAIL`
+- `BOOTSTRAP_ADMIN_PASSWORD` com no mínimo 12 caracteres
+
+Na primeira inicialização, o backend cria o tenant, o usuário administrador com BCrypt, o perfil `ADMIN`, associa todas as permissões existentes ao perfil e vincula o usuário ao perfil. Após a criação inicial, remova/desabilite as variáveis de bootstrap. Se já existir qualquer tenant, uma nova tentativa é recusada.
 
 ## Próximos itens da Fase 0
 
-- Proteger endpoints de Usuário com permissões específicas.
-- Definir bootstrap seguro do primeiro administrador do tenant.
 - Criar API de administração de RBAC protegida por `RBAC_GERENCIAR`.
-- Expor consulta de auditoria com autorização adequada.
 - Consolidar OpenAPI/Swagger após validar compatibilidade com Spring Boot 4.1.1.
 - Criar Dockerfile e fluxo de imagem do backend.
 - Revisar versões das actions do CI.
@@ -44,4 +56,4 @@ A arquitetura segue monólito modular. Regras de negócio ficam no backend e tod
 
 - `arquitetura-atual.md`: arquitetura e decisões vigentes.
 - `seguranca-e-multitenancy.md`: autenticação, autorização, isolamento e auditoria.
-- `migrations.md`: inventário das migrations imutáveis V1–V7.
+- `migrations.md`: inventário das migrations imutáveis.

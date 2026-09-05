@@ -43,9 +43,10 @@ public class PedidoCompraItemController {
                                                @Valid @RequestBody AdicionarPedidoCompraItemRequest request) {
         return PedidoCompraItemResponse.from(service.adicionar(
                 tenantContext.tenantId(),
+                tenantContext.usuarioIdOuNulo(),
                 pedidoId,
-                request.tipoItem(),
-                request.itemId(),
+                request.produtoId(),
+                request.gradeId(),
                 request.quantidade(),
                 request.precoUnitario()));
     }

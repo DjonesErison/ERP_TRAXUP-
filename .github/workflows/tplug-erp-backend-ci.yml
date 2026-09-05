@@ -61,3 +61,6 @@ jobs:
 
       - name: Executar testes e validar migrations
         run: bash mvnw --batch-mode --no-transfer-progress clean verify
+
+      - name: Validar build da imagem Docker
+        run: docker build --tag tplug-erp-backend:ci .

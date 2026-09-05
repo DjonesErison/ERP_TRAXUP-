@@ -30,6 +30,13 @@ public class ApiExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(AutenticacaoException.class)
+    public ProblemDetail autenticacao(AutenticacaoException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage());
+        problem.setTitle("Falha de autenticacao");
+        return problem;
+    }
+
     @ExceptionHandler(RegraNegocioException.class)
     public ProblemDetail regraNegocio(RegraNegocioException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());

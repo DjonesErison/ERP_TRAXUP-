@@ -3,12 +3,15 @@ package com.traxup.tplug.erp.venda;
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.estoque.EstoqueMovimentacaoApplicationService;
 import com.traxup.tplug.erp.filial.FilialRepository;
+import com.traxup.tplug.erp.financeiro.ContaReceberApplicationService;
 import com.traxup.tplug.erp.pessoa.Pessoa;
 import com.traxup.tplug.erp.pessoa.PessoaRepository;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,17 +23,20 @@ public class PedidoVendaApplicationService {
     private final FilialRepository filialRepository;
     private final PessoaRepository pessoaRepository;
     private final EstoqueMovimentacaoApplicationService estoqueMovimentacaoService;
+    private final ContaReceberApplicationService contaReceberService;
     private final AuditoriaApplicationService auditoria;
 
     public PedidoVendaApplicationService(PedidoVendaRepository repository, PedidoVendaItemRepository itemRepository,
                                          FilialRepository filialRepository, PessoaRepository pessoaRepository,
                                          EstoqueMovimentacaoApplicationService estoqueMovimentacaoService,
+                                         ContaReceberApplicationService contaReceberService,
                                          AuditoriaApplicationService auditoria) {
         this.repository = repository;
         this.itemRepository = itemRepository;
         this.filialRepository = filialRepository;
         this.pessoaRepository = pessoaRepository;
         this.estoqueMovimentacaoService = estoqueMovimentacaoService;
+        this.contaReceberService = contaReceberService;
         this.auditoria = auditoria;
     }
 
@@ -86,12 +92,29 @@ public class PedidoVendaApplicationService {
         }
         List<PedidoVendaItem> itens = itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId);
         if (itens.isEmpty()) throw new IllegalArgumentException("Pedido de venda precisa possuir itens antes de ser faturado");
+
         for (PedidoVendaItem item : itens) {
             String tipoItem = item.getGradeId() == null ? "PRODUTO" : "GRADE";
             UUID itemEstoqueId = item.getGradeId() == null ? item.getProdutoId() : item.getGradeId();
             estoqueMovimentacaoService.movimentar(tenantId, pedido.getFilialId(), tipoItem, itemEstoqueId,
                     "SAIDA", item.getQuantidade(), "FATURAMENTO_PEDIDO_VENDA:" + pedido.getId(), usuarioId);
         }
+
+        if (pedido.getClienteId() != null) {
+            BigDecimal total = itens.stream()
+                    .map(PedidoVendaItem::getTotalItem)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            contaReceberService.criar(
+                    tenantId,
+                    usuarioId,
+                    pedido.getFilialId(),
+                    pedido.getClienteId(),
+                    "PV-" + pedido.getNumero(),
+                    "Faturamento pedido de venda " + pedido.getNumero(),
+                    total,
+                    LocalDate.now());
+        }
+
         pedido.faturar();
         repository.save(pedido);
         auditoria.registrar(tenantId, usuarioId, null, pedido.getFilialId(),

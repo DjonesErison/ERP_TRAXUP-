@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.compra;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.estoque.EstoqueMovimentacaoApplicationService;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,17 +19,20 @@ public class RecebimentoCompraApplicationService {
     private final PedidoCompraItemRepository pedidoItemRepository;
     private final RecebimentoCompraRepository recebimentoRepository;
     private final RecebimentoCompraItemRepository recebimentoItemRepository;
+    private final EstoqueMovimentacaoApplicationService estoqueMovimentacaoService;
     private final AuditoriaApplicationService auditoria;
 
     public RecebimentoCompraApplicationService(PedidoCompraRepository pedidoRepository,
                                                PedidoCompraItemRepository pedidoItemRepository,
                                                RecebimentoCompraRepository recebimentoRepository,
                                                RecebimentoCompraItemRepository recebimentoItemRepository,
+                                               EstoqueMovimentacaoApplicationService estoqueMovimentacaoService,
                                                AuditoriaApplicationService auditoria) {
         this.pedidoRepository = pedidoRepository;
         this.pedidoItemRepository = pedidoItemRepository;
         this.recebimentoRepository = recebimentoRepository;
         this.recebimentoItemRepository = recebimentoItemRepository;
+        this.estoqueMovimentacaoService = estoqueMovimentacaoService;
         this.auditoria = auditoria;
     }
 
@@ -75,6 +79,40 @@ public class RecebimentoCompraApplicationService {
 
         auditoria.registrar(tenantId, usuarioId, null, pedido.getFilialId(),
                 "CRIAR", "RECEBIMENTO_COMPRA", recebimento.getId(), "pedidoId=" + pedidoId);
+        return recebimento;
+    }
+
+    @Transactional
+    public RecebimentoCompra integrarEstoque(UUID tenantId, UUID usuarioId, UUID recebimentoId) {
+        RecebimentoCompra recebimento = buscar(tenantId, recebimentoId);
+        if (!"CONFERIDO".equals(recebimento.getStatus())) {
+            throw new IllegalArgumentException("Recebimento ja integrado ao estoque ou em estado invalido");
+        }
+
+        List<RecebimentoCompraItem> itens = recebimentoItemRepository
+                .findAllByTenantIdAndRecebimentoIdOrderByCriadoEmAsc(tenantId, recebimentoId);
+        if (itens.isEmpty()) throw new IllegalArgumentException("Recebimento nao possui itens");
+
+        for (RecebimentoCompraItem item : itens) {
+            if (item.getQuantidadeRecebida().signum() == 0) continue;
+            String tipoItem = item.getGradeId() == null ? "PRODUTO" : "GRADE";
+            UUID itemId = item.getGradeId() == null ? item.getProdutoId() : item.getGradeId();
+            estoqueMovimentacaoService.movimentar(
+                    tenantId,
+                    recebimento.getFilialId(),
+                    tipoItem,
+                    itemId,
+                    "ENTRADA",
+                    item.getQuantidadeRecebida(),
+                    "Recebimento de compra " + recebimentoId,
+                    usuarioId);
+        }
+
+        recebimento.marcarIntegradoEstoque();
+        recebimentoRepository.save(recebimento);
+        auditoria.registrar(tenantId, usuarioId, null, recebimento.getFilialId(),
+                "INTEGRAR_ESTOQUE", "RECEBIMENTO_COMPRA", recebimento.getId(),
+                "pedidoId=" + recebimento.getPedidoCompraId());
         return recebimento;
     }
 

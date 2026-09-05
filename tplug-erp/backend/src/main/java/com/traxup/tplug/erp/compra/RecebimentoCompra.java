@@ -46,6 +46,13 @@ public class RecebimentoCompra {
         criadoEm = agora;
     }
 
+    public void marcarIntegradoEstoque() {
+        if (!"CONFERIDO".equals(status)) {
+            throw new IllegalStateException("Recebimento precisa estar CONFERIDO para integrar ao estoque");
+        }
+        status = "INTEGRADO_ESTOQUE";
+    }
+
     public UUID getId() { return id; }
     public UUID getTenantId() { return tenantId; }
     public UUID getPedidoCompraId() { return pedidoCompraId; }

@@ -39,6 +39,14 @@ public class ContaReceberController {
         return ContaReceberResponse.from(service.buscar(tenantContext.tenantId(), contaId));
     }
 
+    @GetMapping("/{contaId}/recebimentos")
+    @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_LER')")
+    public List<ContaReceberRecebimentoResponse> listarRecebimentos(@PathVariable UUID contaId) {
+        return service.listarRecebimentos(tenantContext.tenantId(), contaId).stream()
+                .map(ContaReceberRecebimentoResponse::from)
+                .toList();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_CRIAR')")
@@ -52,6 +60,14 @@ public class ContaReceberController {
     @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_BAIXAR')")
     public ContaReceberResponse receber(@PathVariable UUID contaId) {
         return ContaReceberResponse.from(service.receber(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId));
+    }
+
+    @PostMapping("/{contaId}/recebimentos")
+    @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_BAIXAR')")
+    public ContaReceberResponse registrarRecebimento(@PathVariable UUID contaId,
+                                                      @Valid @RequestBody RegistrarRecebimentoContaRequest request) {
+        return ContaReceberResponse.from(service.receber(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId, request.valor()));
     }
 
     @PostMapping("/{contaId}/cancelar")

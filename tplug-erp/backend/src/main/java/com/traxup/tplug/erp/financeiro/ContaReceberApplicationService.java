@@ -17,15 +17,18 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class ContaReceberApplicationService {
     private final ContaReceberRepository repository;
+    private final ContaReceberRecebimentoRepository recebimentoRepository;
     private final FilialRepository filialRepository;
     private final PessoaRepository pessoaRepository;
     private final AuditoriaApplicationService auditoria;
 
     public ContaReceberApplicationService(ContaReceberRepository repository,
+                                          ContaReceberRecebimentoRepository recebimentoRepository,
                                           FilialRepository filialRepository,
                                           PessoaRepository pessoaRepository,
                                           AuditoriaApplicationService auditoria) {
         this.repository = repository;
+        this.recebimentoRepository = recebimentoRepository;
         this.filialRepository = filialRepository;
         this.pessoaRepository = pessoaRepository;
         this.auditoria = auditoria;
@@ -38,6 +41,11 @@ public class ContaReceberApplicationService {
     public ContaReceber buscar(UUID tenantId, UUID contaId) {
         return repository.findByIdAndTenantId(contaId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Conta a receber nao encontrada para o tenant informado"));
+    }
+
+    public List<ContaReceberRecebimento> listarRecebimentos(UUID tenantId, UUID contaId) {
+        buscar(tenantId, contaId);
+        return recebimentoRepository.findAllByTenantIdAndContaReceberIdOrderByRecebidoEmDesc(tenantId, contaId);
     }
 
     @Transactional
@@ -78,12 +86,13 @@ public class ContaReceberApplicationService {
     @Transactional
     public ContaReceber receber(UUID tenantId, UUID usuarioId, UUID contaId) {
         ContaReceber conta = buscar(tenantId, contaId);
-        conta.receber();
-        repository.save(conta);
-        auditoria.registrar(tenantId, usuarioId, null, conta.getFilialId(),
-                "BAIXAR", "CONTA_RECEBER", conta.getId(),
-                "valor=" + conta.getValorRecebido());
-        return conta;
+        return registrarRecebimento(tenantId, usuarioId, conta, conta.getSaldoAberto());
+    }
+
+    @Transactional
+    public ContaReceber receber(UUID tenantId, UUID usuarioId, UUID contaId, BigDecimal valor) {
+        ContaReceber conta = buscar(tenantId, contaId);
+        return registrarRecebimento(tenantId, usuarioId, conta, valor);
     }
 
     @Transactional
@@ -93,6 +102,18 @@ public class ContaReceberApplicationService {
         repository.save(conta);
         auditoria.registrar(tenantId, usuarioId, null, conta.getFilialId(),
                 "CANCELAR", "CONTA_RECEBER", conta.getId(), null);
+        return conta;
+    }
+
+    private ContaReceber registrarRecebimento(UUID tenantId, UUID usuarioId,
+                                               ContaReceber conta, BigDecimal valor) {
+        conta.receber(valor);
+        ContaReceberRecebimento recebimento = recebimentoRepository.save(
+                new ContaReceberRecebimento(tenantId, conta.getFilialId(), conta.getId(), valor, usuarioId));
+        repository.save(conta);
+        auditoria.registrar(tenantId, usuarioId, null, conta.getFilialId(),
+                "BAIXAR", "CONTA_RECEBER", conta.getId(),
+                "recebimentoId=" + recebimento.getId() + ";valor=" + valor + ";status=" + conta.getStatus());
         return conta;
     }
 

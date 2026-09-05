@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -29,6 +30,9 @@ public class ContaReceber {
     @Column(name = "recebido_em") private Instant recebidoEm;
     @Column(name = "criado_em", nullable = false) private Instant criadoEm;
     @Column(name = "atualizado_em", nullable = false) private Instant atualizadoEm;
+    @Version
+    @Column(nullable = false)
+    private long versao;
 
     protected ContaReceber() {}
 
@@ -58,10 +62,34 @@ public class ContaReceber {
     @PreUpdate void preUpdate() { atualizadoEm = Instant.now(); }
 
     public void receber() {
-        if (!"ABERTO".equals(status)) throw new IllegalArgumentException("Somente conta ABERTA pode ser recebida");
-        valorRecebido = valorOriginal;
-        status = "RECEBIDO";
-        recebidoEm = Instant.now();
+        receber(getSaldoAberto());
+    }
+
+    public void receber(BigDecimal valor) {
+        if (!("ABERTO".equals(status) || "PARCIAL".equals(status))) {
+            throw new IllegalArgumentException("Somente conta ABERTA ou PARCIAL pode receber baixa");
+        }
+        if (valor == null || valor.signum() <= 0) {
+            throw new IllegalArgumentException("Valor do recebimento deve ser maior que zero");
+        }
+
+        BigDecimal saldo = getSaldoAberto();
+        if (valor.compareTo(saldo) > 0) {
+            throw new IllegalArgumentException("Valor do recebimento nao pode exceder o saldo aberto");
+        }
+
+        valorRecebido = valorRecebido.add(valor);
+        if (valorRecebido.compareTo(valorOriginal) == 0) {
+            status = "RECEBIDO";
+            recebidoEm = Instant.now();
+        } else {
+            status = "PARCIAL";
+            recebidoEm = null;
+        }
+    }
+
+    public BigDecimal getSaldoAberto() {
+        return valorOriginal.subtract(valorRecebido);
     }
 
     public void cancelar() {
@@ -83,4 +111,5 @@ public class ContaReceber {
     public Instant getRecebidoEm() { return recebidoEm; }
     public Instant getCriadoEm() { return criadoEm; }
     public Instant getAtualizadoEm() { return atualizadoEm; }
+    public long getVersao() { return versao; }
 }

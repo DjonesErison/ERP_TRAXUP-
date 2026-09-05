@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.shared.api;
 
+import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -17,6 +18,13 @@ public class ApiExceptionHandler {
     public ProblemDetail recursoNaoEncontrado(RecursoNaoEncontradoException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
         problem.setTitle("Recurso nao encontrado");
+        return problem;
+    }
+
+    @ExceptionHandler(RecursoConflitanteException.class)
+    public ProblemDetail recursoConflitante(RecursoConflitanteException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+        problem.setTitle("Conflito de recurso");
         return problem;
     }
 

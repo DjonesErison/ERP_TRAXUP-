@@ -58,10 +58,34 @@ public class ContaReceber {
     @PreUpdate void preUpdate() { atualizadoEm = Instant.now(); }
 
     public void receber() {
-        if (!"ABERTO".equals(status)) throw new IllegalArgumentException("Somente conta ABERTA pode ser recebida");
-        valorRecebido = valorOriginal;
-        status = "RECEBIDO";
-        recebidoEm = Instant.now();
+        receber(getSaldoAberto());
+    }
+
+    public void receber(BigDecimal valor) {
+        if (!("ABERTO".equals(status) || "PARCIAL".equals(status))) {
+            throw new IllegalArgumentException("Somente conta ABERTA ou PARCIAL pode receber baixa");
+        }
+        if (valor == null || valor.signum() <= 0) {
+            throw new IllegalArgumentException("Valor do recebimento deve ser maior que zero");
+        }
+
+        BigDecimal saldo = getSaldoAberto();
+        if (valor.compareTo(saldo) > 0) {
+            throw new IllegalArgumentException("Valor do recebimento nao pode exceder o saldo aberto");
+        }
+
+        valorRecebido = valorRecebido.add(valor);
+        if (valorRecebido.compareTo(valorOriginal) == 0) {
+            status = "RECEBIDO";
+            recebidoEm = Instant.now();
+        } else {
+            status = "PARCIAL";
+            recebidoEm = null;
+        }
+    }
+
+    public BigDecimal getSaldoAberto() {
+        return valorOriginal.subtract(valorRecebido);
     }
 
     public void cancelar() {

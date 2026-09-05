@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -49,5 +50,18 @@ public class PedidoVendaItemController {
                 request.gradeId(),
                 request.quantidade(),
                 request.precoUnitario()));
+    }
+
+    @PatchMapping("/{itemId}/desconto")
+    @PreAuthorize("hasAuthority('VENDA_PEDIDO_EDITAR')")
+    public PedidoVendaItemResponse aplicarDesconto(@PathVariable UUID pedidoId,
+                                                    @PathVariable UUID itemId,
+                                                    @Valid @RequestBody AplicarDescontoPedidoVendaItemRequest request) {
+        return PedidoVendaItemResponse.from(service.aplicarDesconto(
+                tenantContext.tenantId(),
+                tenantContext.usuarioIdOuNulo(),
+                pedidoId,
+                itemId,
+                request.descontoValor()));
     }
 }

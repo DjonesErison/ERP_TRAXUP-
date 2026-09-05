@@ -11,11 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -25,7 +24,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@WithMockUser(username = "teste-api")
 class FilialControllerIntegrationTest {
 
     @Autowired
@@ -41,14 +39,13 @@ class FilialControllerIntegrationTest {
     private FilialApplicationService filialApplicationService;
 
     @Test
-    void deveCriarFilialNaEmpresaDoTenantInformado() throws Exception {
+    void deveCriarFilialNaEmpresaDoTenantDoJwt() throws Exception {
         Tenant tenant = tenantRepository.save(new Tenant("Tenant Filial API"));
         Empresa empresa = empresaApplicationService.criar(
                 tenant.getId(), "Empresa Matriz Ltda", "Matriz", "22222222000122");
 
         mockMvc.perform(post("/api/v1/filiais")
-                        .with(csrf())
-                        .header("X-Tenant-Id", tenant.getId())
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString())))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -73,8 +70,7 @@ class FilialControllerIntegrationTest {
                 tenantA.getId(), "Empresa A Ltda", "Empresa A", "33333333000133");
 
         mockMvc.perform(post("/api/v1/filiais")
-                        .with(csrf())
-                        .header("X-Tenant-Id", tenantB.getId())
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenantB.getId().toString())))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -97,7 +93,7 @@ class FilialControllerIntegrationTest {
                 tenantA.getId(), empresaA.getId(), "Filial A", "55555555000236");
 
         mockMvc.perform(get("/api/v1/filiais/{filialId}", filialA.getId())
-                        .header("X-Tenant-Id", tenantB.getId()))
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenantB.getId().toString()))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
     }

@@ -13,6 +13,7 @@ CREATE TABLE contas_financeiras (
     CONSTRAINT fk_contas_financeiras_tenant_filial
         FOREIGN KEY (tenant_id, filial_id) REFERENCES filiais (tenant_id, id),
     CONSTRAINT ck_contas_financeiras_tipo CHECK (tipo IN ('CAIXA', 'BANCO')),
+    CONSTRAINT ck_contas_financeiras_saldo CHECK (saldo >= 0),
     CONSTRAINT uq_contas_financeiras_tenant_id_id UNIQUE (tenant_id, id),
     CONSTRAINT uq_contas_financeiras_tenant_filial_nome UNIQUE (tenant_id, filial_id, nome)
 );

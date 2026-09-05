@@ -28,6 +28,27 @@ class PedidoVendaStatusTest {
     }
 
     @Test
+    void deveFaturarPedidoAberto() {
+        PedidoVenda pedido = novoPedido();
+        pedido.abrir();
+        pedido.faturar();
+        assertEquals("FATURADO", pedido.getStatus());
+    }
+
+    @Test
+    void naoDeveFaturarPedidoEmRascunho() {
+        assertThrows(IllegalArgumentException.class, novoPedido()::faturar);
+    }
+
+    @Test
+    void naoDeveCancelarPedidoFaturado() {
+        PedidoVenda pedido = novoPedido();
+        pedido.abrir();
+        pedido.faturar();
+        assertThrows(IllegalArgumentException.class, pedido::cancelar);
+    }
+
+    @Test
     void deveCancelarPedidoNaoFinalizado() {
         PedidoVenda pedido = novoPedido();
         pedido.cancelar();

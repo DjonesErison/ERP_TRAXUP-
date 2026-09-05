@@ -47,6 +47,12 @@ public class PedidoVendaController {
         return PedidoVendaResponse.from(service.abrir(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), pedidoId));
     }
 
+    @PostMapping("/{pedidoId}/faturar")
+    @PreAuthorize("hasAuthority('VENDA_PEDIDO_EDITAR')")
+    public PedidoVendaResponse faturar(@PathVariable UUID pedidoId) {
+        return PedidoVendaResponse.from(service.faturar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), pedidoId));
+    }
+
     @PostMapping("/{pedidoId}/cancelar")
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_EDITAR')")
     public PedidoVendaResponse cancelar(@PathVariable UUID pedidoId) {

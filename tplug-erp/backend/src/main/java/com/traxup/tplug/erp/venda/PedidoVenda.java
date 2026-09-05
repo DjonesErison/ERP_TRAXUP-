@@ -51,6 +51,11 @@ public class PedidoVenda {
         status = "ABERTO";
     }
 
+    public void faturar() {
+        if (!"ABERTO".equals(status)) throw new IllegalArgumentException("Somente pedido de venda ABERTO pode ser faturado");
+        status = "FATURADO";
+    }
+
     public void cancelar() {
         if ("CANCELADO".equals(status) || "FATURADO".equals(status)) throw new IllegalArgumentException("Pedido de venda nao pode ser cancelado no estado atual");
         status = "CANCELADO";

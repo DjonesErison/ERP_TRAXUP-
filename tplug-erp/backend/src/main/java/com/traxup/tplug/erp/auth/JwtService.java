@@ -10,21 +10,29 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 public class JwtService {
 
     private final JwtEncoder jwtEncoder;
     private final JwtProperties properties;
+    private final AutorizacaoRepository autorizacaoRepository;
 
-    public JwtService(JwtEncoder jwtEncoder, JwtProperties properties) {
+    public JwtService(
+            JwtEncoder jwtEncoder,
+            JwtProperties properties,
+            AutorizacaoRepository autorizacaoRepository) {
         this.jwtEncoder = jwtEncoder;
         this.properties = properties;
+        this.autorizacaoRepository = autorizacaoRepository;
     }
 
     public String gerarAccessToken(Usuario usuario) {
         Instant agora = Instant.now();
         Instant expiraEm = agora.plus(properties.accessTokenMinutes(), ChronoUnit.MINUTES);
+        List<String> permissoes = autorizacaoRepository.listarPermissoesEfetivas(
+                usuario.getTenant().getId(), usuario.getId());
 
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256)
                 .type("JWT")
@@ -37,6 +45,7 @@ public class JwtService {
                 .subject(usuario.getId().toString())
                 .claim("tenant_id", usuario.getTenant().getId().toString())
                 .claim("email", usuario.getEmail())
+                .claim("permissions", permissoes)
                 .build();
 
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

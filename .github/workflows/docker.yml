@@ -28,17 +28,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Definir nome da imagem
-        run: |
-          echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}/traxup-central" >> "$GITHUB_ENV"
-
       - name: Build e Push da imagem
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ghcr.io/djoneserison/traxup-central:latest
+            ghcr.io/djoneserison/traxup-central:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

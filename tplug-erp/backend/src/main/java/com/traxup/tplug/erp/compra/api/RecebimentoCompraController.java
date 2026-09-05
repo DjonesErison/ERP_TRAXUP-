@@ -55,4 +55,11 @@ public class RecebimentoCompraController {
                 tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), pedidoId,
                 request.documento(), request.observacao(), request.quantidadesPorItem()));
     }
+
+    @PostMapping("/{recebimentoId}/integrar-estoque")
+    @PreAuthorize("hasAuthority('COMPRA_RECEBIMENTO_INTEGRAR_ESTOQUE')")
+    public RecebimentoCompraResponse integrarEstoque(@PathVariable UUID recebimentoId) {
+        return RecebimentoCompraResponse.from(service.integrarEstoque(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), recebimentoId));
+    }
 }

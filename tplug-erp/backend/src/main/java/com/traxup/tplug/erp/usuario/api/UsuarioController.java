@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.usuario.api;
 
+import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.usuario.Usuario;
 import com.traxup.tplug.erp.usuario.UsuarioApplicationService;
@@ -22,12 +23,15 @@ import java.util.UUID;
 public class UsuarioController {
 
     private final UsuarioApplicationService usuarioApplicationService;
+    private final AuditoriaApplicationService auditoriaApplicationService;
     private final TenantContext tenantContext;
 
     public UsuarioController(
             UsuarioApplicationService usuarioApplicationService,
+            AuditoriaApplicationService auditoriaApplicationService,
             TenantContext tenantContext) {
         this.usuarioApplicationService = usuarioApplicationService;
+        this.auditoriaApplicationService = auditoriaApplicationService;
         this.tenantContext = tenantContext;
     }
 
@@ -56,6 +60,16 @@ public class UsuarioController {
                 request.email(),
                 request.senha());
 
+        auditoriaApplicationService.registrar(
+                tenantId,
+                tenantContext.usuarioIdOuNulo(),
+                null,
+                null,
+                "CRIAR",
+                "USUARIO",
+                usuario.getId(),
+                null);
+
         return ResponseEntity
                 .created(URI.create("/api/v1/usuarios/" + usuario.getId()))
                 .body(UsuarioResponse.from(tenantId, usuario));
@@ -64,8 +78,18 @@ public class UsuarioController {
     @PatchMapping("/{usuarioId}/desativar")
     public UsuarioResponse desativar(@PathVariable UUID usuarioId) {
         UUID tenantId = tenantContext.tenantId();
-        return UsuarioResponse.from(
+        Usuario usuario = usuarioApplicationService.desativar(tenantId, usuarioId);
+
+        auditoriaApplicationService.registrar(
                 tenantId,
-                usuarioApplicationService.desativar(tenantId, usuarioId));
+                tenantContext.usuarioIdOuNulo(),
+                null,
+                null,
+                "DESATIVAR",
+                "USUARIO",
+                usuario.getId(),
+                null);
+
+        return UsuarioResponse.from(tenantId, usuario);
     }
 }

@@ -24,11 +24,11 @@ public class PedidoCompraItem {
     @Column(name = "pedido_compra_id", nullable = false)
     private UUID pedidoCompraId;
 
-    @Column(name = "tipo_item", nullable = false, length = 10)
-    private String tipoItem;
+    @Column(name = "produto_id", nullable = false)
+    private UUID produtoId;
 
-    @Column(name = "item_id", nullable = false)
-    private UUID itemId;
+    @Column(name = "grade_id")
+    private UUID gradeId;
 
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal quantidade;
@@ -47,13 +47,13 @@ public class PedidoCompraItem {
 
     protected PedidoCompraItem() {}
 
-    public PedidoCompraItem(UUID tenantId, UUID pedidoCompraId, String tipoItem, UUID itemId,
+    public PedidoCompraItem(UUID tenantId, UUID pedidoCompraId, UUID produtoId, UUID gradeId,
                             BigDecimal quantidade, BigDecimal precoUnitario) {
         this.id = UUID.randomUUID();
         this.tenantId = tenantId;
         this.pedidoCompraId = pedidoCompraId;
-        this.tipoItem = tipoItem;
-        this.itemId = itemId;
+        this.produtoId = produtoId;
+        this.gradeId = gradeId;
         this.quantidade = quantidade;
         this.precoUnitario = precoUnitario;
         this.totalItem = quantidade.multiply(precoUnitario);
@@ -63,6 +63,7 @@ public class PedidoCompraItem {
     void prePersist() {
         Instant agora = Instant.now();
         if (id == null) id = UUID.randomUUID();
+        totalItem = quantidade.multiply(precoUnitario);
         criadoEm = agora;
         atualizadoEm = agora;
     }
@@ -76,8 +77,8 @@ public class PedidoCompraItem {
     public UUID getId() { return id; }
     public UUID getTenantId() { return tenantId; }
     public UUID getPedidoCompraId() { return pedidoCompraId; }
-    public String getTipoItem() { return tipoItem; }
-    public UUID getItemId() { return itemId; }
+    public UUID getProdutoId() { return produtoId; }
+    public UUID getGradeId() { return gradeId; }
     public BigDecimal getQuantidade() { return quantidade; }
     public BigDecimal getPrecoUnitario() { return precoUnitario; }
     public BigDecimal getTotalItem() { return totalItem; }

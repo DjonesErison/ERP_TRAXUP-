@@ -46,7 +46,7 @@ public class TesourariaBaixaApplicationService {
         ContaFinanceira contaFinanceira = contaFinanceiraService.buscar(tenantId, contaFinanceiraId);
         validarMesmaFilial(titulo.getFilialId(), contaFinanceira);
 
-        BigDecimal valor = titulo.getSaldoAberto();
+        BigDecimal valor = titulo.getValorOriginal().subtract(titulo.getValorPago());
         contaFinanceiraService.movimentar(
                 tenantId,
                 usuarioId,

@@ -68,6 +68,10 @@ public class PessoaContato {
     @PreUpdate
     void preUpdate() { atualizadoEm = Instant.now(); }
 
+    public void desmarcarPrincipal() {
+        this.principal = false;
+    }
+
     public UUID getId() { return id; }
     public UUID getTenantId() { return tenantId; }
     public UUID getPessoaId() { return pessoaId; }

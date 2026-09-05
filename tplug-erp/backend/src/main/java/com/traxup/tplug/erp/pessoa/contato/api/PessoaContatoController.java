@@ -2,6 +2,7 @@ package com.traxup.tplug.erp.pessoa.contato.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.pessoa.contato.PessoaContatoApplicationService;
+import com.traxup.tplug.erp.pessoa.contato.PessoaContatoApplicationService.NovoContato;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,14 +32,37 @@ public class PessoaContatoController {
     @GetMapping
     @PreAuthorize("hasAuthority('PESSOA_CONTATO_LER')")
     public List<PessoaContatoResponse> listar(@PathVariable UUID pessoaId) {
-        return service.listar(tenantContext.tenantId(), pessoaId).stream().map(PessoaContatoResponse::from).toList();
+        return service.listar(tenantContext.tenantId(), pessoaId).stream()
+                .map(PessoaContatoResponse::from)
+                .toList();
+    }
+
+    @GetMapping("/situacao")
+    @PreAuthorize("hasAuthority('PESSOA_CONTATO_LER')")
+    public PessoaContatosSituacaoResponse situacao(@PathVariable UUID pessoaId) {
+        return PessoaContatosSituacaoResponse.from(service.situacao(tenantContext.tenantId(), pessoaId));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('PESSOA_CONTATO_GERENCIAR')")
-    public PessoaContatoResponse criar(@PathVariable UUID pessoaId, @Valid @RequestBody CriarPessoaContatoRequest request) {
-        return PessoaContatoResponse.from(service.criar(tenantContext.tenantId(), pessoaId, request.nome(), request.cargo(),
-                request.email(), request.telefone(), request.principal()));
+    public PessoaContatoResponse criar(@PathVariable UUID pessoaId,
+                                       @Valid @RequestBody CriarPessoaContatoRequest request) {
+        return PessoaContatoResponse.from(service.criar(tenantContext.tenantId(), pessoaId, request.nome(),
+                request.cargo(), request.email(), request.telefone(), request.principal()));
+    }
+
+    @PostMapping("/cadastro")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('PESSOA_CONTATO_GERENCIAR')")
+    public List<PessoaContatoResponse> cadastrar(@PathVariable UUID pessoaId,
+                                                 @Valid @RequestBody CadastrarPessoaContatosRequest request) {
+        List<NovoContato> contatos = request.contatos().stream()
+                .map(contato -> new NovoContato(contato.nome(), contato.cargo(), contato.email(),
+                        contato.telefone(), contato.principal()))
+                .toList();
+        return service.cadastrar(tenantContext.tenantId(), pessoaId, contatos).stream()
+                .map(PessoaContatoResponse::from)
+                .toList();
     }
 }

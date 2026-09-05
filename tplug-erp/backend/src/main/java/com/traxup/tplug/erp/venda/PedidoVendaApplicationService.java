@@ -41,6 +41,11 @@ public class PedidoVendaApplicationService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido de venda nao encontrado para o tenant informado"));
     }
 
+    public List<PedidoVendaItem> listarItens(UUID tenantId, UUID pedidoId) {
+        buscar(tenantId, pedidoId);
+        return itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId);
+    }
+
     @Transactional
     public PedidoVenda criar(UUID tenantId, UUID filialId, UUID clienteId, String numero, String observacao, UUID usuarioId) {
         if (!filialRepository.existsByIdAndTenantId(filialId, tenantId)) {
@@ -79,26 +84,14 @@ public class PedidoVendaApplicationService {
         if (!"ABERTO".equals(pedido.getStatus())) {
             throw new IllegalArgumentException("Somente pedido de venda ABERTO pode ser faturado");
         }
-
         List<PedidoVendaItem> itens = itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId);
-        if (itens.isEmpty()) {
-            throw new IllegalArgumentException("Pedido de venda precisa possuir itens antes de ser faturado");
-        }
-
+        if (itens.isEmpty()) throw new IllegalArgumentException("Pedido de venda precisa possuir itens antes de ser faturado");
         for (PedidoVendaItem item : itens) {
             String tipoItem = item.getGradeId() == null ? "PRODUTO" : "GRADE";
             UUID itemEstoqueId = item.getGradeId() == null ? item.getProdutoId() : item.getGradeId();
-            estoqueMovimentacaoService.movimentar(
-                    tenantId,
-                    pedido.getFilialId(),
-                    tipoItem,
-                    itemEstoqueId,
-                    "SAIDA",
-                    item.getQuantidade(),
-                    "FATURAMENTO_PEDIDO_VENDA:" + pedido.getId(),
-                    usuarioId);
+            estoqueMovimentacaoService.movimentar(tenantId, pedido.getFilialId(), tipoItem, itemEstoqueId,
+                    "SAIDA", item.getQuantidade(), "FATURAMENTO_PEDIDO_VENDA:" + pedido.getId(), usuarioId);
         }
-
         pedido.faturar();
         repository.save(pedido);
         auditoria.registrar(tenantId, usuarioId, null, pedido.getFilialId(),

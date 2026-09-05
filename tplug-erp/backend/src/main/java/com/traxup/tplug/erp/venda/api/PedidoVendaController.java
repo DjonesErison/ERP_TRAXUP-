@@ -33,6 +33,13 @@ public class PedidoVendaController {
         return PedidoVendaResponse.from(service.buscar(tenantContext.tenantId(), pedidoId));
     }
 
+    @GetMapping("/{pedidoId}/totais")
+    @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
+    public PedidoVendaTotaisResponse totais(@PathVariable UUID pedidoId) {
+        service.buscar(tenantContext.tenantId(), pedidoId);
+        return PedidoVendaTotaisResponse.from(service.listarItens(tenantContext.tenantId(), pedidoId));
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_CRIAR')")

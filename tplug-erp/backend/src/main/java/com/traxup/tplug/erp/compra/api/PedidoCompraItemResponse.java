@@ -9,8 +9,8 @@ import java.util.UUID;
 public record PedidoCompraItemResponse(
         UUID id,
         UUID pedidoCompraId,
-        String tipoItem,
-        UUID itemId,
+        UUID produtoId,
+        UUID gradeId,
         BigDecimal quantidade,
         BigDecimal precoUnitario,
         BigDecimal totalItem,
@@ -19,15 +19,8 @@ public record PedidoCompraItemResponse(
 ) {
     public static PedidoCompraItemResponse from(PedidoCompraItem item) {
         return new PedidoCompraItemResponse(
-                item.getId(),
-                item.getPedidoCompraId(),
-                item.getTipoItem(),
-                item.getItemId(),
-                item.getQuantidade(),
-                item.getPrecoUnitario(),
-                item.getTotalItem(),
-                item.getCriadoEm(),
-                item.getAtualizadoEm()
-        );
+                item.getId(), item.getPedidoCompraId(), item.getProdutoId(), item.getGradeId(),
+                item.getQuantidade(), item.getPrecoUnitario(), item.getTotalItem(),
+                item.getCriadoEm(), item.getAtualizadoEm());
     }
 }

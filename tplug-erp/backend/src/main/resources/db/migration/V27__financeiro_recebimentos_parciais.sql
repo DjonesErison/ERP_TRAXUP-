@@ -4,6 +4,9 @@ ALTER TABLE contas_receber
     CHECK (status IN ('ABERTO', 'PARCIAL', 'RECEBIDO', 'CANCELADO'));
 
 ALTER TABLE contas_receber
+    ADD COLUMN versao BIGINT NOT NULL DEFAULT 0;
+
+ALTER TABLE contas_receber
     ADD CONSTRAINT uq_contas_receber_tenant_id_id UNIQUE (tenant_id, id);
 
 CREATE TABLE contas_receber_recebimentos (

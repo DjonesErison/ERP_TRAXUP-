@@ -19,7 +19,7 @@ CREATE INDEX idx_produtos_tenant_descricao ON produtos (tenant_id, descricao);
 CREATE INDEX idx_produtos_tenant_codigo_barra ON produtos (tenant_id, codigo_barra);
 
 INSERT INTO permissoes (id, chave, descricao) VALUES
-    ('00000000-0000-0000-0000-000000000011', 'PRODUTO_LER', 'Consultar produtos'),
-    ('00000000-0000-0000-0000-000000000012', 'PRODUTO_CRIAR', 'Criar produtos'),
-    ('00000000-0000-0000-0000-000000000013', 'PRODUTO_DESATIVAR', 'Desativar produtos')
+    ('10000000-0000-0000-0000-000000000012', 'PRODUTO_LER', 'Consultar produtos'),
+    ('10000000-0000-0000-0000-000000000013', 'PRODUTO_CRIAR', 'Criar produtos'),
+    ('10000000-0000-0000-0000-000000000014', 'PRODUTO_DESATIVAR', 'Desativar produtos')
 ON CONFLICT (chave) DO NOTHING;

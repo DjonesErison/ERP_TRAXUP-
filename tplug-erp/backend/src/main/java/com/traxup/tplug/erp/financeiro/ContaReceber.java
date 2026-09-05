@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -29,6 +30,9 @@ public class ContaReceber {
     @Column(name = "recebido_em") private Instant recebidoEm;
     @Column(name = "criado_em", nullable = false) private Instant criadoEm;
     @Column(name = "atualizado_em", nullable = false) private Instant atualizadoEm;
+    @Version
+    @Column(nullable = false)
+    private long versao;
 
     protected ContaReceber() {}
 
@@ -107,4 +111,5 @@ public class ContaReceber {
     public Instant getRecebidoEm() { return recebidoEm; }
     public Instant getCriadoEm() { return criadoEm; }
     public Instant getAtualizadoEm() { return atualizadoEm; }
+    public long getVersao() { return versao; }
 }

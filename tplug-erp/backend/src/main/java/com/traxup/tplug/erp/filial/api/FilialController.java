@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.filial.api;
 
+import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.filial.Filial;
 import com.traxup.tplug.erp.filial.FilialApplicationService;
@@ -24,12 +25,15 @@ import java.util.UUID;
 public class FilialController {
 
     private final FilialApplicationService filialApplicationService;
+    private final AuditoriaApplicationService auditoriaApplicationService;
     private final TenantContext tenantContext;
 
     public FilialController(
             FilialApplicationService filialApplicationService,
+            AuditoriaApplicationService auditoriaApplicationService,
             TenantContext tenantContext) {
         this.filialApplicationService = filialApplicationService;
+        this.auditoriaApplicationService = auditoriaApplicationService;
         this.tenantContext = tenantContext;
     }
 
@@ -65,6 +69,16 @@ public class FilialController {
                 request.nome(),
                 request.cnpj());
 
+        auditoriaApplicationService.registrar(
+                tenantId,
+                tenantContext.usuarioIdOuNulo(),
+                filial.getEmpresa().getId(),
+                filial.getId(),
+                "CRIAR",
+                "FILIAL",
+                filial.getId(),
+                null);
+
         return ResponseEntity
                 .created(URI.create("/api/v1/filiais/" + filial.getId()))
                 .body(FilialResponse.from(tenantId, filial));
@@ -74,8 +88,18 @@ public class FilialController {
     @PreAuthorize("hasAuthority('FILIAL_DESATIVAR')")
     public FilialResponse desativar(@PathVariable UUID filialId) {
         UUID tenantId = tenantContext.tenantId();
-        return FilialResponse.from(
+        Filial filial = filialApplicationService.desativar(tenantId, filialId);
+
+        auditoriaApplicationService.registrar(
                 tenantId,
-                filialApplicationService.desativar(tenantId, filialId));
+                tenantContext.usuarioIdOuNulo(),
+                filial.getEmpresa().getId(),
+                filial.getId(),
+                "DESATIVAR",
+                "FILIAL",
+                filial.getId(),
+                null);
+
+        return FilialResponse.from(tenantId, filial);
     }
 }

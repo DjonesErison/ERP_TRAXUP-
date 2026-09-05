@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: tplug-erp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tplug_erp
+      POSTGRES_USER: tplug_erp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - tplug_erp_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tplug_erp -d tplug_erp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tplug_erp_network
+
+volumes:
+  tplug_erp_postgres_data:
+
+networks:
+  tplug_erp_network:
+    name: tplug_erp_network

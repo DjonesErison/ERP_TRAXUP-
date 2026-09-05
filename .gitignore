@@ -35,3 +35,6 @@ id_ed25519.pub
 # Docker
 *.tar
 docker-compose.override.yml
+
+# TPlug ERP - arquivos locais com segredos
+tplug-erp/infra/.env

@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.financeiro;
 
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -24,7 +25,7 @@ public class ContaReceber {
     @Column(name = "valor_original", nullable = false, precision = 19, scale = 4) private BigDecimal valorOriginal;
     @Column(name = "valor_recebido", nullable = false, precision = 19, scale = 4) private BigDecimal valorRecebido;
     @Column(nullable = false) private LocalDate vencimento;
-    @Column(nullable = false, length = 20) private String status;
+    @Column(nullable = false, length = 30) private String status;
     @Column(name = "usuario_id") private UUID usuarioId;
     @Column(name = "recebido_em") private Instant recebidoEm;
     @Column(name = "criado_em", nullable = false) private Instant criadoEm;
@@ -58,15 +59,38 @@ public class ContaReceber {
     @PreUpdate void preUpdate() { atualizadoEm = Instant.now(); }
 
     public void receber() {
-        if (!"ABERTO".equals(status)) throw new IllegalArgumentException("Somente conta ABERTA pode ser recebida");
-        valorRecebido = valorOriginal;
-        status = "RECEBIDO";
-        recebidoEm = Instant.now();
+        registrarRecebimento(saldoAberto());
+    }
+
+    public void registrarRecebimento(BigDecimal valor) {
+        if (!"ABERTO".equals(status) && !"PARCIALMENTE_RECEBIDO".equals(status)) {
+            throw new RegraNegocioException("Somente conta aberta pode receber baixa");
+        }
+        if (valor == null || valor.signum() <= 0) {
+            throw new RegraNegocioException("Valor do recebimento deve ser maior que zero");
+        }
+        if (valor.compareTo(saldoAberto()) > 0) {
+            throw new RegraNegocioException("Valor do recebimento nao pode superar o saldo em aberto");
+        }
+
+        valorRecebido = valorRecebido.add(valor);
+        if (valorRecebido.compareTo(valorOriginal) == 0) {
+            status = "RECEBIDO";
+            recebidoEm = Instant.now();
+        } else {
+            status = "PARCIALMENTE_RECEBIDO";
+        }
     }
 
     public void cancelar() {
-        if (!"ABERTO".equals(status)) throw new IllegalArgumentException("Somente conta ABERTA pode ser cancelada");
+        if (!"ABERTO".equals(status)) {
+            throw new RegraNegocioException("Somente conta sem recebimentos pode ser cancelada");
+        }
         status = "CANCELADO";
+    }
+
+    public BigDecimal saldoAberto() {
+        return valorOriginal.subtract(valorRecebido);
     }
 
     public UUID getId() { return id; }

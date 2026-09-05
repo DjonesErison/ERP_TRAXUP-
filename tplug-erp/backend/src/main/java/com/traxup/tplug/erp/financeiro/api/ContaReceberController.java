@@ -39,6 +39,14 @@ public class ContaReceberController {
         return ContaReceberResponse.from(service.buscar(tenantContext.tenantId(), contaId));
     }
 
+    @GetMapping("/{contaId}/movimentos")
+    @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_LER')")
+    public List<ContaReceberMovimentoResponse> listarMovimentos(@PathVariable UUID contaId) {
+        return service.listarMovimentos(tenantContext.tenantId(), contaId).stream()
+                .map(ContaReceberMovimentoResponse::from)
+                .toList();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_CRIAR')")
@@ -48,15 +56,27 @@ public class ContaReceberController {
                 request.numeroDocumento(), request.descricao(), request.valorOriginal(), request.vencimento()));
     }
 
+    @PostMapping("/{contaId}/recebimentos")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_BAIXAR')")
+    public ContaReceberMovimentoResponse registrarRecebimento(
+            @PathVariable UUID contaId, @Valid @RequestBody RegistrarRecebimentoRequest request) {
+        return ContaReceberMovimentoResponse.from(service.registrarRecebimento(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId,
+                request.valor(), request.dataRecebimento(), request.observacao()));
+    }
+
     @PostMapping("/{contaId}/receber")
     @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_BAIXAR')")
     public ContaReceberResponse receber(@PathVariable UUID contaId) {
-        return ContaReceberResponse.from(service.receber(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId));
+        return ContaReceberResponse.from(service.receber(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId));
     }
 
     @PostMapping("/{contaId}/cancelar")
     @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_CANCELAR')")
     public ContaReceberResponse cancelar(@PathVariable UUID contaId) {
-        return ContaReceberResponse.from(service.cancelar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId));
+        return ContaReceberResponse.from(service.cancelar(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId));
     }
 }

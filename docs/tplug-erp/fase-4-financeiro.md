@@ -1,19 +1,34 @@
 # Fase 4 - Financeiro
 
-## PR inicial: Contas a receber
+## Contas a receber
 
-A Fase 4 inicia com um nucleo financeiro desacoplado de bancos, boletos, adquirentes e conciliacao. O objetivo deste primeiro bloco e estabelecer o livro operacional de titulos a receber com isolamento multi-tenant, RBAC e auditoria.
+A Fase 4 inicia com um nucleo financeiro desacoplado de bancos, boletos, adquirentes e conciliacao. O livro operacional de titulos a receber possui isolamento multi-tenant, RBAC, auditoria e historico financeiro.
 
 ### Regras implementadas
 
 - Toda conta pertence a um tenant e a uma filial.
 - O cliente e obrigatorio, precisa existir no mesmo tenant, estar ativo e possuir papel de cliente.
 - O valor original deve ser maior que zero.
-- Estados iniciais: `ABERTO`, `RECEBIDO`, `CANCELADO`.
-- Neste primeiro incremento, a baixa e integral. Baixas parciais serao tratadas em PR posterior, evitando assumir uma regra contabil/financeira sem o modelo de movimentos.
-- Conta recebida nao pode ser recebida novamente nem cancelada.
-- Conta cancelada nao pode ser baixada.
-- Criacao, baixa e cancelamento geram auditoria.
+- Estados: `ABERTO`, `PARCIALMENTE_RECEBIDO`, `RECEBIDO`, `CANCELADO`.
+- Cada baixa gera um movimento imutavel com valor, data, observacao e usuario.
+- Baixas podem ser parciais ou integrais e nunca podem superar o saldo em aberto.
+- A conta e marcada como `RECEBIDO` somente quando o saldo chega a zero.
+- O endpoint integral anterior permanece compativel e agora tambem gera movimento.
+- Contas com recebimento parcial ou integral nao podem ser canceladas.
+- A atualizacao do saldo usa bloqueio pessimista por conta para impedir sobrebaixa concorrente.
+- O historico e filtrado simultaneamente por tenant e conta.
+- Criacao, cada baixa e cancelamento geram auditoria.
+- Baixas integrais anteriores a V27 sao convertidas em movimentos durante a migration.
+
+### API
+
+- `GET /api/v1/financeiro/contas-receber`
+- `GET /api/v1/financeiro/contas-receber/{contaId}`
+- `POST /api/v1/financeiro/contas-receber`
+- `POST /api/v1/financeiro/contas-receber/{contaId}/recebimentos`
+- `GET /api/v1/financeiro/contas-receber/{contaId}/movimentos`
+- `POST /api/v1/financeiro/contas-receber/{contaId}/receber`
+- `POST /api/v1/financeiro/contas-receber/{contaId}/cancelar`
 
 ### RBAC
 
@@ -24,10 +39,9 @@ A Fase 4 inicia com um nucleo financeiro desacoplado de bancos, boletos, adquire
 
 ### Proximos blocos planejados
 
-1. movimentos/baixas parciais e historico de recebimentos;
-2. contas a pagar;
-3. caixa e contas bancarias;
-4. origem automatica a partir de vendas/faturamento;
-5. conciliacao, taxas e integracoes bancarias/PSP.
+1. contas a pagar;
+2. caixa e contas bancarias;
+3. origem automatica a partir de vendas/faturamento;
+4. conciliacao, taxas e integracoes bancarias/PSP.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

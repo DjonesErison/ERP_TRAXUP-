@@ -22,20 +22,43 @@ A Fase 4 estabelece o nucleo financeiro desacoplado de bancos, boletos, adquiren
 - Baixas integrais anteriores a V27 recebem um movimento historico na V28.
 - Criacao, baixa e cancelamento geram auditoria.
 
-### RBAC
+### RBAC de recebimentos
 
 - `FINANCEIRO_RECEBER_LER`
 - `FINANCEIRO_RECEBER_CRIAR`
 - `FINANCEIRO_RECEBER_BAIXAR`
 - `FINANCEIRO_RECEBER_CANCELAR`
 
-O historico de recebimentos usa as mesmas permissoes de leitura/baixa do titulo e nao introduz acesso transversal entre tenants.
+## Contas a pagar
+
+O nucleo de contas a pagar usa fornecedor ativo do mesmo tenant, filial obrigatoria, estados `ABERTO`, `PAGO` e `CANCELADO`, baixa integral inicial, concorrencia otimista, auditoria e RBAC `FINANCEIRO_PAGAR_*`.
+
+## Caixa e contas bancarias
+
+O primeiro incremento de tesouraria cria contas financeiras por filial dos tipos `CAIXA` e `BANCO`.
+
+- Cada conta pertence obrigatoriamente a tenant e filial por FK composta.
+- Nomes sao unicos por tenant/filial.
+- Saldo inicia em zero e e alterado apenas por movimentos `ENTRADA` ou `SAIDA`.
+- Cada movimento e imutavel e registra tenant, filial, conta, valor, descricao, usuario e data/hora.
+- Saida maior que o saldo e bloqueada; saldo negativo nao e permitido neste incremento.
+- Atualizacao de saldo usa versao otimista para impedir perda de atualizacao em movimentos simultaneos.
+- Conta inativa permanece consultavel, mas nao aceita novos movimentos.
+- Criacao, movimentacao e desativacao geram auditoria.
+
+### RBAC de tesouraria
+
+- `FINANCEIRO_CONTA_LER`
+- `FINANCEIRO_CONTA_CRIAR`
+- `FINANCEIRO_CONTA_MOVIMENTAR`
+- `FINANCEIRO_CONTA_DESATIVAR`
+
+Conta bancaria compartilhada entre filiais, limite/cheque especial e conciliacao bancaria ficam fora deste incremento e poderao ser parametrizados sem alterar o ledger basico.
 
 ### Proximos blocos planejados
 
-1. contas a pagar;
-2. caixa e contas bancarias;
-3. origem automatica a partir de vendas/faturamento;
-4. conciliacao, taxas e integracoes bancarias/PSP.
+1. origem automatica financeira a partir de vendas/faturamento;
+2. vinculo das baixas de contas a receber/pagar com contas financeiras;
+3. conciliacao, taxas e integracoes bancarias/PSP.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

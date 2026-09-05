@@ -4,6 +4,7 @@ import com.traxup.tplug.erp.shared.exception.AutenticacaoException;
 import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -27,6 +28,14 @@ public class ApiExceptionHandler {
     public ProblemDetail recursoConflitante(RecursoConflitanteException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
         problem.setTitle("Conflito de recurso");
+        return problem;
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ProblemDetail concorrencia(OptimisticLockingFailureException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "O recurso foi alterado por outra operacao; atualize os dados e tente novamente");
+        problem.setTitle("Conflito de concorrencia");
         return problem;
     }
 

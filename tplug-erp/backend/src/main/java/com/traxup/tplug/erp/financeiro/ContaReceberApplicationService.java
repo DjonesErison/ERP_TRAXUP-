@@ -4,6 +4,7 @@ import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.filial.FilialRepository;
 import com.traxup.tplug.erp.pessoa.Pessoa;
 import com.traxup.tplug.erp.pessoa.PessoaRepository;
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +41,8 @@ public class ContaReceberApplicationService {
 
     public ContaReceber buscar(UUID tenantId, UUID contaId) {
         return repository.findByIdAndTenantId(contaId, tenantId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta a receber nao encontrada para o tenant informado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Conta a receber nao encontrada para o tenant informado"));
     }
 
     public List<ContaReceberRecebimento> listarRecebimentos(UUID tenantId, UUID contaId) {
@@ -57,15 +59,16 @@ public class ContaReceberApplicationService {
         }
 
         Pessoa cliente = pessoaRepository.findByIdAndTenantId(clienteId, tenantId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente nao encontrado para o tenant informado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Cliente nao encontrado para o tenant informado"));
         if (!cliente.isCliente() || !cliente.isAtivo()) {
-            throw new IllegalArgumentException("Pessoa informada nao e um cliente ativo");
+            throw new RegraNegocioException("Pessoa informada nao e um cliente ativo");
         }
 
         if (valorOriginal == null || valorOriginal.signum() <= 0) {
-            throw new IllegalArgumentException("Valor original deve ser maior que zero");
+            throw new RegraNegocioException("Valor original deve ser maior que zero");
         }
-        if (vencimento == null) throw new IllegalArgumentException("Vencimento e obrigatorio");
+        if (vencimento == null) throw new RegraNegocioException("Vencimento e obrigatorio");
 
         ContaReceber conta = repository.save(new ContaReceber(
                 tenantId,
@@ -118,7 +121,7 @@ public class ContaReceberApplicationService {
     }
 
     private String normalizarObrigatorio(String valor, String campo) {
-        if (valor == null || valor.isBlank()) throw new IllegalArgumentException(campo + " e obrigatorio");
+        if (valor == null || valor.isBlank()) throw new RegraNegocioException(campo + " e obrigatorio");
         return valor.trim();
     }
 }

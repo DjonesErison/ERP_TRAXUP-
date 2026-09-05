@@ -53,12 +53,24 @@ O primeiro incremento de tesouraria cria contas financeiras por filial dos tipos
 - `FINANCEIRO_CONTA_MOVIMENTAR`
 - `FINANCEIRO_CONTA_DESATIVAR`
 
+## Baixas integradas a tesouraria
+
+As baixas operacionais podem ser executadas junto com a movimentacao de caixa/banco em uma unica transacao.
+
+- Recebimento de conta a receber gera `ENTRADA` na conta financeira pelo mesmo valor da baixa, inclusive parcial.
+- Pagamento de conta a pagar gera `SAIDA` pelo saldo integral do titulo.
+- Titulo e conta financeira precisam pertencer ao mesmo tenant e a mesma filial.
+- O endpoint exige simultaneamente a permissao de baixa do titulo e `FINANCEIRO_CONTA_MOVIMENTAR`.
+- Historico do titulo, movimento da conta, saldo e auditorias participam da mesma transacao; qualquer falha reverte o conjunto.
+- Saldo insuficiente, conta inativa, estado invalido do titulo ou conflito otimista impedem a baixa financeira completa.
+- Os endpoints antigos de baixa sem tesouraria permanecem disponiveis para compatibilidade e fluxos que ainda nao informam conta financeira.
+
 Conta bancaria compartilhada entre filiais, limite/cheque especial e conciliacao bancaria ficam fora deste incremento e poderao ser parametrizados sem alterar o ledger basico.
 
 ### Proximos blocos planejados
 
 1. origem automatica financeira a partir de vendas/faturamento;
-2. vinculo das baixas de contas a receber/pagar com contas financeiras;
-3. conciliacao, taxas e integracoes bancarias/PSP.
+2. conciliacao, taxas e integracoes bancarias/PSP;
+3. evolucao de pagamentos parciais em contas a pagar.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

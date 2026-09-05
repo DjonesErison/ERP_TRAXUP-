@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.shared.api;
 
+import com.traxup.tplug.erp.shared.exception.AutenticacaoException;
 import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,13 @@ public class ApiExceptionHandler {
     public ProblemDetail recursoConflitante(RecursoConflitanteException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
         problem.setTitle("Conflito de recurso");
+        return problem;
+    }
+
+    @ExceptionHandler(AutenticacaoException.class)
+    public ProblemDetail autenticacao(AutenticacaoException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage());
+        problem.setTitle("Falha de autenticacao");
         return problem;
     }
 

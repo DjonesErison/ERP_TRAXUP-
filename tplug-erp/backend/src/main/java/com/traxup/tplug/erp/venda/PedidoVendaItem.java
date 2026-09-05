@@ -36,6 +36,9 @@ public class PedidoVendaItem {
     @Column(name = "preco_unitario", nullable = false, precision = 19, scale = 4)
     private BigDecimal precoUnitario;
 
+    @Column(name = "desconto_valor", nullable = false, precision = 19, scale = 4)
+    private BigDecimal descontoValor;
+
     @Column(name = "total_item", nullable = false, precision = 19, scale = 4)
     private BigDecimal totalItem;
 
@@ -56,22 +59,42 @@ public class PedidoVendaItem {
         this.gradeId = gradeId;
         this.quantidade = quantidade;
         this.precoUnitario = precoUnitario;
-        this.totalItem = quantidade.multiply(precoUnitario);
+        this.descontoValor = BigDecimal.ZERO;
+        recalcularTotal();
+    }
+
+    public void aplicarDesconto(BigDecimal descontoValor) {
+        BigDecimal bruto = quantidade.multiply(precoUnitario);
+        if (descontoValor == null || descontoValor.signum() < 0) {
+            throw new IllegalArgumentException("Desconto nao pode ser negativo");
+        }
+        if (descontoValor.compareTo(bruto) > 0) {
+            throw new IllegalArgumentException("Desconto nao pode ser maior que o total bruto do item");
+        }
+        this.descontoValor = descontoValor;
+        recalcularTotal();
     }
 
     @PrePersist
     void prePersist() {
         Instant agora = Instant.now();
         if (id == null) id = UUID.randomUUID();
-        totalItem = quantidade.multiply(precoUnitario);
+        if (descontoValor == null) descontoValor = BigDecimal.ZERO;
+        recalcularTotal();
         criadoEm = agora;
         atualizadoEm = agora;
     }
 
     @PreUpdate
     void preUpdate() {
-        totalItem = quantidade.multiply(precoUnitario);
+        if (descontoValor == null) descontoValor = BigDecimal.ZERO;
+        recalcularTotal();
         atualizadoEm = Instant.now();
+    }
+
+    private void recalcularTotal() {
+        BigDecimal desconto = descontoValor == null ? BigDecimal.ZERO : descontoValor;
+        totalItem = quantidade.multiply(precoUnitario).subtract(desconto);
     }
 
     public UUID getId() { return id; }
@@ -81,6 +104,7 @@ public class PedidoVendaItem {
     public UUID getGradeId() { return gradeId; }
     public BigDecimal getQuantidade() { return quantidade; }
     public BigDecimal getPrecoUnitario() { return precoUnitario; }
+    public BigDecimal getDescontoValor() { return descontoValor; }
     public BigDecimal getTotalItem() { return totalItem; }
     public Instant getCriadoEm() { return criadoEm; }
     public Instant getAtualizadoEm() { return atualizadoEm; }

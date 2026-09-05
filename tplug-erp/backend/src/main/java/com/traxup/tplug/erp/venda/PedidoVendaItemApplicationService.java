@@ -77,6 +77,19 @@ public class PedidoVendaItemApplicationService {
         return item;
     }
 
+    @Transactional
+    public PedidoVendaItem aplicarDesconto(UUID tenantId, UUID usuarioId, UUID pedidoId, UUID itemId, BigDecimal descontoValor) {
+        PedidoVenda pedido = buscarPedido(tenantId, pedidoId, true);
+        PedidoVendaItem item = itemRepository.findByIdAndTenantIdAndPedidoVendaId(itemId, tenantId, pedidoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Item do pedido de venda nao encontrado para o tenant informado"));
+        item.aplicarDesconto(descontoValor);
+        PedidoVendaItem salvo = itemRepository.save(item);
+        auditoria.registrar(tenantId, usuarioId, null, pedido.getFilialId(),
+                "ALTERAR", "PEDIDO_VENDA_ITEM", item.getId(),
+                "pedidoId=" + pedidoId + ";descontoValor=" + descontoValor);
+        return salvo;
+    }
+
     private PedidoVenda buscarPedido(UUID tenantId, UUID pedidoId, boolean exigirRascunho) {
         PedidoVenda pedido = pedidoRepository.findByIdAndTenantId(pedidoId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido de venda nao encontrado para o tenant informado"));

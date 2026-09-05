@@ -15,13 +15,16 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class PedidoVendaApplicationService {
     private final PedidoVendaRepository repository;
+    private final PedidoVendaItemRepository itemRepository;
     private final FilialRepository filialRepository;
     private final PessoaRepository pessoaRepository;
     private final AuditoriaApplicationService auditoria;
 
-    public PedidoVendaApplicationService(PedidoVendaRepository repository, FilialRepository filialRepository,
-                                         PessoaRepository pessoaRepository, AuditoriaApplicationService auditoria) {
+    public PedidoVendaApplicationService(PedidoVendaRepository repository, PedidoVendaItemRepository itemRepository,
+                                         FilialRepository filialRepository, PessoaRepository pessoaRepository,
+                                         AuditoriaApplicationService auditoria) {
         this.repository = repository;
+        this.itemRepository = itemRepository;
         this.filialRepository = filialRepository;
         this.pessoaRepository = pessoaRepository;
         this.auditoria = auditoria;
@@ -51,6 +54,18 @@ public class PedidoVendaApplicationService {
         String observacaoNormalizada = observacao == null || observacao.isBlank() ? null : observacao.trim();
         PedidoVenda pedido = repository.save(new PedidoVenda(tenantId, filialId, clienteId, numeroNormalizado, observacaoNormalizada, usuarioId));
         auditoria.registrar(tenantId, usuarioId, null, filialId, "CRIAR", "PEDIDO_VENDA", pedido.getId(), null);
+        return pedido;
+    }
+
+    @Transactional
+    public PedidoVenda abrir(UUID tenantId, UUID usuarioId, UUID pedidoId) {
+        PedidoVenda pedido = buscar(tenantId, pedidoId);
+        if (itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId).isEmpty()) {
+            throw new IllegalArgumentException("Pedido de venda precisa possuir itens antes de ser aberto");
+        }
+        pedido.abrir();
+        repository.save(pedido);
+        auditoria.registrar(tenantId, usuarioId, null, pedido.getFilialId(), "ABRIR", "PEDIDO_VENDA", pedido.getId(), null);
         return pedido;
     }
 

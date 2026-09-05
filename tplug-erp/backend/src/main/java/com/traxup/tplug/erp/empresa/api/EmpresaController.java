@@ -5,6 +5,7 @@ import com.traxup.tplug.erp.empresa.Empresa;
 import com.traxup.tplug.erp.empresa.EmpresaApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +33,7 @@ public class EmpresaController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('EMPRESA_LER')")
     public List<EmpresaResponse> listar() {
         UUID tenantId = tenantContext.tenantId();
         return empresaApplicationService.listar(tenantId).stream()
@@ -40,6 +42,7 @@ public class EmpresaController {
     }
 
     @GetMapping("/{empresaId}")
+    @PreAuthorize("hasAuthority('EMPRESA_LER')")
     public EmpresaResponse buscarPorId(@PathVariable UUID empresaId) {
         UUID tenantId = tenantContext.tenantId();
         Empresa empresa = empresaApplicationService.buscarPorId(tenantId, empresaId);
@@ -47,6 +50,7 @@ public class EmpresaController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('EMPRESA_CRIAR')")
     public ResponseEntity<EmpresaResponse> criar(@Valid @RequestBody CriarEmpresaRequest request) {
         UUID tenantId = tenantContext.tenantId();
         Empresa empresa = empresaApplicationService.criar(
@@ -61,6 +65,7 @@ public class EmpresaController {
     }
 
     @PatchMapping("/{empresaId}/desativar")
+    @PreAuthorize("hasAuthority('EMPRESA_DESATIVAR')")
     public EmpresaResponse desativar(@PathVariable UUID empresaId) {
         UUID tenantId = tenantContext.tenantId();
         Empresa empresa = empresaApplicationService.desativar(tenantId, empresaId);

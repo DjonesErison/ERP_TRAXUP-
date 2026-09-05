@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,11 +35,13 @@ class EmpresaControllerIntegrationTest {
     private EmpresaApplicationService empresaApplicationService;
 
     @Test
-    void deveCriarEmpresaNoTenantDoJwt() throws Exception {
+    void deveCriarEmpresaNoTenantDoJwtComPermissao() throws Exception {
         Tenant tenant = tenantRepository.save(new Tenant("Tenant API"));
 
         mockMvc.perform(post("/api/v1/empresas")
-                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString())))
+                        .with(jwt()
+                                .jwt(token -> token.claim("tenant_id", tenant.getId().toString()))
+                                .authorities(new SimpleGrantedAuthority("EMPRESA_CRIAR")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -55,7 +58,24 @@ class EmpresaControllerIntegrationTest {
     }
 
     @Test
-    void naoDeveBuscarEmpresaDeOutroTenantMesmoComHeaderForjado() throws Exception {
+    void deveNegarCriacaoDeEmpresaSemPermissao() throws Exception {
+        Tenant tenant = tenantRepository.save(new Tenant("Tenant Sem Permissao"));
+
+        mockMvc.perform(post("/api/v1/empresas")
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "razaoSocial": "Empresa Bloqueada Ltda",
+                                  "nomeFantasia": "Bloqueada",
+                                  "cnpj": "12345678000270"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void naoDeveBuscarEmpresaDeOutroTenantMesmoComPermissaoEHeaderForjado() throws Exception {
         Tenant tenantA = tenantRepository.save(new Tenant("Tenant A"));
         Tenant tenantB = tenantRepository.save(new Tenant("Tenant B"));
         Empresa empresaA = empresaApplicationService.criar(
@@ -65,7 +85,9 @@ class EmpresaControllerIntegrationTest {
                 "11111111000111");
 
         mockMvc.perform(get("/api/v1/empresas/{empresaId}", empresaA.getId())
-                        .with(jwt().jwt(token -> token.claim("tenant_id", tenantB.getId().toString())))
+                        .with(jwt()
+                                .jwt(token -> token.claim("tenant_id", tenantB.getId().toString()))
+                                .authorities(new SimpleGrantedAuthority("EMPRESA_LER")))
                         .header("X-Tenant-Id", tenantA.getId()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));

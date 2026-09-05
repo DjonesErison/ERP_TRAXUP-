@@ -1,0 +1,42 @@
+name: TPlug ERP Backend - CI
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'tplug-erp/backend/**'
+      - '.github/workflows/tplug-erp-backend-ci.yml'
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - 'tplug-erp/backend/**'
+      - '.github/workflows/tplug-erp-backend-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Backend Java 21
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: tplug-erp/backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: tplug-erp/backend/pom.xml
+
+      - name: Validar e empacotar backend
+        run: bash mvnw --batch-mode --no-transfer-progress clean package -DskipTests

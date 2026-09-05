@@ -1,5 +1,9 @@
 package com.traxup.tplug.erp.auth.api;
 
+import com.traxup.tplug.erp.auth.RbacApplicationService;
+import com.traxup.tplug.erp.perfil.Perfil;
+import com.traxup.tplug.erp.permissao.Permissao;
+import com.traxup.tplug.erp.permissao.PermissaoRepository;
 import com.traxup.tplug.erp.tenant.Tenant;
 import com.traxup.tplug.erp.tenant.TenantRepository;
 import com.traxup.tplug.erp.usuario.Usuario;
@@ -42,6 +46,12 @@ class AuthControllerIntegrationTest {
     private UsuarioApplicationService usuarioApplicationService;
 
     @Autowired
+    private RbacApplicationService rbacApplicationService;
+
+    @Autowired
+    private PermissaoRepository permissaoRepository;
+
+    @Autowired
     private JwtDecoder jwtDecoder;
 
     @Test
@@ -49,6 +59,12 @@ class AuthControllerIntegrationTest {
         Tenant tenant = tenantRepository.save(new Tenant("Tenant Auth"));
         Usuario usuario = usuarioApplicationService.criar(
                 tenant.getId(), "Usuario Auth", "auth@exemplo.com", "SenhaSegura123");
+
+        Perfil perfil = rbacApplicationService.criarPerfil(
+                tenant.getId(), "Leitor Usuarios", "Permite consultar usuarios");
+        Permissao permissao = permissaoRepository.findByChave("USUARIO_LER").orElseThrow();
+        rbacApplicationService.atribuirPermissaoAoPerfil(tenant.getId(), perfil.getId(), permissao.getId());
+        rbacApplicationService.atribuirPerfilAoUsuario(tenant.getId(), usuario.getId(), perfil.getId());
 
         MvcResult resultado = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -71,6 +87,7 @@ class AuthControllerIntegrationTest {
         Jwt jwt = jwtDecoder.decode(accessToken);
         assertThat(jwt.getSubject()).isEqualTo(usuario.getId().toString());
         assertThat(jwt.getClaimAsString("tenant_id")).isEqualTo(tenant.getId().toString());
+        assertThat(jwt.getClaimAsStringList("permissions")).contains("USUARIO_LER");
 
         mockMvc.perform(get("/api/v1/usuarios/{usuarioId}", usuario.getId())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))

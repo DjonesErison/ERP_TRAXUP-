@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +48,9 @@ class UsuarioControllerIntegrationTest {
         String senha = "SenhaSegura123";
 
         mockMvc.perform(post("/api/v1/usuarios")
-                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString())))
+                        .with(jwt()
+                                .jwt(token -> token.claim("tenant_id", tenant.getId().toString()))
+                                .authorities(new SimpleGrantedAuthority("USUARIO_CRIAR")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -79,7 +82,9 @@ class UsuarioControllerIntegrationTest {
                 tenantA.getId(), "Usuario A", "usuario.a@exemplo.com", "SenhaSegura123");
 
         mockMvc.perform(get("/api/v1/usuarios/{usuarioId}", usuarioA.getId())
-                        .with(jwt().jwt(token -> token.claim("tenant_id", tenantB.getId().toString()))))
+                        .with(jwt()
+                                .jwt(token -> token.claim("tenant_id", tenantB.getId().toString()))
+                                .authorities(new SimpleGrantedAuthority("USUARIO_LER"))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
     }
@@ -91,7 +96,9 @@ class UsuarioControllerIntegrationTest {
                 tenant.getId(), "Usuario Um", "duplicado@exemplo.com", "SenhaSegura123");
 
         mockMvc.perform(post("/api/v1/usuarios")
-                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString())))
+                        .with(jwt()
+                                .jwt(token -> token.claim("tenant_id", tenant.getId().toString()))
+                                .authorities(new SimpleGrantedAuthority("USUARIO_CRIAR")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -102,5 +109,14 @@ class UsuarioControllerIntegrationTest {
                                 """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.title").value("Conflito de recurso"));
+    }
+
+    @Test
+    void deveNegarConsultaSemPermissaoDeUsuario() throws Exception {
+        Tenant tenant = tenantRepository.save(new Tenant("Tenant Sem Permissao Usuario"));
+
+        mockMvc.perform(get("/api/v1/usuarios")
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString()))))
+                .andExpect(status().isForbidden());
     }
 }

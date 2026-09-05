@@ -13,6 +13,7 @@ public record PedidoVendaItemResponse(
         UUID gradeId,
         BigDecimal quantidade,
         BigDecimal precoUnitario,
+        BigDecimal descontoValor,
         BigDecimal totalItem,
         Instant criadoEm,
         Instant atualizadoEm
@@ -20,7 +21,7 @@ public record PedidoVendaItemResponse(
     public static PedidoVendaItemResponse from(PedidoVendaItem item) {
         return new PedidoVendaItemResponse(
                 item.getId(), item.getPedidoVendaId(), item.getProdutoId(), item.getGradeId(),
-                item.getQuantidade(), item.getPrecoUnitario(), item.getTotalItem(),
+                item.getQuantidade(), item.getPrecoUnitario(), item.getDescontoValor(), item.getTotalItem(),
                 item.getCriadoEm(), item.getAtualizadoEm());
     }
 }

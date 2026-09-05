@@ -5,6 +5,7 @@ import com.traxup.tplug.erp.filial.Filial;
 import com.traxup.tplug.erp.filial.FilialApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +34,7 @@ public class FilialController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('FILIAL_LER')")
     public List<FilialResponse> listar(@RequestParam(required = false) UUID empresaId) {
         UUID tenantId = tenantContext.tenantId();
         List<Filial> filiais = empresaId == null
@@ -45,6 +47,7 @@ public class FilialController {
     }
 
     @GetMapping("/{filialId}")
+    @PreAuthorize("hasAuthority('FILIAL_LER')")
     public FilialResponse buscarPorId(@PathVariable UUID filialId) {
         UUID tenantId = tenantContext.tenantId();
         return FilialResponse.from(
@@ -53,6 +56,7 @@ public class FilialController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('FILIAL_CRIAR')")
     public ResponseEntity<FilialResponse> criar(@Valid @RequestBody CriarFilialRequest request) {
         UUID tenantId = tenantContext.tenantId();
         Filial filial = filialApplicationService.criar(
@@ -67,6 +71,7 @@ public class FilialController {
     }
 
     @PatchMapping("/{filialId}/desativar")
+    @PreAuthorize("hasAuthority('FILIAL_DESATIVAR')")
     public FilialResponse desativar(@PathVariable UUID filialId) {
         UUID tenantId = tenantContext.tenantId();
         return FilialResponse.from(

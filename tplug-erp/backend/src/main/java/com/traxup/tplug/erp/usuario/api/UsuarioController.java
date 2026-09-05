@@ -6,6 +6,7 @@ import com.traxup.tplug.erp.usuario.Usuario;
 import com.traxup.tplug.erp.usuario.UsuarioApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +37,7 @@ public class UsuarioController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('USUARIO_LER')")
     public List<UsuarioResponse> listar() {
         UUID tenantId = tenantContext.tenantId();
         return usuarioApplicationService.listar(tenantId).stream()
@@ -44,6 +46,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/{usuarioId}")
+    @PreAuthorize("hasAuthority('USUARIO_LER')")
     public UsuarioResponse buscarPorId(@PathVariable UUID usuarioId) {
         UUID tenantId = tenantContext.tenantId();
         return UsuarioResponse.from(
@@ -52,6 +55,7 @@ public class UsuarioController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('USUARIO_CRIAR')")
     public ResponseEntity<UsuarioResponse> criar(@Valid @RequestBody CriarUsuarioRequest request) {
         UUID tenantId = tenantContext.tenantId();
         Usuario usuario = usuarioApplicationService.criar(
@@ -76,6 +80,7 @@ public class UsuarioController {
     }
 
     @PatchMapping("/{usuarioId}/desativar")
+    @PreAuthorize("hasAuthority('USUARIO_DESATIVAR')")
     public UsuarioResponse desativar(@PathVariable UUID usuarioId) {
         UUID tenantId = tenantContext.tenantId();
         Usuario usuario = usuarioApplicationService.desativar(tenantId, usuarioId);

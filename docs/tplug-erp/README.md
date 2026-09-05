@@ -24,6 +24,8 @@ A arquitetura segue monólito modular. Regras de negócio ficam no backend e tod
 - PostgreSQL com migrations Flyway V1 a V9.
 - CI do backend no GitHub Actions com Java 21 e PostgreSQL 17 efêmero.
 - Dockerfile multi-stage do backend com runtime Java 21 não-root e validação de build da imagem no CI.
+- Contrato de variáveis de ambiente documentado em `.env.example`.
+- Estratégia de ambientes, promoção, deploy e rollback formalizada.
 
 ## Segurança
 
@@ -35,6 +37,7 @@ A arquitetura segue monólito modular. Regras de negócio ficam no backend e tod
 - Auditoria não deve armazenar senha, token bruto, segredo JWT ou credencial.
 - Bootstrap administrativo é desabilitado por padrão, depende de variáveis de ambiente e só pode executar quando ainda não existe tenant cadastrado.
 - A imagem Docker executa a aplicação com usuário não-root.
+- Segredos de desenvolvimento, homologação e produção não devem ser versionados nem compartilhados entre ambientes.
 
 ## Bootstrap do primeiro administrador
 
@@ -58,13 +61,13 @@ docker build -t tplug-erp-backend:local .
 
 A aplicação continua recebendo banco, JWT e demais configurações por variáveis de ambiente; nenhuma credencial é incorporada à imagem.
 
-## Próximos itens da Fase 0
+## Fase 0
 
-- Revisar versões das actions do CI.
-- Formalizar configuração de ambientes e deploy.
+Os itens técnicos previstos para a Fase 0 estão implementados ou formalizados no repositório: segurança multi-tenant, autenticação, RBAC, auditoria, bootstrap inicial, OpenAPI opt-in, imagem Docker, CI e contrato de ambientes/deploy.
 
 ## Documentos deste diretório
 
 - `arquitetura-atual.md`: arquitetura e decisões vigentes.
 - `seguranca-e-multitenancy.md`: autenticação, autorização, isolamento e auditoria.
 - `migrations.md`: inventário das migrations imutáveis.
+- `ambientes-e-deploy.md`: contrato de ambientes, promoção, deploy, checklist e rollback.

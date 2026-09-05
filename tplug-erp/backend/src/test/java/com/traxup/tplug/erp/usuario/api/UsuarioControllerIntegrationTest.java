@@ -11,12 +11,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -25,7 +24,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@WithMockUser(username = "teste-api")
 class UsuarioControllerIntegrationTest {
 
     @Autowired
@@ -44,13 +42,12 @@ class UsuarioControllerIntegrationTest {
     private PasswordEncoder passwordEncoder;
 
     @Test
-    void deveCriarUsuarioComSenhaHashEEmailNormalizado() throws Exception {
+    void deveCriarUsuarioComSenhaHashEEmailNormalizadoNoTenantDoJwt() throws Exception {
         Tenant tenant = tenantRepository.save(new Tenant("Tenant Usuario API"));
         String senha = "SenhaSegura123";
 
         mockMvc.perform(post("/api/v1/usuarios")
-                        .with(csrf())
-                        .header("X-Tenant-Id", tenant.getId())
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString())))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -82,7 +79,7 @@ class UsuarioControllerIntegrationTest {
                 tenantA.getId(), "Usuario A", "usuario.a@exemplo.com", "SenhaSegura123");
 
         mockMvc.perform(get("/api/v1/usuarios/{usuarioId}", usuarioA.getId())
-                        .header("X-Tenant-Id", tenantB.getId()))
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenantB.getId().toString()))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
     }
@@ -94,8 +91,7 @@ class UsuarioControllerIntegrationTest {
                 tenant.getId(), "Usuario Um", "duplicado@exemplo.com", "SenhaSegura123");
 
         mockMvc.perform(post("/api/v1/usuarios")
-                        .with(csrf())
-                        .header("X-Tenant-Id", tenant.getId())
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString())))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

@@ -1,7 +1,3 @@
-ALTER TABLE usuarios
-    ADD CONSTRAINT uk_usuarios_tenant_id
-        UNIQUE (tenant_id, id);
-
 CREATE TABLE permissoes (
     id UUID PRIMARY KEY,
     chave VARCHAR(120) NOT NULL,

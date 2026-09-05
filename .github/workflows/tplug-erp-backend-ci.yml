@@ -18,9 +18,29 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build Backend Java 21
+  test:
+    name: Testes Backend Java 21 + PostgreSQL
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: tplug_erp
+          POSTGRES_USER: tplug_erp
+          POSTGRES_PASSWORD: tplug_erp_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tplug_erp -d tplug_erp"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/tplug_erp
+      DB_USERNAME: tplug_erp
+      DB_PASSWORD: tplug_erp_ci
 
     defaults:
       run:
@@ -38,5 +58,5 @@ jobs:
           cache: maven
           cache-dependency-path: tplug-erp/backend/pom.xml
 
-      - name: Validar e empacotar backend
-        run: bash mvnw --batch-mode --no-transfer-progress clean package -DskipTests
+      - name: Executar testes e validar migrations
+        run: bash mvnw --batch-mode --no-transfer-progress clean verify

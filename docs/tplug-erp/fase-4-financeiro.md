@@ -65,11 +65,23 @@ As baixas operacionais podem ser executadas junto com a movimentacao de caixa/ba
 - Saldo insuficiente, conta inativa, estado invalido do titulo ou conflito otimista impedem a baixa financeira completa.
 - Os endpoints antigos de baixa sem tesouraria permanecem disponiveis para compatibilidade e fluxos que ainda nao informam conta financeira.
 
+## Origem automatica a partir de vendas
+
+O faturamento de pedido de venda passa a integrar estoque e financeiro na mesma transacao.
+
+- Pedido faturado com cliente gera automaticamente uma conta a receber no mesmo tenant e filial.
+- O valor do titulo e a soma do total liquido dos itens, portanto descontos ja aplicados sao respeitados.
+- O numero do documento recebe prefixo `PV-` e referencia o numero do pedido.
+- Enquanto nao existir cadastro de condicao de pagamento, o vencimento inicial e a data do faturamento.
+- Pedido sem cliente continua podendo ser faturado, mas nao gera titulo automatico; isso preserva vendas sem identificacao do consumidor.
+- Se a criacao financeira falhar, o faturamento inteiro e revertido junto com as movimentacoes de estoque.
+- O titulo gerado reutiliza validacoes multi-tenant, RBAC interno de dominio e auditoria do modulo financeiro.
+
 Conta bancaria compartilhada entre filiais, limite/cheque especial e conciliacao bancaria ficam fora deste incremento e poderao ser parametrizados sem alterar o ledger basico.
 
 ### Proximos blocos planejados
 
-1. origem automatica financeira a partir de vendas/faturamento;
+1. condicoes e formas de pagamento para definir parcelas/vencimentos no faturamento;
 2. conciliacao, taxas e integracoes bancarias/PSP;
 3. evolucao de pagamentos parciais em contas a pagar.
 

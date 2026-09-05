@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.venda;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.estoque.EstoqueMovimentacaoApplicationService;
 import com.traxup.tplug.erp.filial.FilialRepository;
 import com.traxup.tplug.erp.pessoa.Pessoa;
 import com.traxup.tplug.erp.pessoa.PessoaRepository;
@@ -18,15 +19,18 @@ public class PedidoVendaApplicationService {
     private final PedidoVendaItemRepository itemRepository;
     private final FilialRepository filialRepository;
     private final PessoaRepository pessoaRepository;
+    private final EstoqueMovimentacaoApplicationService estoqueMovimentacaoService;
     private final AuditoriaApplicationService auditoria;
 
     public PedidoVendaApplicationService(PedidoVendaRepository repository, PedidoVendaItemRepository itemRepository,
                                          FilialRepository filialRepository, PessoaRepository pessoaRepository,
+                                         EstoqueMovimentacaoApplicationService estoqueMovimentacaoService,
                                          AuditoriaApplicationService auditoria) {
         this.repository = repository;
         this.itemRepository = itemRepository;
         this.filialRepository = filialRepository;
         this.pessoaRepository = pessoaRepository;
+        this.estoqueMovimentacaoService = estoqueMovimentacaoService;
         this.auditoria = auditoria;
     }
 
@@ -66,6 +70,39 @@ public class PedidoVendaApplicationService {
         pedido.abrir();
         repository.save(pedido);
         auditoria.registrar(tenantId, usuarioId, null, pedido.getFilialId(), "ABRIR", "PEDIDO_VENDA", pedido.getId(), null);
+        return pedido;
+    }
+
+    @Transactional
+    public PedidoVenda faturar(UUID tenantId, UUID usuarioId, UUID pedidoId) {
+        PedidoVenda pedido = buscar(tenantId, pedidoId);
+        if (!"ABERTO".equals(pedido.getStatus())) {
+            throw new IllegalArgumentException("Somente pedido de venda ABERTO pode ser faturado");
+        }
+
+        List<PedidoVendaItem> itens = itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId);
+        if (itens.isEmpty()) {
+            throw new IllegalArgumentException("Pedido de venda precisa possuir itens antes de ser faturado");
+        }
+
+        for (PedidoVendaItem item : itens) {
+            String tipoItem = item.getGradeId() == null ? "PRODUTO" : "GRADE";
+            UUID itemEstoqueId = item.getGradeId() == null ? item.getProdutoId() : item.getGradeId();
+            estoqueMovimentacaoService.movimentar(
+                    tenantId,
+                    pedido.getFilialId(),
+                    tipoItem,
+                    itemEstoqueId,
+                    "SAIDA",
+                    item.getQuantidade(),
+                    "FATURAMENTO_PEDIDO_VENDA:" + pedido.getId(),
+                    usuarioId);
+        }
+
+        pedido.faturar();
+        repository.save(pedido);
+        auditoria.registrar(tenantId, usuarioId, null, pedido.getFilialId(),
+                "FATURAR", "PEDIDO_VENDA", pedido.getId(), "itens=" + itens.size());
         return pedido;
     }
 

@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.filial.api;
 
+import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.filial.Filial;
 import com.traxup.tplug.erp.filial.FilialApplicationService;
 import jakarta.validation.Valid;
@@ -9,7 +10,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,18 +22,19 @@ import java.util.UUID;
 @RequestMapping("/api/v1/filiais")
 public class FilialController {
 
-    private static final String TENANT_HEADER = "X-Tenant-Id";
-
     private final FilialApplicationService filialApplicationService;
+    private final TenantContext tenantContext;
 
-    public FilialController(FilialApplicationService filialApplicationService) {
+    public FilialController(
+            FilialApplicationService filialApplicationService,
+            TenantContext tenantContext) {
         this.filialApplicationService = filialApplicationService;
+        this.tenantContext = tenantContext;
     }
 
     @GetMapping
-    public List<FilialResponse> listar(
-            @RequestHeader(TENANT_HEADER) UUID tenantId,
-            @RequestParam(required = false) UUID empresaId) {
+    public List<FilialResponse> listar(@RequestParam(required = false) UUID empresaId) {
+        UUID tenantId = tenantContext.tenantId();
         List<Filial> filiais = empresaId == null
                 ? filialApplicationService.listar(tenantId)
                 : filialApplicationService.listarPorEmpresa(tenantId, empresaId);
@@ -44,18 +45,16 @@ public class FilialController {
     }
 
     @GetMapping("/{filialId}")
-    public FilialResponse buscarPorId(
-            @RequestHeader(TENANT_HEADER) UUID tenantId,
-            @PathVariable UUID filialId) {
+    public FilialResponse buscarPorId(@PathVariable UUID filialId) {
+        UUID tenantId = tenantContext.tenantId();
         return FilialResponse.from(
                 tenantId,
                 filialApplicationService.buscarPorId(tenantId, filialId));
     }
 
     @PostMapping
-    public ResponseEntity<FilialResponse> criar(
-            @RequestHeader(TENANT_HEADER) UUID tenantId,
-            @Valid @RequestBody CriarFilialRequest request) {
+    public ResponseEntity<FilialResponse> criar(@Valid @RequestBody CriarFilialRequest request) {
+        UUID tenantId = tenantContext.tenantId();
         Filial filial = filialApplicationService.criar(
                 tenantId,
                 request.empresaId(),
@@ -68,9 +67,8 @@ public class FilialController {
     }
 
     @PatchMapping("/{filialId}/desativar")
-    public FilialResponse desativar(
-            @RequestHeader(TENANT_HEADER) UUID tenantId,
-            @PathVariable UUID filialId) {
+    public FilialResponse desativar(@PathVariable UUID filialId) {
+        UUID tenantId = tenantContext.tenantId();
         return FilialResponse.from(
                 tenantId,
                 filialApplicationService.desativar(tenantId, filialId));

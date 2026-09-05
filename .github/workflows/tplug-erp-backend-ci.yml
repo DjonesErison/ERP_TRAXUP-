@@ -41,6 +41,7 @@ jobs:
       DB_URL: jdbc:postgresql://localhost:5432/tplug_erp
       DB_USERNAME: tplug_erp
       DB_PASSWORD: tplug_erp_ci
+      JWT_SECRET: tplug-erp-ci-jwt-secret-32-bytes-minimum-2026
 
     defaults:
       run:

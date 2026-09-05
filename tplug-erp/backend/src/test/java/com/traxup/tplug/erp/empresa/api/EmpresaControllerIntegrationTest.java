@@ -9,11 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -23,7 +22,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@WithMockUser(username = "teste-api")
 class EmpresaControllerIntegrationTest {
 
     @Autowired
@@ -36,12 +34,11 @@ class EmpresaControllerIntegrationTest {
     private EmpresaApplicationService empresaApplicationService;
 
     @Test
-    void deveCriarEmpresaNoTenantInformado() throws Exception {
+    void deveCriarEmpresaNoTenantDoJwt() throws Exception {
         Tenant tenant = tenantRepository.save(new Tenant("Tenant API"));
 
         mockMvc.perform(post("/api/v1/empresas")
-                        .with(csrf())
-                        .header("X-Tenant-Id", tenant.getId())
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenant.getId().toString())))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -58,7 +55,7 @@ class EmpresaControllerIntegrationTest {
     }
 
     @Test
-    void naoDeveBuscarEmpresaDeOutroTenant() throws Exception {
+    void naoDeveBuscarEmpresaDeOutroTenantMesmoComHeaderForjado() throws Exception {
         Tenant tenantA = tenantRepository.save(new Tenant("Tenant A"));
         Tenant tenantB = tenantRepository.save(new Tenant("Tenant B"));
         Empresa empresaA = empresaApplicationService.criar(
@@ -68,7 +65,8 @@ class EmpresaControllerIntegrationTest {
                 "11111111000111");
 
         mockMvc.perform(get("/api/v1/empresas/{empresaId}", empresaA.getId())
-                        .header("X-Tenant-Id", tenantB.getId()))
+                        .with(jwt().jwt(token -> token.claim("tenant_id", tenantB.getId().toString())))
+                        .header("X-Tenant-Id", tenantA.getId()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
     }

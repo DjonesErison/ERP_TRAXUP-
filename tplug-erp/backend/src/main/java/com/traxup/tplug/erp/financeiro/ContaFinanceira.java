@@ -46,9 +46,14 @@ public class ContaFinanceira {
     public void movimentar(String tipoMovimento, BigDecimal valor) {
         if (!ativo) throw new IllegalArgumentException("Conta financeira inativa nao pode ser movimentada");
         if (valor == null || valor.signum() <= 0) throw new IllegalArgumentException("Valor do movimento deve ser maior que zero");
-        if ("ENTRADA".equals(tipoMovimento)) saldo = saldo.add(valor);
-        else if ("SAIDA".equals(tipoMovimento)) saldo = saldo.subtract(valor);
-        else throw new IllegalArgumentException("Tipo de movimento invalido");
+        if ("ENTRADA".equals(tipoMovimento)) {
+            saldo = saldo.add(valor);
+        } else if ("SAIDA".equals(tipoMovimento)) {
+            if (valor.compareTo(saldo) > 0) throw new IllegalArgumentException("Saldo insuficiente para a saida financeira");
+            saldo = saldo.subtract(valor);
+        } else {
+            throw new IllegalArgumentException("Tipo de movimento invalido");
+        }
     }
 
     public void desativar() {

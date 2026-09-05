@@ -12,11 +12,7 @@ import java.util.UUID;
 public class TenantContext {
 
     public UUID tenantId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication instanceof JwtAuthenticationToken jwtAuthenticationToken)) {
-            throw new AutenticacaoException("Token JWT autenticado obrigatorio");
-        }
-
+        JwtAuthenticationToken jwtAuthenticationToken = jwtAuthenticationToken();
         String tenantId = jwtAuthenticationToken.getToken().getClaimAsString("tenant_id");
         if (tenantId == null || tenantId.isBlank()) {
             throw new AutenticacaoException("Token JWT sem identificacao de tenant");
@@ -27,5 +23,26 @@ public class TenantContext {
         } catch (IllegalArgumentException exception) {
             throw new AutenticacaoException("Token JWT com tenant invalido");
         }
+    }
+
+    public UUID usuarioIdOuNulo() {
+        String subject = jwtAuthenticationToken().getToken().getSubject();
+        if (subject == null || subject.isBlank()) {
+            return null;
+        }
+
+        try {
+            return UUID.fromString(subject);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    private JwtAuthenticationToken jwtAuthenticationToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof JwtAuthenticationToken jwtAuthenticationToken)) {
+            throw new AutenticacaoException("Token JWT autenticado obrigatorio");
+        }
+        return jwtAuthenticationToken;
     }
 }

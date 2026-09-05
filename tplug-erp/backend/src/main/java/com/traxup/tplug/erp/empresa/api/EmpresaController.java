@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.empresa.api;
 
+import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.empresa.Empresa;
 import com.traxup.tplug.erp.empresa.EmpresaApplicationService;
@@ -23,12 +24,15 @@ import java.util.UUID;
 public class EmpresaController {
 
     private final EmpresaApplicationService empresaApplicationService;
+    private final AuditoriaApplicationService auditoriaApplicationService;
     private final TenantContext tenantContext;
 
     public EmpresaController(
             EmpresaApplicationService empresaApplicationService,
+            AuditoriaApplicationService auditoriaApplicationService,
             TenantContext tenantContext) {
         this.empresaApplicationService = empresaApplicationService;
+        this.auditoriaApplicationService = auditoriaApplicationService;
         this.tenantContext = tenantContext;
     }
 
@@ -59,6 +63,16 @@ public class EmpresaController {
                 request.nomeFantasia(),
                 request.cnpj());
 
+        auditoriaApplicationService.registrar(
+                tenantId,
+                tenantContext.usuarioIdOuNulo(),
+                empresa.getId(),
+                null,
+                "CRIAR",
+                "EMPRESA",
+                empresa.getId(),
+                null);
+
         return ResponseEntity
                 .created(URI.create("/api/v1/empresas/" + empresa.getId()))
                 .body(EmpresaResponse.from(tenantId, empresa));
@@ -69,6 +83,17 @@ public class EmpresaController {
     public EmpresaResponse desativar(@PathVariable UUID empresaId) {
         UUID tenantId = tenantContext.tenantId();
         Empresa empresa = empresaApplicationService.desativar(tenantId, empresaId);
+
+        auditoriaApplicationService.registrar(
+                tenantId,
+                tenantContext.usuarioIdOuNulo(),
+                empresa.getId(),
+                null,
+                "DESATIVAR",
+                "EMPRESA",
+                empresa.getId(),
+                null);
+
         return EmpresaResponse.from(tenantId, empresa);
     }
 }

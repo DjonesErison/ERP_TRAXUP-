@@ -4,7 +4,7 @@ Este diretório registra o estado técnico atual do TPlug ERP. O GitHub é a fon
 
 ## Estado atual
 
-A base do backend está em Spring Boot 4.1.1 com Java 21, PostgreSQL 17, Flyway, Spring Security, JWT com refresh token, RBAC e auditoria multi-tenant.
+A base do backend está em Spring Boot 4.1.1 com Java 21, PostgreSQL 17, Flyway, Spring Security, JWT com refresh token, RBAC, auditoria multi-tenant e OpenAPI/Swagger opt-in.
 
 A arquitetura segue monólito modular. Regras de negócio ficam no backend e todo acesso operacional deve respeitar isolamento por tenant.
 
@@ -15,12 +15,15 @@ A arquitetura segue monólito modular. Regras de negócio ficam no backend e tod
 - Autenticação JWT com refresh token rotativo e revogação.
 - Tenant derivado exclusivamente do claim `tenant_id` do JWT.
 - RBAC com perfis e catálogo global de permissões.
+- API administrativa de RBAC protegida por `RBAC_GERENCIAR`.
 - Proteção por permissão nos endpoints de Empresa, Filial e Usuário.
 - Auditoria multi-tenant e registro automático de operações críticas de criação/desativação em Empresa, Filial e Usuário.
 - Consulta de auditoria protegida por `AUDITORIA_LER` e isolada pelo tenant do JWT.
 - Bootstrap seguro e opt-in do primeiro tenant/administrador, sem endpoint público.
+- OpenAPI/Swagger disponível de forma opt-in para documentação da API.
 - PostgreSQL com migrations Flyway V1 a V9.
 - CI do backend no GitHub Actions com Java 21 e PostgreSQL 17 efêmero.
+- Dockerfile multi-stage do backend com runtime Java 21 não-root e validação de build da imagem no CI.
 
 ## Segurança
 
@@ -31,6 +34,7 @@ A arquitetura segue monólito modular. Regras de negócio ficam no backend e tod
 - Permissões efetivas são carregadas no JWT como authorities.
 - Auditoria não deve armazenar senha, token bruto, segredo JWT ou credencial.
 - Bootstrap administrativo é desabilitado por padrão, depende de variáveis de ambiente e só pode executar quando ainda não existe tenant cadastrado.
+- A imagem Docker executa a aplicação com usuário não-root.
 
 ## Bootstrap do primeiro administrador
 
@@ -44,11 +48,18 @@ O bootstrap não expõe rota HTTP. Para uma instalação nova, defina temporaria
 
 Na primeira inicialização, o backend cria o tenant, o usuário administrador com BCrypt, o perfil `ADMIN`, associa todas as permissões existentes ao perfil e vincula o usuário ao perfil. Após a criação inicial, remova/desabilite as variáveis de bootstrap. Se já existir qualquer tenant, uma nova tentativa é recusada.
 
+## Build da imagem Docker
+
+A partir de `tplug-erp/backend`:
+
+```bash
+docker build -t tplug-erp-backend:local .
+```
+
+A aplicação continua recebendo banco, JWT e demais configurações por variáveis de ambiente; nenhuma credencial é incorporada à imagem.
+
 ## Próximos itens da Fase 0
 
-- Criar API de administração de RBAC protegida por `RBAC_GERENCIAR`.
-- Consolidar OpenAPI/Swagger após validar compatibilidade com Spring Boot 4.1.1.
-- Criar Dockerfile e fluxo de imagem do backend.
 - Revisar versões das actions do CI.
 - Formalizar configuração de ambientes e deploy.
 

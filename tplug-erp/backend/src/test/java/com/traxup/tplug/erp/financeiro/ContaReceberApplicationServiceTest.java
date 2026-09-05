@@ -14,11 +14,13 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ContaReceberApplicationServiceTest {
     @Mock ContaReceberRepository repository;
+    @Mock ContaReceberRecebimentoRepository recebimentoRepository;
     @Mock FilialRepository filialRepository;
     @Mock PessoaRepository pessoaRepository;
     @Mock AuditoriaApplicationService auditoria;
@@ -30,9 +32,24 @@ class ContaReceberApplicationServiceTest {
         when(repository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.empty());
 
         ContaReceberApplicationService service = new ContaReceberApplicationService(
-                repository, filialRepository, pessoaRepository, auditoria);
+                repository, recebimentoRepository, filialRepository, pessoaRepository, auditoria);
 
         assertThrows(RecursoNaoEncontradoException.class, () -> service.buscar(tenantId, contaId));
         verify(repository).findByIdAndTenantId(contaId, tenantId);
+    }
+
+    @Test
+    void naoDeveListarRecebimentosDeContaForaDoTenant() {
+        UUID tenantId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        when(repository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.empty());
+
+        ContaReceberApplicationService service = new ContaReceberApplicationService(
+                repository, recebimentoRepository, filialRepository, pessoaRepository, auditoria);
+
+        assertThrows(RecursoNaoEncontradoException.class,
+                () -> service.listarRecebimentos(tenantId, contaId));
+        verify(repository).findByIdAndTenantId(contaId, tenantId);
+        verifyNoInteractions(recebimentoRepository);
     }
 }

@@ -59,7 +59,6 @@ class PedidoVendaApplicationServiceTest {
         when(produto.getQuantidade()).thenReturn(new BigDecimal("2.0000"));
 
         PedidoVendaItem grade = mock(PedidoVendaItem.class);
-        when(grade.getProdutoId()).thenReturn(produtoId);
         when(grade.getGradeId()).thenReturn(gradeId);
         when(grade.getQuantidade()).thenReturn(new BigDecimal("1.0000"));
 

@@ -15,10 +15,13 @@ public class IntegracaoFinanceira {
     @Column(name = "conta_financeira_id", nullable = false) private UUID contaFinanceiraId;
     @Column(nullable = false, length = 40) private String provedor;
     @Column(name = "identificador_externo", length = 120) private String identificadorExterno;
+    @Column(length = 500) private String checkpoint;
+    @Column(name = "sincronizado_em") private Instant sincronizadoEm;
     @Column(nullable = false) private boolean ativo;
     @Column(name = "usuario_id") private UUID usuarioId;
     @Column(name = "criado_em", nullable = false) private Instant criadoEm;
     @Column(name = "atualizado_em", nullable = false) private Instant atualizadoEm;
+    @Version @Column(nullable = false) private long versao;
 
     protected IntegracaoFinanceira() {}
 
@@ -48,6 +51,13 @@ public class IntegracaoFinanceira {
         ativo = false;
     }
 
+    public void registrarSincronizacao(String checkpoint, Instant sincronizadoEm) {
+        if (!ativo) throw new IllegalArgumentException("Integracao financeira inativa nao pode ser sincronizada");
+        if (sincronizadoEm == null) throw new IllegalArgumentException("Data/hora da sincronizacao e obrigatoria");
+        this.checkpoint = normalizarCheckpoint(checkpoint);
+        this.sincronizadoEm = sincronizadoEm;
+    }
+
     private String normalizarProvedor(String valor) {
         if (valor == null || valor.isBlank()) throw new IllegalArgumentException("Provedor e obrigatorio");
         return valor.trim().toUpperCase(Locale.ROOT);
@@ -57,14 +67,24 @@ public class IntegracaoFinanceira {
         return valor == null || valor.isBlank() ? null : valor.trim();
     }
 
+    private String normalizarCheckpoint(String valor) {
+        if (valor == null || valor.isBlank()) return null;
+        String normalizado = valor.trim();
+        if (normalizado.length() > 500) throw new IllegalArgumentException("Checkpoint excede o limite de 500 caracteres");
+        return normalizado;
+    }
+
     public UUID getId() { return id; }
     public UUID getTenantId() { return tenantId; }
     public UUID getFilialId() { return filialId; }
     public UUID getContaFinanceiraId() { return contaFinanceiraId; }
     public String getProvedor() { return provedor; }
     public String getIdentificadorExterno() { return identificadorExterno; }
+    public String getCheckpoint() { return checkpoint; }
+    public Instant getSincronizadoEm() { return sincronizadoEm; }
     public boolean isAtivo() { return ativo; }
     public UUID getUsuarioId() { return usuarioId; }
     public Instant getCriadoEm() { return criadoEm; }
     public Instant getAtualizadoEm() { return atualizadoEm; }
+    public long getVersao() { return versao; }
 }

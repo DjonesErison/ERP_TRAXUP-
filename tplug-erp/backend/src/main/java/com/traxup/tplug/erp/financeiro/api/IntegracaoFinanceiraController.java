@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,8 +34,12 @@ public class IntegracaoFinanceiraController {
     }
 
     @GetMapping("/{integracaoId}/tentativas") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
-    public List<IntegracaoFinanceiraTentativaResponse> listarTentativas(@PathVariable UUID integracaoId) {
-        return observabilidadeService.listar(tenantContext.tenantId(), integracaoId).stream()
+    public List<IntegracaoFinanceiraTentativaResponse> listarTentativas(
+            @PathVariable UUID integracaoId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Instant inicio,
+            @RequestParam(required = false) Instant fim) {
+        return observabilidadeService.listar(tenantContext.tenantId(), integracaoId, status, inicio, fim).stream()
                 .map(IntegracaoFinanceiraTentativaResponse::from).toList();
     }
 

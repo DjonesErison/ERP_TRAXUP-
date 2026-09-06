@@ -1,9 +1,12 @@
 package com.traxup.tplug.erp.financeiro.integracao;
 
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -13,7 +16,8 @@ public class IntegracaoFinanceiraObservabilidadeService {
 
     public IntegracaoFinanceiraObservabilidadeService(IntegracaoFinanceiraTentativaRepository tentativaRepository,
                                                        IntegracaoFinanceiraRepository integracaoRepository) {
-        this.tentativaRepository = tentativaRepository; this.integracaoRepository = integracaoRepository;
+        this.tentativaRepository = tentativaRepository;
+        this.integracaoRepository = integracaoRepository;
     }
 
     public void sucesso(IntegracaoFinanceira integracao, int quantidade, long duracaoMs, Instant inicio, Instant fim) {
@@ -27,8 +31,15 @@ public class IntegracaoFinanceiraObservabilidadeService {
     }
 
     public List<IntegracaoFinanceiraTentativa> listar(UUID tenantId, UUID integracaoId) {
+        return listar(tenantId, integracaoId, null, null, null);
+    }
+
+    public List<IntegracaoFinanceiraTentativa> listar(UUID tenantId, UUID integracaoId,
+                                                       String status, Instant inicio, Instant fim) {
+        String statusNormalizado = normalizarStatus(status);
+        validarPeriodo(inicio, fim);
         validarIntegracao(tenantId, integracaoId);
-        return tentativaRepository.findTop50ByTenantIdAndIntegracaoIdOrderByIniciadoEmDesc(tenantId, integracaoId);
+        return tentativaRepository.filtrar(tenantId, integracaoId, statusNormalizado, inicio, fim, PageRequest.of(0, 50));
     }
 
     public ResumoSaude resumirSaude(UUID tenantId, UUID integracaoId) {
@@ -51,6 +62,21 @@ public class IntegracaoFinanceiraObservabilidadeService {
         String status = falhasConsecutivas == 0 ? "SAUDAVEL" : "ATENCAO";
         return new ResumoSaude(integracaoId, status, ultimaTentativaEm, ultimoSucessoEm,
                 falhasConsecutivas, tentativas.size());
+    }
+
+    private String normalizarStatus(String status) {
+        if (status == null || status.isBlank()) return null;
+        String normalizado = status.trim().toUpperCase(Locale.ROOT);
+        if (!"SUCESSO".equals(normalizado) && !"FALHA".equals(normalizado)) {
+            throw new IllegalArgumentException("Status de tentativa invalido");
+        }
+        return normalizado;
+    }
+
+    private void validarPeriodo(Instant inicio, Instant fim) {
+        if (inicio != null && fim != null && inicio.isAfter(fim)) {
+            throw new IllegalArgumentException("Inicio nao pode ser posterior ao fim");
+        }
     }
 
     private void validarIntegracao(UUID tenantId, UUID integracaoId) {

@@ -28,6 +28,9 @@ public class ContaReceber {
     @Column(nullable = false) private LocalDate vencimento;
     @Column(nullable = false, length = 20) private String status;
     @Column(name = "usuario_id") private UUID usuarioId;
+    @Column(name = "origem_tipo", length = 40) private String origemTipo;
+    @Column(name = "origem_id") private UUID origemId;
+    @Column(name = "origem_referencia", length = 80) private String origemReferencia;
     @Column(name = "recebido_em") private Instant recebidoEm;
     @Column(name = "criado_em", nullable = false) private Instant criadoEm;
     @Column(name = "atualizado_em", nullable = false) private Instant atualizadoEm;
@@ -39,6 +42,13 @@ public class ContaReceber {
 
     public ContaReceber(UUID tenantId, UUID filialId, UUID clienteId, String numeroDocumento,
                         String descricao, BigDecimal valorOriginal, LocalDate vencimento, UUID usuarioId) {
+        this(tenantId, filialId, clienteId, numeroDocumento, descricao, valorOriginal, vencimento, usuarioId,
+                null, null, null);
+    }
+
+    public ContaReceber(UUID tenantId, UUID filialId, UUID clienteId, String numeroDocumento,
+                        String descricao, BigDecimal valorOriginal, LocalDate vencimento, UUID usuarioId,
+                        String origemTipo, UUID origemId, String origemReferencia) {
         this.id = UUID.randomUUID();
         this.tenantId = tenantId;
         this.filialId = filialId;
@@ -50,6 +60,9 @@ public class ContaReceber {
         this.vencimento = vencimento;
         this.status = "ABERTO";
         this.usuarioId = usuarioId;
+        this.origemTipo = origemTipo;
+        this.origemId = origemId;
+        this.origemReferencia = origemReferencia;
     }
 
     @PrePersist void prePersist() {
@@ -111,6 +124,9 @@ public class ContaReceber {
     public LocalDate getVencimento() { return vencimento; }
     public String getStatus() { return status; }
     public UUID getUsuarioId() { return usuarioId; }
+    public String getOrigemTipo() { return origemTipo; }
+    public UUID getOrigemId() { return origemId; }
+    public String getOrigemReferencia() { return origemReferencia; }
     public Instant getRecebidoEm() { return recebidoEm; }
     public Instant getCriadoEm() { return criadoEm; }
     public Instant getAtualizadoEm() { return atualizadoEm; }

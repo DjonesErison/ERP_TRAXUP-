@@ -10,11 +10,14 @@ import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Table(name = "conciliacao_lancamentos")
 public class ConciliacaoLancamento {
+    private static final Set<String> NATUREZAS = Set.of("NORMAL", "TAXA", "ANTECIPACAO", "ESTORNO", "CHARGEBACK");
+
     @Id private UUID id;
     @Column(name = "tenant_id", nullable = false) private UUID tenantId;
     @Column(name = "filial_id", nullable = false) private UUID filialId;
@@ -24,6 +27,7 @@ public class ConciliacaoLancamento {
     @Column(nullable = false, length = 20) private String tipo;
     @Column(nullable = false, precision = 19, scale = 4) private BigDecimal valor;
     @Column(nullable = false, length = 200) private String descricao;
+    @Column(nullable = false, length = 20) private String natureza;
     @Column(name = "ocorrido_em", nullable = false) private Instant ocorridoEm;
     @Column(nullable = false, length = 20) private String status;
     @Column(name = "movimento_id") private UUID movimentoId;
@@ -45,6 +49,7 @@ public class ConciliacaoLancamento {
         this.tipo = tipo;
         this.valor = valor;
         this.descricao = descricao;
+        this.natureza = "NORMAL";
         this.ocorridoEm = ocorridoEm;
         this.status = "PENDENTE";
         this.usuarioId = usuarioId;
@@ -52,7 +57,18 @@ public class ConciliacaoLancamento {
 
     @PrePersist void prePersist() {
         if (id == null) id = UUID.randomUUID();
+        if (natureza == null) natureza = "NORMAL";
         if (criadoEm == null) criadoEm = Instant.now();
+    }
+
+    public void classificar(String natureza) {
+        if (!"PENDENTE".equals(status)) {
+            throw new RecursoConflitanteException("Somente lancamento PENDENTE pode ser classificado");
+        }
+        if (natureza == null || !NATUREZAS.contains(natureza)) {
+            throw new RegraNegocioException("Natureza de conciliacao invalida");
+        }
+        this.natureza = natureza;
     }
 
     public void conciliar(UUID movimentoId) {
@@ -74,6 +90,7 @@ public class ConciliacaoLancamento {
     public String getTipo() { return tipo; }
     public BigDecimal getValor() { return valor; }
     public String getDescricao() { return descricao; }
+    public String getNatureza() { return natureza; }
     public Instant getOcorridoEm() { return ocorridoEm; }
     public String getStatus() { return status; }
     public UUID getMovimentoId() { return movimentoId; }

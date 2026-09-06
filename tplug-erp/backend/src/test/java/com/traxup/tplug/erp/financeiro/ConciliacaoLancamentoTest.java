@@ -13,6 +13,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ConciliacaoLancamentoTest {
     @Test
+    void deveIniciarComoNaturezaNormalEClassificarEnquantoPendente() {
+        ConciliacaoLancamento lancamento = novoLancamento();
+
+        assertEquals("NORMAL", lancamento.getNatureza());
+        lancamento.classificar("TAXA");
+        assertEquals("TAXA", lancamento.getNatureza());
+    }
+
+    @Test
+    void deveRejeitarNaturezaInvalida() {
+        assertThrows(RegraNegocioException.class, () -> novoLancamento().classificar("OUTRA"));
+    }
+
+    @Test
     void deveConciliarLancamentoPendente() {
         ConciliacaoLancamento lancamento = novoLancamento();
         UUID movimentoId = UUID.randomUUID();
@@ -21,6 +35,14 @@ class ConciliacaoLancamentoTest {
 
         assertEquals("CONCILIADO", lancamento.getStatus());
         assertEquals(movimentoId, lancamento.getMovimentoId());
+    }
+
+    @Test
+    void naoDeveClassificarDepoisDeConciliado() {
+        ConciliacaoLancamento lancamento = novoLancamento();
+        lancamento.conciliar(UUID.randomUUID());
+
+        assertThrows(RecursoConflitanteException.class, () -> lancamento.classificar("CHARGEBACK"));
     }
 
     @Test

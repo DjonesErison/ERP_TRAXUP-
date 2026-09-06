@@ -14,6 +14,7 @@ public record ConciliacaoLancamentoResponse(
         String tipo,
         BigDecimal valor,
         String descricao,
+        String natureza,
         Instant ocorridoEm,
         String status,
         UUID movimentoId,
@@ -24,7 +25,7 @@ public record ConciliacaoLancamentoResponse(
         return new ConciliacaoLancamentoResponse(
                 lancamento.getId(), lancamento.getContaFinanceiraId(), lancamento.getOrigem(),
                 lancamento.getReferenciaExterna(), lancamento.getTipo(), lancamento.getValor(),
-                lancamento.getDescricao(), lancamento.getOcorridoEm(), lancamento.getStatus(),
+                lancamento.getDescricao(), lancamento.getNatureza(), lancamento.getOcorridoEm(), lancamento.getStatus(),
                 lancamento.getMovimentoId(), lancamento.getConciliadoEm(), lancamento.getCriadoEm());
     }
 }

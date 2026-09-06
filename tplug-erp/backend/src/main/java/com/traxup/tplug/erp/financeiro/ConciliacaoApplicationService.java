@@ -41,8 +41,7 @@ public class ConciliacaoApplicationService {
     }
 
     public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId) {
-        ConciliacaoLancamento lancamento = repository.findByIdAndTenantId(lancamentoId, tenantId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Lancamento de conciliacao nao encontrado para o tenant informado"));
+        ConciliacaoLancamento lancamento = buscarLancamento(tenantId, lancamentoId);
         if (!"PENDENTE".equals(lancamento.getStatus())) {
             throw new RecursoConflitanteException("Somente lancamento PENDENTE pode receber sugestoes de conciliacao");
         }
@@ -101,6 +100,18 @@ public class ConciliacaoApplicationService {
     }
 
     @Transactional
+    public ConciliacaoLancamento classificar(UUID tenantId, UUID usuarioId, UUID lancamentoId, String natureza) {
+        ConciliacaoLancamento lancamento = buscarLancamento(tenantId, lancamentoId);
+        String naturezaNormalizada = obrigatorio(natureza, "Natureza").toUpperCase(Locale.ROOT);
+        lancamento.classificar(naturezaNormalizada);
+        repository.save(lancamento);
+        auditoria.registrar(tenantId, usuarioId, null, lancamento.getFilialId(),
+                "CLASSIFICAR", "CONCILIACAO_FINANCEIRA", lancamento.getId(),
+                "natureza=" + naturezaNormalizada);
+        return lancamento;
+    }
+
+    @Transactional
     public ConciliacaoLancamento conciliar(UUID tenantId, UUID usuarioId, UUID lancamentoId, UUID movimentoId) {
         ConciliacaoLancamento lancamento = repository.findByIdAndTenantIdForUpdate(lancamentoId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Lancamento de conciliacao nao encontrado para o tenant informado"));
@@ -126,6 +137,11 @@ public class ConciliacaoApplicationService {
         auditoria.registrar(tenantId, usuarioId, null, lancamento.getFilialId(),
                 "CONCILIAR", "CONCILIACAO_FINANCEIRA", lancamento.getId(), "movimentoId=" + movimentoId);
         return lancamento;
+    }
+
+    private ConciliacaoLancamento buscarLancamento(UUID tenantId, UUID lancamentoId) {
+        return repository.findByIdAndTenantId(lancamentoId, tenantId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Lancamento de conciliacao nao encontrado para o tenant informado"));
     }
 
     private boolean mesmoConteudo(ConciliacaoLancamento existente, String tipo, BigDecimal valor,

@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.financeiro;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +48,7 @@ public class ConciliacaoApplicationService {
         if (ocorridoEm == null) throw new IllegalArgumentException("Data/hora do lancamento e obrigatoria");
         if (repository.existsByTenantIdAndContaFinanceiraIdAndOrigemAndReferenciaExterna(
                 tenantId, contaId, origemNormalizada, referenciaNormalizada)) {
-            throw new IllegalArgumentException("Lancamento externo ja importado para esta conta");
+            throw new RecursoConflitanteException("Lancamento externo ja importado para esta conta");
         }
         ConciliacaoLancamento lancamento = repository.save(new ConciliacaoLancamento(
                 tenantId, conta.getFilialId(), contaId, origemNormalizada, referenciaNormalizada,

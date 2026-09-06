@@ -101,7 +101,8 @@ public class ConciliacaoApplicationService {
 
     @Transactional
     public ConciliacaoLancamento classificar(UUID tenantId, UUID usuarioId, UUID lancamentoId, String natureza) {
-        ConciliacaoLancamento lancamento = buscarLancamento(tenantId, lancamentoId);
+        ConciliacaoLancamento lancamento = repository.findByIdAndTenantIdForUpdate(lancamentoId, tenantId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Lancamento de conciliacao nao encontrado para o tenant informado"));
         String naturezaNormalizada = obrigatorio(natureza, "Natureza").toUpperCase(Locale.ROOT);
         lancamento.classificar(naturezaNormalizada);
         repository.save(lancamento);

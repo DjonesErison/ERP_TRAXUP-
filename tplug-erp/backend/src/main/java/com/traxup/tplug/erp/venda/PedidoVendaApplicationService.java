@@ -4,6 +4,7 @@ import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.estoque.EstoqueMovimentacaoApplicationService;
 import com.traxup.tplug.erp.filial.FilialRepository;
 import com.traxup.tplug.erp.financeiro.ContaReceberApplicationService;
+import com.traxup.tplug.erp.financeiro.pagamento.AjusteComercialCalculadora;
 import com.traxup.tplug.erp.financeiro.pagamento.CondicaoPagamento;
 import com.traxup.tplug.erp.financeiro.pagamento.CondicaoPagamentoParcela;
 import com.traxup.tplug.erp.financeiro.pagamento.CondicaoPagamentoParcelaRepository;
@@ -139,16 +140,28 @@ public class PedidoVendaApplicationService {
             if (pedido.getCondicaoPagamentoId() == null) {
                 criarParcelaFinanceira(tenantId, usuarioId, pedido, total, LocalDate.now(), 1);
             } else {
-                List<CondicaoPagamentoParcela> parcelas = parcelaRepository
-                        .findAllByTenantIdAndCondicaoPagamentoIdOrderByNumeroAsc(tenantId, pedido.getCondicaoPagamentoId());
-                BigDecimal acumulado = BigDecimal.ZERO;
-                for (int i = 0; i < parcelas.size(); i++) {
-                    CondicaoPagamentoParcela parcela = parcelas.get(i);
-                    BigDecimal valor = i == parcelas.size() - 1
-                            ? total.subtract(acumulado)
-                            : total.multiply(parcela.getPercentual()).divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
-                    acumulado = acumulado.add(valor);
-                    criarParcelaFinanceira(tenantId, usuarioId, pedido, valor, LocalDate.now().plusDays(parcela.getDias()), parcela.getNumero());
+                CondicaoPagamento condicao = condicaoPagamentoRepository
+                        .findByIdAndTenantId(pedido.getCondicaoPagamentoId(), tenantId)
+                        .orElseThrow(() -> new RecursoNaoEncontradoException("Condicao de pagamento nao encontrada para o tenant informado"));
+                AjusteComercialCalculadora.Resultado ajustes = AjusteComercialCalculadora.calcular(total, condicao);
+                if (ajustes.entrada().signum() > 0) {
+                    contaReceberService.criar(tenantId, usuarioId, pedido.getFilialId(), pedido.getClienteId(),
+                            "PV-" + pedido.getNumero() + "-ENTRADA",
+                            "Entrada do faturamento pedido de venda " + pedido.getNumero(),
+                            ajustes.entrada(), LocalDate.now());
+                }
+                if (ajustes.saldoParcelar().signum() > 0) {
+                    List<CondicaoPagamentoParcela> parcelas = parcelaRepository
+                            .findAllByTenantIdAndCondicaoPagamentoIdOrderByNumeroAsc(tenantId, pedido.getCondicaoPagamentoId());
+                    BigDecimal acumulado = BigDecimal.ZERO;
+                    for (int i = 0; i < parcelas.size(); i++) {
+                        CondicaoPagamentoParcela parcela = parcelas.get(i);
+                        BigDecimal valor = i == parcelas.size() - 1
+                                ? ajustes.saldoParcelar().subtract(acumulado)
+                                : ajustes.saldoParcelar().multiply(parcela.getPercentual()).divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
+                        acumulado = acumulado.add(valor);
+                        criarParcelaFinanceira(tenantId, usuarioId, pedido, valor, LocalDate.now().plusDays(parcela.getDias()), parcela.getNumero());
+                    }
                 }
             }
         }

@@ -77,11 +77,25 @@ O faturamento de pedido de venda passa a integrar estoque e financeiro na mesma 
 - Se a criacao financeira falhar, o faturamento inteiro e revertido junto com as movimentacoes de estoque.
 - O titulo gerado reutiliza validacoes multi-tenant, RBAC interno de dominio e auditoria do modulo financeiro.
 
+## Configuracao de formas e condicoes de pagamento
+
+O cadastro financeiro de pagamento passa a ser configuravel por tenant, sem acoplamento a adquirente, banco ou PSP especifico.
+
+- Formas de pagamento possuem `codigo`, `nome` e estado ativo/inativo, com codigo unico por tenant.
+- Condicoes de pagamento possuem `codigo`, `nome` e uma grade ordenada de parcelas.
+- Cada parcela define numero sequencial, quantidade de dias apos o faturamento e percentual do total.
+- A soma dos percentuais deve ser exatamente 100% e a numeracao deve iniciar em 1 sem lacunas.
+- Dias negativos e percentuais nulos/negativos sao bloqueados na aplicacao e por constraints do PostgreSQL.
+- Todas as consultas e alteracoes sao isoladas por tenant.
+- Criacao e desativacao geram auditoria.
+- RBAC: `FINANCEIRO_PAGAMENTO_CONFIG_LER` e `FINANCEIRO_PAGAMENTO_CONFIG_EDITAR`.
+- Formas e condicoes inativas permanecem historicamente consultaveis, mas a integracao com vendas utilizara apenas configuracoes ativas.
+
 Conta bancaria compartilhada entre filiais, limite/cheque especial e conciliacao bancaria ficam fora deste incremento e poderao ser parametrizados sem alterar o ledger basico.
 
 ### Proximos blocos planejados
 
-1. condicoes e formas de pagamento para definir parcelas/vencimentos no faturamento;
+1. associar forma/condicao ao pedido de venda e gerar uma conta a receber por parcela no faturamento;
 2. conciliacao, taxas e integracoes bancarias/PSP;
 3. evolucao de pagamentos parciais em contas a pagar.
 

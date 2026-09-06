@@ -31,11 +31,7 @@ public class TesourariaBaixaApplicationService {
 
         ContaReceber atualizado = contaReceberService.receber(tenantId, usuarioId, contaReceberId, valor);
         contaFinanceiraService.movimentar(
-                tenantId,
-                usuarioId,
-                contaFinanceiraId,
-                "ENTRADA",
-                valor,
+                tenantId, usuarioId, contaFinanceiraId, "ENTRADA", valor,
                 "RECEBIMENTO_CONTA_RECEBER:" + contaReceberId);
         return atualizado;
     }
@@ -43,18 +39,21 @@ public class TesourariaBaixaApplicationService {
     @Transactional
     public ContaPagar pagarEmConta(UUID tenantId, UUID usuarioId, UUID contaPagarId, UUID contaFinanceiraId) {
         ContaPagar titulo = contaPagarService.buscar(tenantId, contaPagarId);
+        return pagarEmConta(tenantId, usuarioId, contaPagarId, contaFinanceiraId, titulo.getSaldoAberto());
+    }
+
+    @Transactional
+    public ContaPagar pagarEmConta(UUID tenantId, UUID usuarioId, UUID contaPagarId,
+                                   UUID contaFinanceiraId, BigDecimal valor) {
+        ContaPagar titulo = contaPagarService.buscar(tenantId, contaPagarId);
         ContaFinanceira contaFinanceira = contaFinanceiraService.buscar(tenantId, contaFinanceiraId);
         validarMesmaFilial(titulo.getFilialId(), contaFinanceira);
 
-        BigDecimal valor = titulo.getValorOriginal().subtract(titulo.getValorPago());
+        ContaPagar atualizado = contaPagarService.pagar(tenantId, usuarioId, contaPagarId, valor);
         contaFinanceiraService.movimentar(
-                tenantId,
-                usuarioId,
-                contaFinanceiraId,
-                "SAIDA",
-                valor,
+                tenantId, usuarioId, contaFinanceiraId, "SAIDA", valor,
                 "PAGAMENTO_CONTA_PAGAR:" + contaPagarId);
-        return contaPagarService.pagar(tenantId, usuarioId, contaPagarId);
+        return atualizado;
     }
 
     private void validarMesmaFilial(UUID filialTituloId, ContaFinanceira contaFinanceira) {

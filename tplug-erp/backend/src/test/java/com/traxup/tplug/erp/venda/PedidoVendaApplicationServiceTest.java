@@ -74,7 +74,7 @@ class PedidoVendaApplicationServiceTest {
         PedidoVendaItem item = mock(PedidoVendaItem.class); when(item.getProdutoId()).thenReturn(UUID.randomUUID()); when(item.getGradeId()).thenReturn(null); when(item.getQuantidade()).thenReturn(BigDecimal.ONE); when(item.getTotalItem()).thenReturn(new BigDecimal("125.50"));
         when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId)).thenReturn(List.of(item));
         service.faturar(tenantId, usuarioId, pedidoId);
-        verify(contaReceberService).criar(eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId), eq("PV-PV-100-1"), contains("parcela 1"), eq(new BigDecimal("125.50")), eq(LocalDate.now()));
+        verify(contaReceberService).criar(eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId), eq("PV-PV-100-1"), contains("parcela 1"), eq(new BigDecimal("125.5000")), eq(LocalDate.now()));
     }
 
     @Test

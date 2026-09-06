@@ -87,11 +87,17 @@ As baixas operacionais podem ser executadas junto com a movimentacao de caixa/ba
 
 O faturamento de pedido de venda integra estoque e financeiro na mesma transacao.
 
-- Pedido faturado com cliente gera automaticamente conta a receber no mesmo tenant e filial.
-- O valor financeiro usa a soma do total liquido dos itens, portanto descontos ja aplicados sao respeitados.
+- Pedido faturado com cliente gera automaticamente contas a receber no mesmo tenant e filial.
+- O total liquido dos itens e a base comercial inicial; desconto da condicao e aplicado primeiro e juros de venda, quando configurados, incidem depois do desconto.
+- A entrada e calculada sobre o total financeiro ajustado, gera titulo proprio com vencimento na data do faturamento e reduz apenas o saldo a parcelar.
+- Somente o saldo remanescente e distribuido pela grade de parcelas; a ultima parcela absorve diferencas de arredondamento.
+- Condicoes sem juros nao geram qualquer acrescimo. Taxa de adquirente e juros de mora permanecem dominios separados.
+- Entrada de 100% gera apenas o titulo de entrada, sem parcelas futuras.
 - Pedido sem cliente continua podendo ser faturado sem titulo automatico, preservando vendas sem identificacao do consumidor.
 - Se a criacao financeira falhar, o faturamento inteiro e revertido junto com as movimentacoes de estoque.
-- O titulo gerado reutiliza validacoes multi-tenant e auditoria do modulo financeiro.
+- O plano financeiro da previa e o faturamento usam a mesma calculadora deterministica, evitando divergencia entre simulacao e execucao.
+- O faturamento adquire lock pessimista de escrita por `pedido + tenant` antes de qualquer baixa de estoque ou geracao financeira; requisicoes concorrentes para o mesmo pedido sao serializadas e a segunda e rejeitada ao reenxergar o pedido como `FATURADO`.
+- O reflexo tributario automatico de desconto, juros e entrada ainda nao faz parte deste fluxo; o modulo fiscal permanece responsavel por definir esse tratamento quando implementado.
 
 ## Configuracao de formas e condicoes de pagamento
 
@@ -99,37 +105,39 @@ O cadastro financeiro de pagamento e configuravel por tenant, sem acoplamento a 
 
 - Formas de pagamento possuem `codigo`, `nome` e estado ativo/inativo, com codigo unico por tenant.
 - Condicoes de pagamento possuem `codigo`, `nome` e uma grade ordenada de parcelas.
-- Cada parcela define numero sequencial, quantidade de dias apos o faturamento e percentual do total.
+- Cada parcela define numero sequencial, quantidade de dias apos o faturamento e percentual do saldo parcelavel.
 - A soma dos percentuais deve ser exatamente 100% e a numeracao deve iniciar em 1 sem lacunas.
 - Dias negativos e percentuais nulos/negativos sao bloqueados na aplicacao e por constraints do PostgreSQL.
 - A condicao pode configurar opcionalmente `juros`, `desconto` e `entrada`, cada um como `PERCENTUAL` ou `VALOR_FIXO`.
 - Cada ajuste precisa informar tipo e valor em conjunto e ter valor positivo; desconto e entrada percentuais nao podem superar 100%.
-- Esses ajustes sao regras comerciais reutilizaveis da condicao e ficam isolados por tenant como o restante da configuracao.
-- Neste incremento os ajustes sao apenas cadastrados e consultados. A incidencia sobre total da venda, documento fiscal, entrada e distribuicao das parcelas nao e aplicada ate que a regra fiscal/financeira correspondente seja definida explicitamente.
+- Esses ajustes sao regras comerciais reutilizaveis da condicao, isoladas por tenant e aplicadas ao plano financeiro do faturamento conforme a ordem `desconto -> juros -> entrada -> parcelas`.
 - Override de juros, desconto ou entrada diretamente no pedido permanece fora deste incremento e, se adotado, devera possuir permissao e auditoria especificas.
 - Todas as consultas e alteracoes sao isoladas por tenant.
 - Criacao e desativacao geram auditoria.
 - RBAC: `FINANCEIRO_PAGAMENTO_CONFIG_LER` e `FINANCEIRO_PAGAMENTO_CONFIG_EDITAR`.
 - Formas e condicoes inativas permanecem historicamente consultaveis, mas novas configuracoes de venda utilizam apenas configuracoes ativas.
 
-## Parcelamento financeiro no pedido de venda
+## Parcelamento e previa financeira no pedido de venda
 
 O pedido de venda pode registrar forma e condicao de pagamento enquanto estiver em `RASCUNHO`.
 
 - Forma e condicao sao buscadas sempre pelo tenant do pedido e precisam estar ativas no momento da configuracao.
 - As FKs do pedido para forma e condicao sao compostas por `tenant_id`, impedindo referencias cruzadas entre tenants tambem no PostgreSQL.
 - A configuracao exige `VENDA_PEDIDO_EDITAR` e gera auditoria `CONFIGURAR_PAGAMENTO`.
-- No faturamento, cada parcela da condicao gera uma conta a receber independente, com vencimento calculado pela quantidade de dias da parcela.
-- O valor de cada parcela deriva do percentual configurado; a ultima parcela absorve diferencas de arredondamento para que a soma dos titulos seja exatamente o total liquido da venda.
-- O documento financeiro identifica pedido e numero da parcela.
+- No faturamento, cada parcela prevista gera uma conta a receber independente, com vencimento calculado pela quantidade de dias da parcela.
+- O valor de cada parcela deriva do percentual configurado sobre o saldo depois da entrada; a ultima parcela absorve diferencas de arredondamento para que a soma dos titulos seja exatamente o total financeiro ajustado.
+- O documento financeiro identifica pedido e numero da parcela; a entrada usa identificacao propria.
 - Pedidos antigos ou ainda sem condicao configurada mantem compatibilidade: geram uma unica parcela com vencimento na data do faturamento.
+- `GET /api/v1/vendas/pedidos/{pedidoId}/previa-financeira`, protegido por `VENDA_PEDIDO_LER`, retorna total liquido, desconto, juros, entrada, total financeiro, saldo a parcelar e titulos previstos sem gerar estoque, conta a receber ou auditoria.
+- A previa e read-only e utiliza o mesmo plano financeiro tenant-scoped do faturamento.
 - Faturamento, estoque e todas as parcelas financeiras participam da mesma transacao; qualquer falha reverte o conjunto.
 
-Conta bancaria compartilhada entre filiais, limite/cheque especial e conciliacao bancaria ficam fora deste incremento e poderao ser parametrizados sem alterar o ledger basico.
+Conta bancaria compartilhada entre filiais e limite/cheque especial continuam fora deste incremento e poderao ser parametrizados sem alterar o ledger basico.
 
 ### Proximos blocos planejados
 
-1. conciliacao, taxas e integracoes bancarias/PSP permanecem condicionadas ao provedor concreto escolhido;
-2. aplicar juros, desconto e entrada configurados na condicao ao fluxo de venda/faturamento somente apos definir incidencia, distribuicao entre parcelas e reflexo fiscal/financeiro.
+1. o primeiro adaptador bancario/PSP concreto permanece adiado ate a escolha e disponibilidade da documentacao real do provedor; a infraestrutura generica de conciliacao e sincronizacao continua pronta para recebe-lo;
+2. o tratamento fiscal de desconto, juros e entrada permanece separado e so deve ser implementado quando as regras tributarias de incidencia e representacao no documento fiscal forem definidas explicitamente;
+3. hardenings genericos de operacao, concorrencia, observabilidade e integridade podem continuar sem acoplamento a provedor externo.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

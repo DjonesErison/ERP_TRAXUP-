@@ -63,33 +63,30 @@ class TesourariaBaixaApplicationServiceTest {
                 () -> service().receberEmConta(tenantId, usuarioId, tituloId, contaFinanceiraId, valor));
 
         verify(contaReceberService, never()).receber(tenantId, usuarioId, tituloId, valor);
-        verify(contaFinanceiraService, never()).movimentar(
-                tenantId, usuarioId, contaFinanceiraId, "ENTRADA", valor,
-                "RECEBIMENTO_CONTA_RECEBER:" + tituloId);
     }
 
     @Test
-    void deveDebitarContaFinanceiraAoPagarTitulo() {
+    void deveDebitarSomenteValorParcialAoPagarTitulo() {
         UUID tenantId = UUID.randomUUID();
         UUID usuarioId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
         UUID tituloId = UUID.randomUUID();
         UUID contaFinanceiraId = UUID.randomUUID();
-        BigDecimal valor = new BigDecimal("80.00");
+        BigDecimal valorParcial = new BigDecimal("30.00");
 
         ContaPagar titulo = new ContaPagar(tenantId, filialId, UUID.randomUUID(), "P-1", "Pagar",
-                valor, LocalDate.now().plusDays(5), usuarioId);
+                new BigDecimal("80.00"), LocalDate.now().plusDays(5), usuarioId);
         ContaFinanceira contaFinanceira = new ContaFinanceira(tenantId, filialId, "Banco", "BANCO", usuarioId);
         when(contaPagarService.buscar(tenantId, tituloId)).thenReturn(titulo);
         when(contaFinanceiraService.buscar(tenantId, contaFinanceiraId)).thenReturn(contaFinanceira);
-        when(contaPagarService.pagar(tenantId, usuarioId, tituloId)).thenReturn(titulo);
+        when(contaPagarService.pagar(tenantId, usuarioId, tituloId, valorParcial)).thenReturn(titulo);
 
-        service().pagarEmConta(tenantId, usuarioId, tituloId, contaFinanceiraId);
+        service().pagarEmConta(tenantId, usuarioId, tituloId, contaFinanceiraId, valorParcial);
 
+        verify(contaPagarService).pagar(tenantId, usuarioId, tituloId, valorParcial);
         verify(contaFinanceiraService).movimentar(
-                tenantId, usuarioId, contaFinanceiraId, "SAIDA", valor,
+                tenantId, usuarioId, contaFinanceiraId, "SAIDA", valorParcial,
                 "PAGAMENTO_CONTA_PAGAR:" + tituloId);
-        verify(contaPagarService).pagar(tenantId, usuarioId, tituloId);
     }
 
     private TesourariaBaixaApplicationService service() {

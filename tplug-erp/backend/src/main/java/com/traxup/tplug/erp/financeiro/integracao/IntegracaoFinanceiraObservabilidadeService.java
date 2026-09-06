@@ -90,5 +90,11 @@ public class IntegracaoFinanceiraObservabilidadeService {
 
     public record ResumoSaude(UUID integracaoId, String status, Instant ultimaTentativaEm,
                               Instant ultimoSucessoEm, int falhasConsecutivas, int tentativasConsideradas,
-                              int sucessos, int falhas, Long duracaoMediaMs) {}
+                              int sucessos, int falhas, Long duracaoMediaMs) {
+        public ResumoSaude(UUID integracaoId, String status, Instant ultimaTentativaEm,
+                           Instant ultimoSucessoEm, int falhasConsecutivas, int tentativasConsideradas) {
+            this(integracaoId, status, ultimaTentativaEm, ultimoSucessoEm,
+                    falhasConsecutivas, tentativasConsideradas, 0, 0, null);
+        }
+    }
 }

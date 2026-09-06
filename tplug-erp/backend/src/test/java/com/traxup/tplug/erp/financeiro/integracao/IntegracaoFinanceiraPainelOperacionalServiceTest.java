@@ -48,6 +48,29 @@ class IntegracaoFinanceiraPainelOperacionalServiceTest {
     }
 
     @Test
+    void deveResumirEstadosDoPainelSemSairDoEscopoTenantConta() {
+        UUID tenantId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        UUID usuarioId = UUID.randomUUID();
+        IntegracaoFinanceira a = new IntegracaoFinanceira(tenantId, UUID.randomUUID(), contaId, "A", null, usuarioId);
+        IntegracaoFinanceira b = new IntegracaoFinanceira(tenantId, UUID.randomUUID(), contaId, "B", null, usuarioId);
+        IntegracaoFinanceira c = new IntegracaoFinanceira(tenantId, UUID.randomUUID(), contaId, "C", null, usuarioId);
+        IntegracaoFinanceiraApplicationService integracaoService = mock(IntegracaoFinanceiraApplicationService.class);
+        IntegracaoFinanceiraObservabilidadeService observabilidadeService = mock(IntegracaoFinanceiraObservabilidadeService.class);
+        when(integracaoService.listar(tenantId, contaId)).thenReturn(List.of(a, b, c));
+        when(observabilidadeService.resumirSaude(tenantId, a.getId())).thenReturn(new IntegracaoFinanceiraObservabilidadeService.ResumoSaude(a.getId(), "SAUDAVEL", null, null, 0, 1));
+        when(observabilidadeService.resumirSaude(tenantId, b.getId())).thenReturn(new IntegracaoFinanceiraObservabilidadeService.ResumoSaude(b.getId(), "ATENCAO", null, null, 2, 2));
+        when(observabilidadeService.resumirSaude(tenantId, c.getId())).thenReturn(new IntegracaoFinanceiraObservabilidadeService.ResumoSaude(c.getId(), "SEM_EXECUCAO", null, null, 0, 0));
+
+        var resumo = new IntegracaoFinanceiraPainelOperacionalService(integracaoService, observabilidadeService).resumir(tenantId, contaId);
+
+        assertEquals(3, resumo.total());
+        assertEquals(1, resumo.saudaveis());
+        assertEquals(1, resumo.atencao());
+        assertEquals(1, resumo.semExecucao());
+    }
+
+    @Test
     void deveRetornarPainelVazioSemConsultarSaudeQuandoContaNaoPossuiIntegracoes() {
         UUID tenantId = UUID.randomUUID();
         UUID contaId = UUID.randomUUID();

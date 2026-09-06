@@ -42,6 +42,12 @@ public class IntegracaoFinanceiraController {
                 .map(IntegracaoFinanceiraPainelOperacionalResponse::from).toList();
     }
 
+    @GetMapping("/contas/{contaId}/painel/resumo") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
+    public IntegracaoFinanceiraResumoPainelResponse resumoPainel(@PathVariable UUID contaId) {
+        return IntegracaoFinanceiraResumoPainelResponse.from(
+                painelOperacionalService.resumir(tenantContext.tenantId(), contaId));
+    }
+
     @GetMapping("/{integracaoId}/tentativas") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
     public List<IntegracaoFinanceiraTentativaResponse> listarTentativas(
             @PathVariable UUID integracaoId,

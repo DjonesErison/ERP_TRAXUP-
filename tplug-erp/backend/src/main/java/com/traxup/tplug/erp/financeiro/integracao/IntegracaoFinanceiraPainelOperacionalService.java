@@ -25,6 +25,16 @@ public class IntegracaoFinanceiraPainelOperacionalService {
                 .toList();
     }
 
+    public ResumoPainel resumir(UUID tenantId, UUID contaId) {
+        List<ItemPainel> itens = listar(tenantId, contaId);
+        long saudaveis = itens.stream().filter(item -> "SAUDAVEL".equals(item.saude().status())).count();
+        long atencao = itens.stream().filter(item -> "ATENCAO".equals(item.saude().status())).count();
+        long semExecucao = itens.stream().filter(item -> "SEM_EXECUCAO".equals(item.saude().status())).count();
+        return new ResumoPainel(itens.size(), saudaveis, atencao, semExecucao);
+    }
+
     public record ItemPainel(IntegracaoFinanceira integracao,
                              IntegracaoFinanceiraObservabilidadeService.ResumoSaude saude) {}
+
+    public record ResumoPainel(long total, long saudaveis, long atencao, long semExecucao) {}
 }

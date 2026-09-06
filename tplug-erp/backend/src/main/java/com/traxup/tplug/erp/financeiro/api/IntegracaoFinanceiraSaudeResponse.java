@@ -10,11 +10,15 @@ public record IntegracaoFinanceiraSaudeResponse(
         Instant ultimaTentativaEm,
         Instant ultimoSucessoEm,
         int falhasConsecutivas,
-        int tentativasConsideradas) {
+        int tentativasConsideradas,
+        int sucessos,
+        int falhas,
+        Long duracaoMediaMs) {
 
     public static IntegracaoFinanceiraSaudeResponse from(IntegracaoFinanceiraObservabilidadeService.ResumoSaude resumo) {
         return new IntegracaoFinanceiraSaudeResponse(
                 resumo.integracaoId(), resumo.status(), resumo.ultimaTentativaEm(), resumo.ultimoSucessoEm(),
-                resumo.falhasConsecutivas(), resumo.tentativasConsideradas());
+                resumo.falhasConsecutivas(), resumo.tentativasConsideradas(), resumo.sucessos(), resumo.falhas(),
+                resumo.duracaoMediaMs());
     }
 }

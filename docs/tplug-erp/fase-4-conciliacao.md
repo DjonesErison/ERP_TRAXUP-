@@ -74,6 +74,15 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 - Cada novo lancamento mantem auditoria `IMPORTAR`; o fechamento bem sucedido do lote gera `SINCRONIZAR` com provedor, horario e quantidade, sem registrar o checkpoint bruto.
 - O endpoint exige `FINANCEIRO_CONCILIACAO_EDITAR`.
 
+## SPI de adapters financeiros
+
+- `IntegracaoFinanceiraAdapter` define o contrato interno para um provedor buscar lancamentos e devolver `lancamentos + checkpoint + sincronizadoEm`.
+- O adapter recebe apenas a configuracao operacional da integracao; credenciais continuam fora do banco operacional e devem ser resolvidas pela implementacao concreta em mecanismo seguro.
+- O registry normaliza o nome do provedor, impede duas implementacoes concorrentes para o mesmo provedor e falha explicitamente quando nao existe adapter registrado.
+- O resultado do adapter e limitado a 500 lancamentos e exige data/hora de sincronizacao.
+- A orquestracao localiza a integracao por `id + tenant`, bloqueia integracao inativa, resolve o adapter pelo provedor configurado e entrega o resultado ao fluxo atomico de importacao + checkpoint ja existente.
+- Nenhum adapter concreto de banco/PSP e inventado neste incremento; o contrato permite adicionar um provedor real sem alterar o dominio de conciliacao.
+
 ## RBAC e auditoria
 
 - `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos, filtros, sugestoes e configuracoes de integracao.
@@ -82,8 +91,8 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 
 ## Proximos incrementos
 
-1. primeiro adaptador concreto de banco/PSP sobre a base de integracoes e checkpoint, mantendo segredos fora do banco operacional;
-2. conectar esse adaptador ao fluxo atomico de importacao + checkpoint;
+1. primeiro adapter concreto de banco/PSP implementando a SPI, com credenciais fora do banco operacional;
+2. expor/disparar a sincronizacao pelo adapter concreto com RBAC e observabilidade operacional;
 3. regras de contabilizacao/liquidacao especificas quando o provedor exigir.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

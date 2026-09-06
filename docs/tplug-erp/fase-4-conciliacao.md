@@ -61,19 +61,29 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 - `sincronizado_em` deve avancar estritamente; requisicoes repetidas ou atrasadas retornam conflito e nao podem regredir o checkpoint.
 - A resposta da API inclui `versao` para diagnostico e controle operacional de concorrencia.
 - Registrar sincronizacao exige `FINANCEIRO_CONCILIACAO_EDITAR` e gera auditoria `SINCRONIZAR` sem copiar o valor bruto do checkpoint para o log.
-- Adaptadores concretos devem atualizar o checkpoint somente apos a importacao correspondente concluir com sucesso; falhas de importacao nao podem avancar a posicao de sincronizacao.
 - Provedores sem cursor podem deixar o checkpoint nulo e utilizar apenas `sincronizado_em` como marcador operacional.
+
+## Importacao e checkpoint atomicos
+
+- O endpoint `/{integracaoId}/sincronizar-lote` recebe os lancamentos ja traduzidos pelo adaptador e o novo checkpoint em uma unica operacao transacional.
+- A integracao e sempre localizada por `id + tenant`; integracoes inativas nao podem sincronizar.
+- A conta financeira usada na importacao vem da propria integracao, impedindo que o chamador redirecione lancamentos para outra conta.
+- A `origem` dos lancamentos e forçada para o `provedor` configurado na integracao, preservando proveniencia e idempotencia sem confiar em valor informado pelo cliente.
+- O limite continua sendo 500 lancamentos e todas as validacoes/idempotencia da conciliacao sao reutilizadas.
+- O checkpoint so e atualizado depois que todo o lote e importado com sucesso. Qualquer erro de importacao, conflito de referencia, regressao temporal ou falha ao salvar o checkpoint reverte a transacao inteira.
+- Cada novo lancamento mantem auditoria `IMPORTAR`; o fechamento bem sucedido do lote gera `SINCRONIZAR` com provedor, horario e quantidade, sem registrar o checkpoint bruto.
+- O endpoint exige `FINANCEIRO_CONCILIACAO_EDITAR`.
 
 ## RBAC e auditoria
 
 - `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos, filtros, sugestoes e configuracoes de integracao.
-- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, classifica, concilia, configura integracoes e registra sincronizacoes.
+- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, classifica, concilia, configura integracoes e executa sincronizacoes.
 - Nova importacao gera auditoria `IMPORTAR`; classificacao gera `CLASSIFICAR`; matching efetivado gera `CONCILIAR`; sincronizacao gera `SINCRONIZAR`.
 
 ## Proximos incrementos
 
 1. primeiro adaptador concreto de banco/PSP sobre a base de integracoes e checkpoint, mantendo segredos fora do banco operacional;
-2. orquestrar importacao + avancar checkpoint na mesma transacao do adaptador concreto;
+2. conectar esse adaptador ao fluxo atomico de importacao + checkpoint;
 3. regras de contabilizacao/liquidacao especificas quando o provedor exigir.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

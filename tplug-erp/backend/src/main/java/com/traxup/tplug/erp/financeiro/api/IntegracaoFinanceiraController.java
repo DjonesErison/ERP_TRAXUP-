@@ -38,6 +38,16 @@ public class IntegracaoFinanceiraController {
                 request.provedor(), request.identificadorExterno()));
     }
 
+    @PostMapping("/{integracaoId}/sincronizacao")
+    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
+    public IntegracaoFinanceiraResponse registrarSincronizacao(
+            @PathVariable UUID integracaoId,
+            @Valid @RequestBody RegistrarSincronizacaoIntegracaoRequest request) {
+        return IntegracaoFinanceiraResponse.from(service.registrarSincronizacao(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), integracaoId,
+                request.checkpoint(), request.sincronizadoEm()));
+    }
+
     @PostMapping("/{integracaoId}/desativar")
     @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
     public IntegracaoFinanceiraResponse desativar(@PathVariable UUID integracaoId) {

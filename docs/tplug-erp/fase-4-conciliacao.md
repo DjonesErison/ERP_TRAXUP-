@@ -97,6 +97,8 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 - Cada disparo por adapter registra uma tentativa vinculada por `tenant + integracao`, com provedor, status `SUCESSO` ou `FALHA`, quantidade de lancamentos, duracao e timestamps.
 - Falhas persistem apenas o nome sanitizado da classe da excecao; mensagens de erro, tokens, chaves, certificados, senhas e outros segredos nao sao armazenados.
 - `GET /api/v1/financeiro/integracoes/{integracaoId}/tentativas` retorna no maximo as 50 tentativas mais recentes e exige `FINANCEIRO_CONCILIACAO_LER`.
+- A consulta de tentativas aceita filtros opcionais `status`, `inicio` e `fim`; status e normalizado e restrito a `SUCESSO` ou `FALHA`, e periodos invertidos sao rejeitados.
+- Mesmo com filtros, o repositorio mantem obrigatoriamente `tenant_id + integracao_id` e limita a resposta a 50 registros.
 - Antes de consultar tentativas, a integracao e validada por `id + tenant`, preservando isolamento multi-tenant.
 - A tabela de tentativas usa FK composta `(tenant_id, integracao_id)`, constraints de status/quantidade/duracao e indice operacional.
 

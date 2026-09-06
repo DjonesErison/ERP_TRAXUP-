@@ -86,7 +86,7 @@ public class ContaFinanceiraApplicationService {
     private ContaFinanceira movimentarInterno(UUID tenantId, UUID usuarioId, UUID contaId,
                                               String tipo, BigDecimal valor, String descricao,
                                               String origemTipo, UUID origemId, String origemReferencia) {
-        ContaFinanceira conta = buscar(tenantId, contaId);
+        ContaFinanceira conta = buscarParaAtualizacao(tenantId, contaId);
         String tipoNormalizado = normalizarTipoMovimento(tipo);
         String descricaoNormalizada = normalizarObrigatorio(descricao, "Descricao");
         conta.movimentar(tipoNormalizado, valor);
@@ -111,11 +111,16 @@ public class ContaFinanceiraApplicationService {
 
     @Transactional
     public ContaFinanceira desativar(UUID tenantId, UUID usuarioId, UUID contaId) {
-        ContaFinanceira conta = buscar(tenantId, contaId);
+        ContaFinanceira conta = buscarParaAtualizacao(tenantId, contaId);
         conta.desativar();
         repository.save(conta);
         auditoria.registrar(tenantId, usuarioId, null, conta.getFilialId(), "DESATIVAR", "CONTA_FINANCEIRA", conta.getId(), null);
         return conta;
+    }
+
+    private ContaFinanceira buscarParaAtualizacao(UUID tenantId, UUID contaId) {
+        return repository.findByIdAndTenantIdForUpdate(contaId, tenantId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta financeira nao encontrada para o tenant informado"));
     }
 
     private String normalizarTipoConta(String tipo) {

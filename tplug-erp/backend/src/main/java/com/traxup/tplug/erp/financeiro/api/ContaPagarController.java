@@ -33,6 +33,14 @@ public class ContaPagarController {
         return ContaPagarResponse.from(service.buscar(tenantContext.tenantId(), contaId));
     }
 
+    @GetMapping("/{contaId}/pagamentos")
+    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')")
+    public List<ContaPagarPagamentoResponse> listarPagamentos(@PathVariable UUID contaId) {
+        return service.listarPagamentos(tenantContext.tenantId(), contaId).stream()
+                .map(ContaPagarPagamentoResponse::from)
+                .toList();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_CRIAR')")
@@ -46,6 +54,14 @@ public class ContaPagarController {
     @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_BAIXAR')")
     public ContaPagarResponse pagar(@PathVariable UUID contaId) {
         return ContaPagarResponse.from(service.pagar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId));
+    }
+
+    @PostMapping("/{contaId}/pagamentos")
+    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_BAIXAR')")
+    public ContaPagarResponse registrarPagamento(@PathVariable UUID contaId,
+                                                  @Valid @RequestBody RegistrarPagamentoContaRequest request) {
+        return ContaPagarResponse.from(service.pagar(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId, request.valor()));
     }
 
     @PostMapping("/{contaId}/cancelar")

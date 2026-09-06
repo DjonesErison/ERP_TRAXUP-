@@ -28,6 +28,13 @@ public class ConciliacaoController {
                 .map(ConciliacaoLancamentoResponse::from).toList();
     }
 
+    @GetMapping("/lancamentos/{lancamentoId}/sugestoes")
+    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
+    public List<ContaFinanceiraMovimentoResponse> sugestoes(@PathVariable UUID lancamentoId) {
+        return service.sugerirMovimentos(tenantContext.tenantId(), lancamentoId).stream()
+                .map(ContaFinanceiraMovimentoResponse::from).toList();
+    }
+
     @PostMapping("/contas/{contaId}/lancamentos")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")

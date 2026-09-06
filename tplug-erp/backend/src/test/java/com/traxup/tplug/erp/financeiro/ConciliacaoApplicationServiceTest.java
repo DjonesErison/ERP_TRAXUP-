@@ -9,9 +9,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -39,6 +41,33 @@ class ConciliacaoApplicationServiceTest {
 
         verify(contaRepository).findByIdAndTenantId(contaId, tenantId);
         verify(repository).save(any(ConciliacaoLancamento.class));
+    }
+
+    @Test
+    void deveSugerirMovimentosCompativeisEmJanelaDeTresDias() {
+        UUID tenantId = UUID.randomUUID();
+        UUID lancamentoId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        UUID filialId = UUID.randomUUID();
+        Instant ocorridoEm = Instant.parse("2026-09-05T12:00:00Z");
+        BigDecimal valor = new BigDecimal("125.50");
+        ConciliacaoLancamento lancamento = new ConciliacaoLancamento(
+                tenantId, filialId, contaId, "OFX", "REF-SUG", "ENTRADA", valor,
+                "Credito", ocorridoEm, UUID.randomUUID());
+        ContaFinanceiraMovimento movimento = new ContaFinanceiraMovimento(
+                tenantId, filialId, contaId, "ENTRADA", valor, "Recebimento", UUID.randomUUID());
+        when(repository.findByIdAndTenantId(lancamentoId, tenantId)).thenReturn(Optional.of(lancamento));
+        when(movimentoRepository.findAllByTenantIdAndContaFinanceiraIdAndFilialIdAndTipoAndValorAndOcorridoEmBetweenOrderByOcorridoEmAsc(
+                tenantId, contaId, filialId, "ENTRADA", valor,
+                ocorridoEm.minusSeconds(259200), ocorridoEm.plusSeconds(259200)))
+                .thenReturn(List.of(movimento));
+
+        List<ContaFinanceiraMovimento> sugestoes = novoService().sugerirMovimentos(tenantId, lancamentoId);
+
+        assertEquals(1, sugestoes.size());
+        verify(movimentoRepository).findAllByTenantIdAndContaFinanceiraIdAndFilialIdAndTipoAndValorAndOcorridoEmBetweenOrderByOcorridoEmAsc(
+                tenantId, contaId, filialId, "ENTRADA", valor,
+                ocorridoEm.minusSeconds(259200), ocorridoEm.plusSeconds(259200));
     }
 
     @Test

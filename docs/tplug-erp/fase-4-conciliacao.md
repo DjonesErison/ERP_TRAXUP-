@@ -92,16 +92,32 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 - A resposta reutiliza a visao operacional da sincronizacao, incluindo o estado atualizado da integracao e os lancamentos importados.
 - Se nao houver implementacao registrada para o provedor, a chamada falha explicitamente em vez de simular uma integracao externa.
 
+## Observabilidade operacional
+
+- Cada disparo por adapter registra uma tentativa vinculada por `tenant + integracao`, com provedor, status `SUCESSO` ou `FALHA`, quantidade de lancamentos, duracao e timestamps.
+- Falhas persistem apenas o nome sanitizado da classe da excecao; mensagens de erro, tokens, chaves, certificados, senhas e outros segredos nao sao armazenados.
+- `GET /api/v1/financeiro/integracoes/{integracaoId}/tentativas` retorna no maximo as 50 tentativas mais recentes e exige `FINANCEIRO_CONCILIACAO_LER`.
+- Antes de consultar tentativas, a integracao e validada por `id + tenant`, preservando isolamento multi-tenant.
+- A tabela de tentativas usa FK composta `(tenant_id, integracao_id)`, constraints de status/quantidade/duracao e indice operacional.
+
+## Saude operacional
+
+- `GET /api/v1/financeiro/integracoes/{integracaoId}/saude` resume as ate 50 tentativas mais recentes sem expor dados sensiveis.
+- O estado e `SEM_EXECUCAO` quando ainda nao houve tentativa, `SAUDAVEL` quando a tentativa mais recente nao inicia uma sequencia de falhas e `ATENCAO` quando existem falhas consecutivas no topo do historico.
+- O resumo inclui ultima tentativa, ultimo sucesso, quantidade de falhas consecutivas e quantidade de tentativas consideradas.
+- A consulta valida a integracao por `id + tenant` antes de ler o historico e reutiliza `FINANCEIRO_CONCILIACAO_LER`.
+- O resumo e somente leitura e nao gera auditoria de mutacao.
+
 ## RBAC e auditoria
 
-- `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos, filtros, sugestoes e configuracoes de integracao.
+- `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos, filtros, sugestoes, configuracoes de integracao, tentativas e saude operacional.
 - `FINANCEIRO_CONCILIACAO_EDITAR`: importa, classifica, concilia, configura integracoes e executa sincronizacoes.
 - Nova importacao gera auditoria `IMPORTAR`; classificacao gera `CLASSIFICAR`; matching efetivado gera `CONCILIAR`; sincronizacao gera `SINCRONIZAR`.
 
 ## Proximos incrementos
 
-1. primeiro adapter concreto de banco/PSP implementando a SPI, com credenciais fora do banco operacional;
-2. observabilidade operacional de tentativas/falhas de sincronizacao sem registrar segredos;
-3. regras de contabilizacao/liquidacao especificas quando o provedor exigir.
+1. primeiro adapter concreto de banco/PSP implementando a SPI, com credenciais fora do banco operacional, permanece adiado ate haver documentacao real do provedor escolhido;
+2. endurecimentos operacionais genericos que nao dependam de provedor podem continuar sendo implementados;
+3. regras de contabilizacao/liquidacao especificas somente devem ser adicionadas quando o contrato do provedor exigir.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

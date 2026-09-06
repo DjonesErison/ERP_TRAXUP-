@@ -83,6 +83,15 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 - A orquestracao localiza a integracao por `id + tenant`, bloqueia integracao inativa, resolve o adapter pelo provedor configurado e entrega o resultado ao fluxo atomico de importacao + checkpoint ja existente.
 - Nenhum adapter concreto de banco/PSP e inventado neste incremento; o contrato permite adicionar um provedor real sem alterar o dominio de conciliacao.
 
+## Disparo de sincronizacao por adapter
+
+- `POST /api/v1/financeiro/integracoes/{integracaoId}/sincronizar` dispara o adapter registrado para o provedor configurado na integracao.
+- O endpoint exige `FINANCEIRO_CONCILIACAO_EDITAR` e nunca recebe tenant, conta, provedor ou checkpoint do cliente; esses dados sao derivados da integracao tenant-scoped e do resultado do adapter.
+- Integracao inexistente para o tenant corrente ou inativa e rejeitada antes de qualquer chamada ao adapter.
+- O resultado e encaminhado ao mesmo fluxo atomico de importacao + checkpoint, preservando idempotencia, auditoria e rollback integral.
+- A resposta reutiliza a visao operacional da sincronizacao, incluindo o estado atualizado da integracao e os lancamentos importados.
+- Se nao houver implementacao registrada para o provedor, a chamada falha explicitamente em vez de simular uma integracao externa.
+
 ## RBAC e auditoria
 
 - `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos, filtros, sugestoes e configuracoes de integracao.
@@ -92,7 +101,7 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 ## Proximos incrementos
 
 1. primeiro adapter concreto de banco/PSP implementando a SPI, com credenciais fora do banco operacional;
-2. expor/disparar a sincronizacao pelo adapter concreto com RBAC e observabilidade operacional;
+2. observabilidade operacional de tentativas/falhas de sincronizacao sem registrar segredos;
 3. regras de contabilizacao/liquidacao especificas quando o provedor exigir.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

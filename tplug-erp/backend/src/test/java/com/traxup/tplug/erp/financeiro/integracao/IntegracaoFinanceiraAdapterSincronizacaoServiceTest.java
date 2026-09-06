@@ -1,5 +1,7 @@
 package com.traxup.tplug.erp.financeiro.integracao;
 
+import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
+import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -40,6 +42,41 @@ class IntegracaoFinanceiraAdapterSincronizacaoServiceTest {
         assertEquals(integracao, resultado.integracao());
         verify(repository).findByIdAndTenantId(integracao.getId(), tenantId);
         verify(sincronizacao).sincronizar(tenantId, usuarioId, integracao.getId(), List.of(), "cursor-2", sincronizadoEm);
+    }
+
+    @Test
+    void deveRejeitarIntegracaoDeOutroTenantAntesDeResolverAdapter() {
+        UUID tenantId = UUID.randomUUID();
+        UUID integracaoId = UUID.randomUUID();
+        IntegracaoFinanceiraRepository repository = mock(IntegracaoFinanceiraRepository.class);
+        IntegracaoFinanceiraSincronizacaoService sincronizacao = mock(IntegracaoFinanceiraSincronizacaoService.class);
+        IntegracaoFinanceiraAdapterRegistry registry = mock(IntegracaoFinanceiraAdapterRegistry.class);
+        when(repository.findByIdAndTenantId(integracaoId, tenantId)).thenReturn(Optional.empty());
+
+        var service = new IntegracaoFinanceiraAdapterSincronizacaoService(repository, registry, sincronizacao);
+
+        assertThrows(RecursoNaoEncontradoException.class,
+                () -> service.sincronizar(tenantId, UUID.randomUUID(), integracaoId));
+        verifyNoInteractions(registry, sincronizacao);
+    }
+
+    @Test
+    void deveRejeitarIntegracaoInativaAntesDeExecutarAdapter() {
+        UUID tenantId = UUID.randomUUID();
+        UUID usuarioId = UUID.randomUUID();
+        IntegracaoFinanceira integracao = new IntegracaoFinanceira(
+                tenantId, UUID.randomUUID(), UUID.randomUUID(), "banco-x", null, usuarioId);
+        integracao.desativar();
+        IntegracaoFinanceiraRepository repository = mock(IntegracaoFinanceiraRepository.class);
+        IntegracaoFinanceiraSincronizacaoService sincronizacao = mock(IntegracaoFinanceiraSincronizacaoService.class);
+        IntegracaoFinanceiraAdapterRegistry registry = mock(IntegracaoFinanceiraAdapterRegistry.class);
+        when(repository.findByIdAndTenantId(integracao.getId(), tenantId)).thenReturn(Optional.of(integracao));
+
+        var service = new IntegracaoFinanceiraAdapterSincronizacaoService(repository, registry, sincronizacao);
+
+        assertThrows(RecursoConflitanteException.class,
+                () -> service.sincronizar(tenantId, usuarioId, integracao.getId()));
+        verifyNoInteractions(registry, sincronizacao);
     }
 
     @Test

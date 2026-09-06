@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.financeiro.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
+import com.traxup.tplug.erp.financeiro.integracao.IntegracaoFinanceiraAdapterSincronizacaoService;
 import com.traxup.tplug.erp.financeiro.integracao.IntegracaoFinanceiraApplicationService;
 import com.traxup.tplug.erp.financeiro.integracao.IntegracaoFinanceiraSincronizacaoService;
 import jakarta.validation.Valid;
@@ -16,13 +17,16 @@ import java.util.UUID;
 public class IntegracaoFinanceiraController {
     private final IntegracaoFinanceiraApplicationService service;
     private final IntegracaoFinanceiraSincronizacaoService sincronizacaoService;
+    private final IntegracaoFinanceiraAdapterSincronizacaoService adapterSincronizacaoService;
     private final TenantContext tenantContext;
 
     public IntegracaoFinanceiraController(IntegracaoFinanceiraApplicationService service,
                                           IntegracaoFinanceiraSincronizacaoService sincronizacaoService,
+                                          IntegracaoFinanceiraAdapterSincronizacaoService adapterSincronizacaoService,
                                           TenantContext tenantContext) {
         this.service = service;
         this.sincronizacaoService = sincronizacaoService;
+        this.adapterSincronizacaoService = adapterSincronizacaoService;
         this.tenantContext = tenantContext;
     }
 
@@ -65,6 +69,13 @@ public class IntegracaoFinanceiraController {
         return SincronizarIntegracaoFinanceiraResponse.from(sincronizacaoService.sincronizar(
                 tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), integracaoId,
                 itens, request.checkpoint(), request.sincronizadoEm()));
+    }
+
+    @PostMapping("/{integracaoId}/sincronizar")
+    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
+    public SincronizarIntegracaoFinanceiraResponse sincronizarPorAdapter(@PathVariable UUID integracaoId) {
+        return SincronizarIntegracaoFinanceiraResponse.from(adapterSincronizacaoService.sincronizar(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), integracaoId));
     }
 
     @PostMapping("/{integracaoId}/desativar")

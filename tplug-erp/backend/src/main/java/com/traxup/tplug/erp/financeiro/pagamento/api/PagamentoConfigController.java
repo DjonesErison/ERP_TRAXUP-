@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.financeiro.pagamento.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
+import com.traxup.tplug.erp.financeiro.pagamento.AjusteComercialTipo;
 import com.traxup.tplug.erp.financeiro.pagamento.CondicaoPagamento;
 import com.traxup.tplug.erp.financeiro.pagamento.CondicaoPagamentoParcela;
 import com.traxup.tplug.erp.financeiro.pagamento.FormaPagamento;
@@ -63,7 +64,15 @@ public class PagamentoConfigController {
         UUID tenantId = tenantContext.tenantId();
         List<PagamentoConfigApplicationService.ParcelaDefinicao> parcelas = request.parcelas() == null ? null : request.parcelas().stream()
                 .map(p -> new PagamentoConfigApplicationService.ParcelaDefinicao(p.numero(), p.dias(), p.percentual())).toList();
-        CondicaoPagamento condicao = service.criarCondicao(tenantId, tenantContext.usuarioIdOuNulo(), request.codigo(), request.nome(), parcelas);
+        CondicaoPagamento condicao = service.criarCondicao(
+                tenantId,
+                tenantContext.usuarioIdOuNulo(),
+                request.codigo(),
+                request.nome(),
+                ajuste(request.juros()),
+                ajuste(request.desconto()),
+                ajuste(request.entrada()),
+                parcelas);
         return CondicaoResponse.from(condicao, service.listarParcelas(tenantId, condicao.getId()));
     }
 
@@ -73,8 +82,15 @@ public class PagamentoConfigController {
         service.desativarCondicao(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), id);
     }
 
+    private PagamentoConfigApplicationService.AjusteDefinicao ajuste(AjusteRequest request) {
+        return request == null ? null : new PagamentoConfigApplicationService.AjusteDefinicao(request.tipo(), request.valor());
+    }
+
     public record CriarFormaRequest(String codigo, String nome) {}
-    public record CriarCondicaoRequest(String codigo, String nome, List<ParcelaRequest> parcelas) {}
+    public record CriarCondicaoRequest(String codigo, String nome,
+                                       AjusteRequest juros, AjusteRequest desconto, AjusteRequest entrada,
+                                       List<ParcelaRequest> parcelas) {}
+    public record AjusteRequest(AjusteComercialTipo tipo, BigDecimal valor) {}
     public record ParcelaRequest(int numero, int dias, BigDecimal percentual) {}
 
     public record FormaResponse(UUID id, String codigo, String nome, boolean ativo) {
@@ -85,9 +101,22 @@ public class PagamentoConfigController {
         static ParcelaResponse from(CondicaoPagamentoParcela parcela) { return new ParcelaResponse(parcela.getNumero(), parcela.getDias(), parcela.getPercentual()); }
     }
 
-    public record CondicaoResponse(UUID id, String codigo, String nome, boolean ativo, List<ParcelaResponse> parcelas) {
+    public record AjusteResponse(AjusteComercialTipo tipo, BigDecimal valor) {
+        static AjusteResponse from(AjusteComercialTipo tipo, BigDecimal valor) {
+            return tipo == null && valor == null ? null : new AjusteResponse(tipo, valor);
+        }
+    }
+
+    public record CondicaoResponse(UUID id, String codigo, String nome, boolean ativo,
+                                   AjusteResponse juros, AjusteResponse desconto, AjusteResponse entrada,
+                                   List<ParcelaResponse> parcelas) {
         static CondicaoResponse from(CondicaoPagamento condicao, List<CondicaoPagamentoParcela> parcelas) {
-            return new CondicaoResponse(condicao.getId(), condicao.getCodigo(), condicao.getNome(), condicao.isAtivo(), parcelas.stream().map(ParcelaResponse::from).toList());
+            return new CondicaoResponse(
+                    condicao.getId(), condicao.getCodigo(), condicao.getNome(), condicao.isAtivo(),
+                    AjusteResponse.from(condicao.getJurosTipo(), condicao.getJurosValor()),
+                    AjusteResponse.from(condicao.getDescontoTipo(), condicao.getDescontoValor()),
+                    AjusteResponse.from(condicao.getEntradaTipo(), condicao.getEntradaValor()),
+                    parcelas.stream().map(ParcelaResponse::from).toList());
         }
     }
 }

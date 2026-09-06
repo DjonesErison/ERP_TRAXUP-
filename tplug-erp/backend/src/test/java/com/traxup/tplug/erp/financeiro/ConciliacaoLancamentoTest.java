@@ -1,5 +1,7 @@
 package com.traxup.tplug.erp.financeiro;
 
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
+import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -26,7 +28,12 @@ class ConciliacaoLancamentoTest {
         ConciliacaoLancamento lancamento = novoLancamento();
         lancamento.conciliar(UUID.randomUUID());
 
-        assertThrows(IllegalArgumentException.class, () -> lancamento.conciliar(UUID.randomUUID()));
+        assertThrows(RecursoConflitanteException.class, () -> lancamento.conciliar(UUID.randomUUID()));
+    }
+
+    @Test
+    void naoDeveConciliarSemMovimento() {
+        assertThrows(RegraNegocioException.class, () -> novoLancamento().conciliar(null));
     }
 
     private ConciliacaoLancamento novoLancamento() {

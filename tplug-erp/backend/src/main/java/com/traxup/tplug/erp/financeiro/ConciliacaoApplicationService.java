@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.financeiro;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -46,17 +48,16 @@ public class ConciliacaoApplicationService {
         }
         Instant inicio = lancamento.getOcorridoEm().minus(JANELA_SUGESTAO);
         Instant fim = lancamento.getOcorridoEm().plus(JANELA_SUGESTAO);
-        return movimentoRepository
-                .findAllByTenantIdAndContaFinanceiraIdAndFilialIdAndTipoAndValorAndOcorridoEmBetweenOrderByOcorridoEmAsc(
-                        tenantId, lancamento.getContaFinanceiraId(), lancamento.getFilialId(), lancamento.getTipo(),
-                        lancamento.getValor(), inicio, fim);
+        return movimentoRepository.findCandidatosDisponiveis(
+                tenantId, lancamento.getContaFinanceiraId(), lancamento.getFilialId(), lancamento.getTipo(),
+                lancamento.getValor(), inicio, fim);
     }
 
     @Transactional
     public List<ConciliacaoLancamento> importarLote(UUID tenantId, UUID usuarioId, UUID contaId,
                                                      List<ImportacaoLancamento> lancamentos) {
-        if (lancamentos == null || lancamentos.isEmpty()) throw new IllegalArgumentException("Lote deve possuir lancamentos");
-        if (lancamentos.size() > 500) throw new IllegalArgumentException("Lote excede o limite de 500 lancamentos");
+        if (lancamentos == null || lancamentos.isEmpty()) throw new RegraNegocioException("Lote deve possuir lancamentos");
+        if (lancamentos.size() > 500) throw new RegraNegocioException("Lote excede o limite de 500 lancamentos");
         List<ConciliacaoLancamento> resultado = new ArrayList<>(lancamentos.size());
         for (ImportacaoLancamento item : lancamentos) {
             resultado.add(importar(tenantId, usuarioId, contaId, item.origem(), item.referenciaExterna(),
@@ -74,12 +75,22 @@ public class ConciliacaoApplicationService {
         String referenciaNormalizada = obrigatorio(referenciaExterna, "Referencia externa");
         String tipoNormalizado = normalizarTipo(tipo);
         String descricaoNormalizada = obrigatorio(descricao, "Descricao");
-        if (valor == null || valor.signum() <= 0) throw new IllegalArgumentException("Valor deve ser maior que zero");
-        if (ocorridoEm == null) throw new IllegalArgumentException("Data/hora do lancamento e obrigatoria");
-        if (repository.existsByTenantIdAndContaFinanceiraIdAndOrigemAndReferenciaExterna(
-                tenantId, contaId, origemNormalizada, referenciaNormalizada)) {
-            throw new RecursoConflitanteException("Lancamento externo ja importado para esta conta");
+        if (valor == null || valor.signum() <= 0) throw new RegraNegocioException("Valor deve ser maior que zero");
+        if (ocorridoEm == null) throw new RegraNegocioException("Data/hora do lancamento e obrigatoria");
+
+        repository.bloquearContaParaImportacao(tenantId, contaId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta financeira nao encontrada para o tenant informado"));
+
+        var existente = repository.findByTenantIdAndContaFinanceiraIdAndOrigemAndReferenciaExterna(
+                tenantId, contaId, origemNormalizada, referenciaNormalizada);
+        if (existente.isPresent()) {
+            if (mesmoConteudo(existente.get(), tipoNormalizado, valor, descricaoNormalizada, ocorridoEm)) {
+                return existente.get();
+            }
+            throw new RecursoConflitanteException(
+                    "Referencia externa ja importada para esta conta com conteudo diferente");
         }
+
         ConciliacaoLancamento lancamento = repository.save(new ConciliacaoLancamento(
                 tenantId, conta.getFilialId(), contaId, origemNormalizada, referenciaNormalizada,
                 tipoNormalizado, valor, descricaoNormalizada, ocorridoEm, usuarioId));
@@ -91,21 +102,24 @@ public class ConciliacaoApplicationService {
 
     @Transactional
     public ConciliacaoLancamento conciliar(UUID tenantId, UUID usuarioId, UUID lancamentoId, UUID movimentoId) {
-        ConciliacaoLancamento lancamento = repository.findByIdAndTenantId(lancamentoId, tenantId)
+        ConciliacaoLancamento lancamento = repository.findByIdAndTenantIdForUpdate(lancamentoId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Lancamento de conciliacao nao encontrado para o tenant informado"));
-        ContaFinanceiraMovimento movimento = movimentoRepository.findByIdAndTenantId(movimentoId, tenantId)
+        ContaFinanceiraMovimento movimento = movimentoRepository.findByIdAndTenantIdForUpdate(movimentoId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Movimento financeiro nao encontrado para o tenant informado"));
+        if (repository.existsByTenantIdAndMovimentoIdAndIdNot(tenantId, movimentoId, lancamentoId)) {
+            throw new RecursoConflitanteException("Movimento financeiro ja utilizado em outra conciliacao");
+        }
         if (!lancamento.getContaFinanceiraId().equals(movimento.getContaFinanceiraId())) {
-            throw new IllegalArgumentException("Lancamento e movimento devem pertencer a mesma conta financeira");
+            throw new RegraNegocioException("Lancamento e movimento devem pertencer a mesma conta financeira");
         }
         if (!lancamento.getFilialId().equals(movimento.getFilialId())) {
-            throw new IllegalArgumentException("Lancamento e movimento devem pertencer a mesma filial");
+            throw new RegraNegocioException("Lancamento e movimento devem pertencer a mesma filial");
         }
         if (!lancamento.getTipo().equals(movimento.getTipo())) {
-            throw new IllegalArgumentException("Tipo do lancamento externo difere do movimento financeiro");
+            throw new RegraNegocioException("Tipo do lancamento externo difere do movimento financeiro");
         }
         if (lancamento.getValor().compareTo(movimento.getValor()) != 0) {
-            throw new IllegalArgumentException("Valor do lancamento externo difere do movimento financeiro");
+            throw new RegraNegocioException("Valor do lancamento externo difere do movimento financeiro");
         }
         lancamento.conciliar(movimentoId);
         repository.save(lancamento);
@@ -114,16 +128,24 @@ public class ConciliacaoApplicationService {
         return lancamento;
     }
 
+    private boolean mesmoConteudo(ConciliacaoLancamento existente, String tipo, BigDecimal valor,
+                                  String descricao, Instant ocorridoEm) {
+        return existente.getTipo().equals(tipo)
+                && existente.getValor().compareTo(valor) == 0
+                && existente.getDescricao().equals(descricao)
+                && Objects.equals(existente.getOcorridoEm(), ocorridoEm);
+    }
+
     private String normalizarTipo(String tipo) {
         String valor = obrigatorio(tipo, "Tipo").toUpperCase(Locale.ROOT);
         if (!("ENTRADA".equals(valor) || "SAIDA".equals(valor))) {
-            throw new IllegalArgumentException("Tipo deve ser ENTRADA ou SAIDA");
+            throw new RegraNegocioException("Tipo deve ser ENTRADA ou SAIDA");
         }
         return valor;
     }
 
     private String obrigatorio(String valor, String campo) {
-        if (valor == null || valor.isBlank()) throw new IllegalArgumentException(campo + " e obrigatorio");
+        if (valor == null || valor.isBlank()) throw new RegraNegocioException(campo + " e obrigatorio");
         return valor.trim();
     }
 

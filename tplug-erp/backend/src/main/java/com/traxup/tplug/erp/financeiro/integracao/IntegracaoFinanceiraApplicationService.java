@@ -8,6 +8,7 @@ import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -46,6 +47,20 @@ public class IntegracaoFinanceiraApplicationService {
         auditoria.registrar(tenantId, usuarioId, null, conta.getFilialId(),
                 "CRIAR", "INTEGRACAO_FINANCEIRA", integracao.getId(),
                 "contaId=" + contaId + ";provedor=" + provedorNormalizado);
+        return integracao;
+    }
+
+    @Transactional
+    public IntegracaoFinanceira registrarSincronizacao(UUID tenantId, UUID usuarioId, UUID integracaoId,
+                                                       String checkpoint, Instant sincronizadoEm) {
+        IntegracaoFinanceira integracao = repository.findByIdAndTenantId(integracaoId, tenantId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Integracao financeira nao encontrada para o tenant informado"));
+        if (!integracao.isAtivo()) throw new RecursoConflitanteException("Integracao financeira inativa nao pode ser sincronizada");
+        integracao.registrarSincronizacao(checkpoint, sincronizadoEm);
+        repository.save(integracao);
+        auditoria.registrar(tenantId, usuarioId, null, integracao.getFilialId(),
+                "SINCRONIZAR", "INTEGRACAO_FINANCEIRA", integracao.getId(),
+                "provedor=" + integracao.getProvedor() + ";sincronizadoEm=" + sincronizadoEm);
         return integracao;
     }
 

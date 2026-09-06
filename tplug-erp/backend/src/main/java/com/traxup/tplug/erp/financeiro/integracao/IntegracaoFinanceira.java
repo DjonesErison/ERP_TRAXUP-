@@ -1,5 +1,7 @@
 package com.traxup.tplug.erp.financeiro.integracao;
 
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
+import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -47,19 +49,23 @@ public class IntegracaoFinanceira {
     @PreUpdate void preUpdate() { atualizadoEm = Instant.now(); }
 
     public void desativar() {
-        if (!ativo) throw new IllegalArgumentException("Integracao financeira ja esta inativa");
+        if (!ativo) throw new RegraNegocioException("Integracao financeira ja esta inativa");
         ativo = false;
     }
 
     public void registrarSincronizacao(String checkpoint, Instant sincronizadoEm) {
-        if (!ativo) throw new IllegalArgumentException("Integracao financeira inativa nao pode ser sincronizada");
-        if (sincronizadoEm == null) throw new IllegalArgumentException("Data/hora da sincronizacao e obrigatoria");
+        if (!ativo) throw new RecursoConflitanteException("Integracao financeira inativa nao pode ser sincronizada");
+        if (sincronizadoEm == null) throw new RegraNegocioException("Data/hora da sincronizacao e obrigatoria");
+        if (this.sincronizadoEm != null && !sincronizadoEm.isAfter(this.sincronizadoEm)) {
+            throw new RecursoConflitanteException(
+                    "Sincronizacao deve ser posterior ao ultimo checkpoint registrado");
+        }
         this.checkpoint = normalizarCheckpoint(checkpoint);
         this.sincronizadoEm = sincronizadoEm;
     }
 
     private String normalizarProvedor(String valor) {
-        if (valor == null || valor.isBlank()) throw new IllegalArgumentException("Provedor e obrigatorio");
+        if (valor == null || valor.isBlank()) throw new RegraNegocioException("Provedor e obrigatorio");
         return valor.trim().toUpperCase(Locale.ROOT);
     }
 
@@ -70,7 +76,9 @@ public class IntegracaoFinanceira {
     private String normalizarCheckpoint(String valor) {
         if (valor == null || valor.isBlank()) return null;
         String normalizado = valor.trim();
-        if (normalizado.length() > 500) throw new IllegalArgumentException("Checkpoint excede o limite de 500 caracteres");
+        if (normalizado.length() > 500) {
+            throw new RegraNegocioException("Checkpoint excede o limite de 500 caracteres");
+        }
         return normalizado;
     }
 

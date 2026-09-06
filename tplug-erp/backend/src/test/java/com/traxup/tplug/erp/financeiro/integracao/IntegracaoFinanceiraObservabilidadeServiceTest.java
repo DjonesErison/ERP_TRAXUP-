@@ -83,16 +83,16 @@ class IntegracaoFinanceiraObservabilidadeServiceTest {
     }
 
     @Test
-    void deveResumirSaudeComFalhasConsecutivasSemCruzarTenant() {
+    void deveResumirSaudeComFalhasConsecutivasEMetricasSemCruzarTenant() {
         UUID tenant = UUID.randomUUID(); UUID integracaoId = UUID.randomUUID();
         var integracao = new IntegracaoFinanceira(tenant, UUID.randomUUID(), UUID.randomUUID(), "banco-x", null, UUID.randomUUID());
         var tentativas = mock(IntegracaoFinanceiraTentativaRepository.class);
         var integracoes = mock(IntegracaoFinanceiraRepository.class);
         when(integracoes.findByIdAndTenantId(integracaoId, tenant)).thenReturn(Optional.of(integracao));
         Instant base = Instant.parse("2026-09-06T12:00:00Z");
-        var falha1 = IntegracaoFinanceiraTentativa.falha(tenant, integracaoId, "BANCO-X", 0, 10,
+        var falha1 = IntegracaoFinanceiraTentativa.falha(tenant, integracaoId, "BANCO-X", 0, 30,
                 new IllegalStateException(), base, base.plusSeconds(1));
-        var falha2 = IntegracaoFinanceiraTentativa.falha(tenant, integracaoId, "BANCO-X", 0, 10,
+        var falha2 = IntegracaoFinanceiraTentativa.falha(tenant, integracaoId, "BANCO-X", 0, 20,
                 new IllegalStateException(), base.minusSeconds(10), base.minusSeconds(9));
         var sucesso = IntegracaoFinanceiraTentativa.sucesso(tenant, integracaoId, "BANCO-X", 2, 10,
                 base.minusSeconds(20), base.minusSeconds(19));
@@ -106,11 +106,14 @@ class IntegracaoFinanceiraObservabilidadeServiceTest {
         assertEquals(2, resumo.falhasConsecutivas());
         assertEquals(sucesso.getFinalizadoEm(), resumo.ultimoSucessoEm());
         assertEquals(3, resumo.tentativasConsideradas());
+        assertEquals(1, resumo.sucessos());
+        assertEquals(2, resumo.falhas());
+        assertEquals(20L, resumo.duracaoMediaMs());
         verify(integracoes).findByIdAndTenantId(integracaoId, tenant);
     }
 
     @Test
-    void deveMarcarSemExecucaoQuandoNaoHaTentativas() {
+    void deveMarcarSemExecucaoSemInventarMetricas() {
         UUID tenant = UUID.randomUUID(); UUID integracaoId = UUID.randomUUID();
         var integracao = new IntegracaoFinanceira(tenant, UUID.randomUUID(), UUID.randomUUID(), "banco-x", null, UUID.randomUUID());
         var tentativas = mock(IntegracaoFinanceiraTentativaRepository.class);
@@ -123,6 +126,9 @@ class IntegracaoFinanceiraObservabilidadeServiceTest {
 
         assertEquals("SEM_EXECUCAO", resumo.status());
         assertEquals(0, resumo.falhasConsecutivas());
+        assertEquals(0, resumo.sucessos());
+        assertEquals(0, resumo.falhas());
+        assertNull(resumo.duracaoMediaMs());
         assertNull(resumo.ultimaTentativaEm());
     }
 }

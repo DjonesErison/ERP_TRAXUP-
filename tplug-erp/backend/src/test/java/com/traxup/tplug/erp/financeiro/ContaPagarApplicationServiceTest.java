@@ -28,7 +28,7 @@ class ContaPagarApplicationServiceTest {
     @Mock AuditoriaApplicationService auditoria;
 
     @Test
-    void deveRegistrarPagamentoParcialComHistoricoEAuditoria() {
+    void deveRegistrarPagamentoParcialComHistoricoAuditoriaELockTenantScoped() {
         UUID tenantId = UUID.randomUUID();
         UUID usuarioId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
@@ -37,7 +37,7 @@ class ContaPagarApplicationServiceTest {
         ContaPagar conta = new ContaPagar(tenantId, filialId, UUID.randomUUID(), "P-1", "Titulo",
                 new BigDecimal("100.0000"), LocalDate.now().plusDays(5), usuarioId);
 
-        when(repository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
+        when(repository.findByIdAndTenantIdForUpdate(contaId, tenantId)).thenReturn(Optional.of(conta));
         when(pagamentoRepository.save(any(ContaPagarPagamento.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(conta)).thenReturn(conta);
@@ -46,6 +46,7 @@ class ContaPagarApplicationServiceTest {
 
         assertEquals("PARCIAL", resultado.getStatus());
         assertEquals(0, resultado.getValorPago().compareTo(valor));
+        verify(repository).findByIdAndTenantIdForUpdate(contaId, tenantId);
         verify(pagamentoRepository).save(any(ContaPagarPagamento.class));
         verify(auditoria).registrar(
                 org.mockito.ArgumentMatchers.eq(tenantId), org.mockito.ArgumentMatchers.eq(usuarioId),

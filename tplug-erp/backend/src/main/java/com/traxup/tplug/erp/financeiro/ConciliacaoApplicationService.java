@@ -36,8 +36,17 @@ public class ConciliacaoApplicationService {
     }
 
     public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId) {
+        return listar(tenantId, contaId, null, null, null, null, null);
+    }
+
+    public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId, String origem, String natureza,
+                                              String status, Instant inicio, Instant fim) {
         contaFinanceiraService.buscar(tenantId, contaId);
-        return repository.findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDesc(tenantId, contaId);
+        if (inicio != null && fim != null && inicio.isAfter(fim)) {
+            throw new RegraNegocioException("Periodo inicial nao pode ser posterior ao periodo final");
+        }
+        return repository.filtrar(tenantId, contaId, opcionalUpper(origem), opcionalUpper(natureza),
+                opcionalUpper(status), inicio, fim);
     }
 
     public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId) {
@@ -159,6 +168,10 @@ public class ConciliacaoApplicationService {
             throw new RegraNegocioException("Tipo deve ser ENTRADA ou SAIDA");
         }
         return valor;
+    }
+
+    private String opcionalUpper(String valor) {
+        return valor == null || valor.isBlank() ? null : valor.trim().toUpperCase(Locale.ROOT);
     }
 
     private String obrigatorio(String valor, String campo) {

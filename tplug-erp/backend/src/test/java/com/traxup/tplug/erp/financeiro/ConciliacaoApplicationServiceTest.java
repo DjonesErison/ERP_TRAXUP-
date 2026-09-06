@@ -2,6 +2,8 @@ package com.traxup.tplug.erp.financeiro;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.filial.FilialRepository;
+import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -14,8 +16,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,24 +36,65 @@ class ConciliacaoApplicationServiceTest {
     void deveImportarLancamentoUsandoContaDoMesmoTenant() {
         UUID tenantId = UUID.randomUUID();
         UUID contaId = UUID.randomUUID();
-        ContaFinanceira conta = new ContaFinanceira(tenantId, UUID.randomUUID(), "Banco", "BANCO", UUID.randomUUID());
-        when(contaRepository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
+        ContaFinanceira conta = novaConta(tenantId);
+        prepararContaParaImportacao(tenantId, contaId, conta);
         when(repository.save(any(ConciliacaoLancamento.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        ConciliacaoApplicationService service = novoService();
-        service.importar(tenantId, UUID.randomUUID(), contaId, "ofx", "REF-1", "entrada",
+        novoService().importar(tenantId, UUID.randomUUID(), contaId, "ofx", "REF-1", "entrada",
                 new BigDecimal("50.00"), "Credito", Instant.now());
 
-        verify(contaRepository).findByIdAndTenantId(contaId, tenantId);
+        verify(repository).bloquearContaParaImportacao(tenantId, contaId);
         verify(repository).save(any(ConciliacaoLancamento.class));
+    }
+
+    @Test
+    void deveRetornarLancamentoExistenteQuandoRequisicaoForIdempotente() {
+        UUID tenantId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        Instant ocorridoEm = Instant.parse("2026-09-06T03:00:00Z");
+        ContaFinanceira conta = novaConta(tenantId);
+        ConciliacaoLancamento existente = new ConciliacaoLancamento(
+                tenantId, conta.getFilialId(), contaId, "OFX", "REF-IDEM", "ENTRADA",
+                new BigDecimal("50.00"), "Credito", ocorridoEm, UUID.randomUUID());
+        prepararContaParaImportacao(tenantId, contaId, conta);
+        when(repository.findByTenantIdAndContaFinanceiraIdAndOrigemAndReferenciaExterna(
+                tenantId, contaId, "OFX", "REF-IDEM")).thenReturn(Optional.of(existente));
+
+        ConciliacaoLancamento resultado = novoService().importar(
+                tenantId, UUID.randomUUID(), contaId, "ofx", "REF-IDEM", "entrada",
+                new BigDecimal("50.0000"), "Credito", ocorridoEm);
+
+        assertSame(existente, resultado);
+        verify(repository, never()).save(any(ConciliacaoLancamento.class));
+        verify(auditoria, never()).registrar(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void deveRejeitarMesmaReferenciaComConteudoDiferente() {
+        UUID tenantId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        Instant ocorridoEm = Instant.parse("2026-09-06T03:00:00Z");
+        ContaFinanceira conta = novaConta(tenantId);
+        ConciliacaoLancamento existente = new ConciliacaoLancamento(
+                tenantId, conta.getFilialId(), contaId, "OFX", "REF-CONFLITO", "ENTRADA",
+                new BigDecimal("50.00"), "Credito", ocorridoEm, UUID.randomUUID());
+        prepararContaParaImportacao(tenantId, contaId, conta);
+        when(repository.findByTenantIdAndContaFinanceiraIdAndOrigemAndReferenciaExterna(
+                tenantId, contaId, "OFX", "REF-CONFLITO")).thenReturn(Optional.of(existente));
+
+        assertThrows(RecursoConflitanteException.class, () -> novoService().importar(
+                tenantId, UUID.randomUUID(), contaId, "ofx", "REF-CONFLITO", "entrada",
+                new BigDecimal("51.00"), "Credito", ocorridoEm));
+
+        verify(repository, never()).save(any(ConciliacaoLancamento.class));
     }
 
     @Test
     void deveImportarLoteNaMesmaContaDoTenant() {
         UUID tenantId = UUID.randomUUID();
         UUID contaId = UUID.randomUUID();
-        ContaFinanceira conta = new ContaFinanceira(tenantId, UUID.randomUUID(), "Banco", "BANCO", UUID.randomUUID());
-        when(contaRepository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
+        ContaFinanceira conta = novaConta(tenantId);
+        prepararContaParaImportacao(tenantId, contaId, conta);
         when(repository.save(any(ConciliacaoLancamento.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
         var itens = List.of(
                 new ConciliacaoApplicationService.ImportacaoLancamento("api", "L1", "entrada", new BigDecimal("10.00"), "Credito 1", Instant.now()),
@@ -60,6 +105,7 @@ class ConciliacaoApplicationServiceTest {
 
         assertEquals(2, resultado.size());
         verify(contaRepository, times(2)).findByIdAndTenantId(contaId, tenantId);
+        verify(repository, times(2)).bloquearContaParaImportacao(tenantId, contaId);
         verify(repository, times(2)).save(any(ConciliacaoLancamento.class));
     }
 
@@ -77,7 +123,7 @@ class ConciliacaoApplicationServiceTest {
         ContaFinanceiraMovimento movimento = new ContaFinanceiraMovimento(
                 tenantId, filialId, contaId, "ENTRADA", valor, "Recebimento", UUID.randomUUID());
         when(repository.findByIdAndTenantId(lancamentoId, tenantId)).thenReturn(Optional.of(lancamento));
-        when(movimentoRepository.findAllByTenantIdAndContaFinanceiraIdAndFilialIdAndTipoAndValorAndOcorridoEmBetweenOrderByOcorridoEmAsc(
+        when(movimentoRepository.findCandidatosDisponiveis(
                 tenantId, contaId, filialId, "ENTRADA", valor,
                 ocorridoEm.minusSeconds(259200), ocorridoEm.plusSeconds(259200)))
                 .thenReturn(List.of(movimento));
@@ -85,7 +131,7 @@ class ConciliacaoApplicationServiceTest {
         List<ContaFinanceiraMovimento> sugestoes = novoService().sugerirMovimentos(tenantId, lancamentoId);
 
         assertEquals(1, sugestoes.size());
-        verify(movimentoRepository).findAllByTenantIdAndContaFinanceiraIdAndFilialIdAndTipoAndValorAndOcorridoEmBetweenOrderByOcorridoEmAsc(
+        verify(movimentoRepository).findCandidatosDisponiveis(
                 tenantId, contaId, filialId, "ENTRADA", valor,
                 ocorridoEm.minusSeconds(259200), ocorridoEm.plusSeconds(259200));
     }
@@ -101,15 +147,43 @@ class ConciliacaoApplicationServiceTest {
                 new BigDecimal("75.00"), "Credito", Instant.now(), UUID.randomUUID());
         ContaFinanceiraMovimento movimento = new ContaFinanceiraMovimento(
                 tenantId, filialId, UUID.randomUUID(), "ENTRADA", new BigDecimal("75.00"), "Movimento", UUID.randomUUID());
-        when(repository.findByIdAndTenantId(lancamentoId, tenantId)).thenReturn(Optional.of(lancamento));
-        when(movimentoRepository.findByIdAndTenantId(movimentoId, tenantId)).thenReturn(Optional.of(movimento));
+        when(repository.findByIdAndTenantIdForUpdate(lancamentoId, tenantId)).thenReturn(Optional.of(lancamento));
+        when(movimentoRepository.findByIdAndTenantIdForUpdate(movimentoId, tenantId)).thenReturn(Optional.of(movimento));
 
-        ConciliacaoApplicationService service = novoService();
+        assertThrows(RegraNegocioException.class,
+                () -> novoService().conciliar(tenantId, UUID.randomUUID(), lancamentoId, movimentoId));
+        verify(repository).findByIdAndTenantIdForUpdate(lancamentoId, tenantId);
+        verify(movimentoRepository).findByIdAndTenantIdForUpdate(movimentoId, tenantId);
+    }
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.conciliar(tenantId, UUID.randomUUID(), lancamentoId, movimentoId));
-        verify(repository).findByIdAndTenantId(lancamentoId, tenantId);
-        verify(movimentoRepository).findByIdAndTenantId(movimentoId, tenantId);
+    @Test
+    void naoDeveReutilizarMovimentoEmOutraConciliacao() {
+        UUID tenantId = UUID.randomUUID();
+        UUID lancamentoId = UUID.randomUUID();
+        UUID movimentoId = UUID.randomUUID();
+        UUID filialId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        ConciliacaoLancamento lancamento = new ConciliacaoLancamento(
+                tenantId, filialId, contaId, "OFX", "REF-3", "ENTRADA",
+                new BigDecimal("75.00"), "Credito", Instant.now(), UUID.randomUUID());
+        ContaFinanceiraMovimento movimento = new ContaFinanceiraMovimento(
+                tenantId, filialId, contaId, "ENTRADA", new BigDecimal("75.00"), "Movimento", UUID.randomUUID());
+        when(repository.findByIdAndTenantIdForUpdate(lancamentoId, tenantId)).thenReturn(Optional.of(lancamento));
+        when(movimentoRepository.findByIdAndTenantIdForUpdate(movimentoId, tenantId)).thenReturn(Optional.of(movimento));
+        when(repository.existsByTenantIdAndMovimentoIdAndIdNot(tenantId, movimentoId, lancamentoId)).thenReturn(true);
+
+        assertThrows(RecursoConflitanteException.class,
+                () -> novoService().conciliar(tenantId, UUID.randomUUID(), lancamentoId, movimentoId));
+        verify(repository, never()).save(any(ConciliacaoLancamento.class));
+    }
+
+    private void prepararContaParaImportacao(UUID tenantId, UUID contaId, ContaFinanceira conta) {
+        when(contaRepository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
+        when(repository.bloquearContaParaImportacao(tenantId, contaId)).thenReturn(Optional.of(contaId));
+    }
+
+    private ContaFinanceira novaConta(UUID tenantId) {
+        return new ContaFinanceira(tenantId, UUID.randomUUID(), "Banco", "BANCO", UUID.randomUUID());
     }
 
     private ConciliacaoApplicationService novoService() {

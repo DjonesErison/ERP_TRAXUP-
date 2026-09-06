@@ -4,7 +4,6 @@ import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.estoque.EstoqueMovimentacaoApplicationService;
 import com.traxup.tplug.erp.filial.FilialRepository;
 import com.traxup.tplug.erp.financeiro.ContaReceberApplicationService;
-import com.traxup.tplug.erp.financeiro.pagamento.AjusteComercialCalculadora;
 import com.traxup.tplug.erp.financeiro.pagamento.CondicaoPagamento;
 import com.traxup.tplug.erp.financeiro.pagamento.CondicaoPagamentoParcela;
 import com.traxup.tplug.erp.financeiro.pagamento.CondicaoPagamentoParcelaRepository;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -136,32 +134,26 @@ public class PedidoVendaApplicationService {
         }
 
         if (pedido.getClienteId() != null) {
-            BigDecimal total = itens.stream().map(PedidoVendaItem::getTotalItem).reduce(BigDecimal.ZERO, BigDecimal::add);
-            if (pedido.getCondicaoPagamentoId() == null) {
-                criarParcelaFinanceira(tenantId, usuarioId, pedido, total, LocalDate.now(), 1);
-            } else {
-                CondicaoPagamento condicao = condicaoPagamentoRepository
-                        .findByIdAndTenantId(pedido.getCondicaoPagamentoId(), tenantId)
+            BigDecimal totalLiquido = itens.stream().map(PedidoVendaItem::getTotalItem).reduce(BigDecimal.ZERO, BigDecimal::add);
+            CondicaoPagamento condicao = null;
+            List<CondicaoPagamentoParcela> parcelas = List.of();
+            if (pedido.getCondicaoPagamentoId() != null) {
+                condicao = condicaoPagamentoRepository.findByIdAndTenantId(pedido.getCondicaoPagamentoId(), tenantId)
                         .orElseThrow(() -> new RecursoNaoEncontradoException("Condicao de pagamento nao encontrada para o tenant informado"));
-                AjusteComercialCalculadora.Resultado ajustes = AjusteComercialCalculadora.calcular(total, condicao);
-                if (ajustes.entrada().signum() > 0) {
+                parcelas = parcelaRepository.findAllByTenantIdAndCondicaoPagamentoIdOrderByNumeroAsc(
+                        tenantId, pedido.getCondicaoPagamentoId());
+            }
+
+            PedidoVendaPlanoFinanceiroCalculadora.Plano plano = PedidoVendaPlanoFinanceiroCalculadora
+                    .calcular(totalLiquido, condicao, parcelas, LocalDate.now());
+            for (PedidoVendaPlanoFinanceiroCalculadora.Titulo titulo : plano.titulos()) {
+                if ("ENTRADA".equals(titulo.tipo())) {
                     contaReceberService.criar(tenantId, usuarioId, pedido.getFilialId(), pedido.getClienteId(),
                             "PV-" + pedido.getNumero() + "-ENTRADA",
                             "Entrada do faturamento pedido de venda " + pedido.getNumero(),
-                            ajustes.entrada(), LocalDate.now());
-                }
-                if (ajustes.saldoParcelar().signum() > 0) {
-                    List<CondicaoPagamentoParcela> parcelas = parcelaRepository
-                            .findAllByTenantIdAndCondicaoPagamentoIdOrderByNumeroAsc(tenantId, pedido.getCondicaoPagamentoId());
-                    BigDecimal acumulado = BigDecimal.ZERO;
-                    for (int i = 0; i < parcelas.size(); i++) {
-                        CondicaoPagamentoParcela parcela = parcelas.get(i);
-                        BigDecimal valor = i == parcelas.size() - 1
-                                ? ajustes.saldoParcelar().subtract(acumulado)
-                                : ajustes.saldoParcelar().multiply(parcela.getPercentual()).divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
-                        acumulado = acumulado.add(valor);
-                        criarParcelaFinanceira(tenantId, usuarioId, pedido, valor, LocalDate.now().plusDays(parcela.getDias()), parcela.getNumero());
-                    }
+                            titulo.valor(), titulo.vencimento());
+                } else {
+                    criarParcelaFinanceira(tenantId, usuarioId, pedido, titulo.valor(), titulo.vencimento(), titulo.numero());
                 }
             }
         }

@@ -14,6 +14,17 @@ Este incremento aplica ao financeiro do faturamento os ajustes opcionais configu
 
 Percentuais e valores fixos usam a configuracao tenant-scoped da condicao. Desconto fixo maior que o total liquido e entrada maior que o total financeiro sao rejeitados. O faturamento, estoque e geracao dos titulos continuam na mesma transacao.
 
+## Previa financeira do pedido
+
+Antes do faturamento, `GET /api/v1/vendas/pedidos/{pedidoId}/previa-financeira` permite consultar como o pedido sera convertido em titulos financeiros.
+
+- Exige `VENDA_PEDIDO_LER` e nao gera qualquer mutacao, auditoria, movimento de estoque ou conta a receber.
+- Pedido e condicao de pagamento sao buscados sempre pelo tenant corrente.
+- Retorna total liquido, desconto, juros, entrada, total financeiro, saldo a parcelar e os titulos previstos com tipo, numero, vencimento e valor.
+- Sem condicao configurada, a previa mostra uma unica parcela no dia corrente, preservando o comportamento de compatibilidade do faturamento.
+- Com entrada, a previa apresenta o titulo `ENTRADA` separado e distribui somente o saldo restante pela grade da condicao.
+- A mesma calculadora deterministica usada no faturamento e reutilizada na previa, evitando divergencia de regra comercial entre consulta e execucao.
+
 ## Separacoes importantes
 
 - Juros de venda sao opcionais e existem somente quando a condicao de pagamento os configura explicitamente.

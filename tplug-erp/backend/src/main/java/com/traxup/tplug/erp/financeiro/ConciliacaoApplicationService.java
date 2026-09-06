@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @Service
 @Transactional(readOnly = true)
 public class ConciliacaoApplicationService {
+    private static final Duration JANELA_SUGESTAO = Duration.ofDays(3);
     private final ConciliacaoLancamentoRepository repository;
     private final ContaFinanceiraApplicationService contaFinanceiraService;
     private final ContaFinanceiraMovimentoRepository movimentoRepository;
@@ -33,6 +35,20 @@ public class ConciliacaoApplicationService {
     public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId) {
         contaFinanceiraService.buscar(tenantId, contaId);
         return repository.findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDesc(tenantId, contaId);
+    }
+
+    public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId) {
+        ConciliacaoLancamento lancamento = repository.findByIdAndTenantId(lancamentoId, tenantId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Lancamento de conciliacao nao encontrado para o tenant informado"));
+        if (!"PENDENTE".equals(lancamento.getStatus())) {
+            throw new RecursoConflitanteException("Somente lancamento PENDENTE pode receber sugestoes de conciliacao");
+        }
+        Instant inicio = lancamento.getOcorridoEm().minus(JANELA_SUGESTAO);
+        Instant fim = lancamento.getOcorridoEm().plus(JANELA_SUGESTAO);
+        return movimentoRepository
+                .findAllByTenantIdAndContaFinanceiraIdAndFilialIdAndTipoAndValorAndOcorridoEmBetweenOrderByOcorridoEmAsc(
+                        tenantId, lancamento.getContaFinanceiraId(), lancamento.getFilialId(), lancamento.getTipo(),
+                        lancamento.getValor(), inicio, fim);
     }
 
     @Transactional

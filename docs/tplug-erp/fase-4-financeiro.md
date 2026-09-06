@@ -102,6 +102,11 @@ O cadastro financeiro de pagamento e configuravel por tenant, sem acoplamento a 
 - Cada parcela define numero sequencial, quantidade de dias apos o faturamento e percentual do total.
 - A soma dos percentuais deve ser exatamente 100% e a numeracao deve iniciar em 1 sem lacunas.
 - Dias negativos e percentuais nulos/negativos sao bloqueados na aplicacao e por constraints do PostgreSQL.
+- A condicao pode configurar opcionalmente `juros`, `desconto` e `entrada`, cada um como `PERCENTUAL` ou `VALOR_FIXO`.
+- Cada ajuste precisa informar tipo e valor em conjunto e ter valor positivo; desconto e entrada percentuais nao podem superar 100%.
+- Esses ajustes sao regras comerciais reutilizaveis da condicao e ficam isolados por tenant como o restante da configuracao.
+- Neste incremento os ajustes sao apenas cadastrados e consultados. A incidencia sobre total da venda, documento fiscal, entrada e distribuicao das parcelas nao e aplicada ate que a regra fiscal/financeira correspondente seja definida explicitamente.
+- Override de juros, desconto ou entrada diretamente no pedido permanece fora deste incremento e, se adotado, devera possuir permissao e auditoria especificas.
 - Todas as consultas e alteracoes sao isoladas por tenant.
 - Criacao e desativacao geram auditoria.
 - RBAC: `FINANCEIRO_PAGAMENTO_CONFIG_LER` e `FINANCEIRO_PAGAMENTO_CONFIG_EDITAR`.
@@ -125,6 +130,6 @@ Conta bancaria compartilhada entre filiais, limite/cheque especial e conciliacao
 ### Proximos blocos planejados
 
 1. conciliacao, taxas e integracoes bancarias/PSP permanecem condicionadas ao provedor concreto escolhido;
-2. ampliar condicoes comerciais com juros, desconto e entrada quando o modelo fiscal/financeiro exigir.
+2. aplicar juros, desconto e entrada configurados na condicao ao fluxo de venda/faturamento somente apos definir incidencia, distribuicao entre parcelas e reflexo fiscal/financeiro.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

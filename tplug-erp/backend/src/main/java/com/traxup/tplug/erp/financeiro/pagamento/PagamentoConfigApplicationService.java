@@ -59,12 +59,29 @@ public class PagamentoConfigApplicationService {
     @Transactional
     public CondicaoPagamento criarCondicao(UUID tenantId, UUID usuarioId, String codigo, String nome,
                                            List<ParcelaDefinicao> parcelas) {
+        return criarCondicao(tenantId, usuarioId, codigo, nome, null, null, null, parcelas);
+    }
+
+    @Transactional
+    public CondicaoPagamento criarCondicao(UUID tenantId, UUID usuarioId, String codigo, String nome,
+                                           AjusteDefinicao juros, AjusteDefinicao desconto, AjusteDefinicao entrada,
+                                           List<ParcelaDefinicao> parcelas) {
         String codigoNormalizado = obrigatorio(codigo, "Codigo").toUpperCase();
         if (condicaoRepository.existsByTenantIdAndCodigoIgnoreCase(tenantId, codigoNormalizado)) {
             throw new IllegalArgumentException("Codigo da condicao de pagamento ja cadastrado para o tenant");
         }
         validarParcelas(parcelas);
-        CondicaoPagamento condicao = condicaoRepository.save(new CondicaoPagamento(tenantId, codigoNormalizado, obrigatorio(nome, "Nome")));
+        validarAjuste("Juros", juros, false);
+        validarAjuste("Desconto", desconto, true);
+        validarAjuste("Entrada", entrada, true);
+
+        CondicaoPagamento condicao = condicaoRepository.save(new CondicaoPagamento(
+                tenantId,
+                codigoNormalizado,
+                obrigatorio(nome, "Nome"),
+                tipo(juros), valor(juros),
+                tipo(desconto), valor(desconto),
+                tipo(entrada), valor(entrada)));
         for (ParcelaDefinicao parcela : parcelas) {
             parcelaRepository.save(new CondicaoPagamentoParcela(tenantId, condicao.getId(), parcela.numero(), parcela.dias(), parcela.percentual()));
         }
@@ -102,10 +119,28 @@ public class PagamentoConfigApplicationService {
         if (total.compareTo(new BigDecimal("100.0000")) != 0) throw new IllegalArgumentException("Soma dos percentuais das parcelas deve ser 100");
     }
 
+    private void validarAjuste(String nome, AjusteDefinicao ajuste, boolean percentualLimitado) {
+        if (ajuste == null) return;
+        if (ajuste.tipo() == null || ajuste.valor() == null) {
+            throw new IllegalArgumentException(nome + " deve informar tipo e valor");
+        }
+        if (ajuste.valor().signum() <= 0) {
+            throw new IllegalArgumentException(nome + " deve ser maior que zero");
+        }
+        if (percentualLimitado && ajuste.tipo() == AjusteComercialTipo.PERCENTUAL
+                && ajuste.valor().compareTo(new BigDecimal("100.0000")) > 0) {
+            throw new IllegalArgumentException(nome + " percentual nao pode superar 100");
+        }
+    }
+
+    private AjusteComercialTipo tipo(AjusteDefinicao ajuste) { return ajuste == null ? null : ajuste.tipo(); }
+    private BigDecimal valor(AjusteDefinicao ajuste) { return ajuste == null ? null : ajuste.valor(); }
+
     private String obrigatorio(String valor, String campo) {
         if (valor == null || valor.isBlank()) throw new IllegalArgumentException(campo + " e obrigatorio");
         return valor.trim();
     }
 
+    public record AjusteDefinicao(AjusteComercialTipo tipo, BigDecimal valor) {}
     public record ParcelaDefinicao(int numero, int dias, BigDecimal percentual) {}
 }

@@ -54,6 +54,26 @@ public class ContaReceberApplicationService {
     public ContaReceber criar(UUID tenantId, UUID usuarioId, UUID filialId, UUID clienteId,
                               String numeroDocumento, String descricao, BigDecimal valorOriginal,
                               LocalDate vencimento) {
+        return criarInterno(tenantId, usuarioId, filialId, clienteId, numeroDocumento, descricao,
+                valorOriginal, vencimento, null, null, null);
+    }
+
+    @Transactional
+    public ContaReceber criarComOrigem(UUID tenantId, UUID usuarioId, UUID filialId, UUID clienteId,
+                                       String numeroDocumento, String descricao, BigDecimal valorOriginal,
+                                       LocalDate vencimento, String origemTipo, UUID origemId,
+                                       String origemReferencia) {
+        String tipo = normalizarObrigatorio(origemTipo, "Tipo da origem");
+        String referencia = normalizarObrigatorio(origemReferencia, "Referencia da origem");
+        if (origemId == null) throw new RegraNegocioException("Identificador da origem e obrigatorio");
+        return criarInterno(tenantId, usuarioId, filialId, clienteId, numeroDocumento, descricao,
+                valorOriginal, vencimento, tipo, origemId, referencia);
+    }
+
+    private ContaReceber criarInterno(UUID tenantId, UUID usuarioId, UUID filialId, UUID clienteId,
+                                      String numeroDocumento, String descricao, BigDecimal valorOriginal,
+                                      LocalDate vencimento, String origemTipo, UUID origemId,
+                                      String origemReferencia) {
         if (!filialRepository.existsByIdAndTenantId(filialId, tenantId)) {
             throw new RecursoNaoEncontradoException("Filial nao encontrada para o tenant informado");
         }
@@ -78,11 +98,17 @@ public class ContaReceberApplicationService {
                 normalizarObrigatorio(descricao, "Descricao"),
                 valorOriginal,
                 vencimento,
-                usuarioId));
+                usuarioId,
+                origemTipo,
+                origemId,
+                origemReferencia));
 
+        String detalhe = "clienteId=" + clienteId + ";valor=" + valorOriginal;
+        if (origemTipo != null) {
+            detalhe += ";origemTipo=" + origemTipo + ";origemId=" + origemId + ";origemReferencia=" + origemReferencia;
+        }
         auditoria.registrar(tenantId, usuarioId, null, filialId,
-                "CRIAR", "CONTA_RECEBER", conta.getId(),
-                "clienteId=" + clienteId + ";valor=" + valorOriginal);
+                "CRIAR", "CONTA_RECEBER", conta.getId(), detalhe);
         return conta;
     }
 

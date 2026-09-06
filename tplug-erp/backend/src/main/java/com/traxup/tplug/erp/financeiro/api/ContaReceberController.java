@@ -33,6 +33,15 @@ public class ContaReceberController {
         return service.listar(tenantContext.tenantId()).stream().map(ContaReceberResponse::from).toList();
     }
 
+    @GetMapping("/origens/{origemTipo}/{origemId}")
+    @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_LER')")
+    public List<ContaReceberResponse> listarPorOrigem(@PathVariable String origemTipo,
+                                                       @PathVariable UUID origemId) {
+        return service.listarPorOrigem(tenantContext.tenantId(), origemTipo, origemId).stream()
+                .map(ContaReceberResponse::from)
+                .toList();
+    }
+
     @GetMapping("/{contaId}")
     @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_LER')")
     public ContaReceberResponse buscar(@PathVariable UUID contaId) {

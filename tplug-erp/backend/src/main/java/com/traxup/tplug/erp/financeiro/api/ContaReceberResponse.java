@@ -18,6 +18,9 @@ public record ContaReceberResponse(
         BigDecimal saldoAberto,
         LocalDate vencimento,
         String status,
+        String origemTipo,
+        UUID origemId,
+        String origemReferencia,
         Instant recebidoEm,
         Instant criadoEm,
         Instant atualizadoEm
@@ -26,7 +29,7 @@ public record ContaReceberResponse(
         return new ContaReceberResponse(
                 conta.getId(), conta.getFilialId(), conta.getClienteId(), conta.getNumeroDocumento(),
                 conta.getDescricao(), conta.getValorOriginal(), conta.getValorRecebido(), conta.getSaldoAberto(),
-                conta.getVencimento(), conta.getStatus(), conta.getRecebidoEm(), conta.getCriadoEm(),
-                conta.getAtualizadoEm());
+                conta.getVencimento(), conta.getStatus(), conta.getOrigemTipo(), conta.getOrigemId(),
+                conta.getOrigemReferencia(), conta.getRecebidoEm(), conta.getCriadoEm(), conta.getAtualizadoEm());
     }
 }

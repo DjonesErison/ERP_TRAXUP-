@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,6 +37,22 @@ class ContaReceberApplicationServiceTest {
 
         assertThrows(RecursoNaoEncontradoException.class, () -> service.buscar(tenantId, contaId));
         verify(repository).findByIdAndTenantId(contaId, tenantId);
+    }
+
+    @Test
+    void deveListarOrigemSomenteNoTenantInformadoENormalizarTipo() {
+        UUID tenantId = UUID.randomUUID();
+        UUID origemId = UUID.randomUUID();
+        when(repository.findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDesc(
+                tenantId, "PEDIDO_VENDA", origemId)).thenReturn(List.of());
+
+        ContaReceberApplicationService service = new ContaReceberApplicationService(
+                repository, recebimentoRepository, filialRepository, pessoaRepository, auditoria);
+
+        service.listarPorOrigem(tenantId, " pedido_venda ", origemId);
+
+        verify(repository).findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDesc(
+                tenantId, "PEDIDO_VENDA", origemId);
     }
 
     @Test

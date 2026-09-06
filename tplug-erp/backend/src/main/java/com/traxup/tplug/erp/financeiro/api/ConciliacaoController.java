@@ -46,6 +46,20 @@ public class ConciliacaoController {
                 request.descricao(), request.ocorridoEm()));
     }
 
+    @PostMapping("/contas/{contaId}/lancamentos/lote")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
+    public List<ConciliacaoLancamentoResponse> importarLote(@PathVariable UUID contaId,
+                                                            @Valid @RequestBody ImportarConciliacaoLoteRequest request) {
+        var itens = request.lancamentos().stream()
+                .map(item -> new ConciliacaoApplicationService.ImportacaoLancamento(
+                        item.origem(), item.referenciaExterna(), item.tipo(), item.valor(),
+                        item.descricao(), item.ocorridoEm()))
+                .toList();
+        return service.importarLote(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId, itens).stream()
+                .map(ConciliacaoLancamentoResponse::from).toList();
+    }
+
     @PostMapping("/lancamentos/{lancamentoId}/conciliar")
     @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
     public ConciliacaoLancamentoResponse conciliar(@PathVariable UUID lancamentoId,

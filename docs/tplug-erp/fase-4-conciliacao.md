@@ -53,16 +53,25 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 - A tabela possui FKs compostas por tenant para conta financeira e filial, alem de unicidade por `(tenant, conta, provedor)`.
 - Esta base permite adicionar adaptadores concretos sem acoplar credenciais ou regras especificas ao dominio de conciliacao.
 
+## Sincronizacao incremental e checkpoint
+
+- Cada integracao pode armazenar um `checkpoint` opaco de ate 500 caracteres e a data/hora da ultima sincronizacao concluida.
+- O checkpoint representa apenas a posicao operacional do provedor; ele nao deve conter token, chave, certificado, senha ou qualquer credencial.
+- A atualizacao e sempre localizada por `id + tenant`, exige integracao ativa e usa versionamento otimista para impedir perda silenciosa de checkpoint em atualizacoes concorrentes.
+- Registrar sincronizacao exige `FINANCEIRO_CONCILIACAO_EDITAR` e gera auditoria `SINCRONIZAR` sem copiar o valor bruto do checkpoint para o log.
+- Adaptadores concretos devem atualizar o checkpoint somente apos a importacao correspondente concluir com sucesso; falhas de importacao nao podem avancar a posicao de sincronizacao.
+- Provedores sem cursor podem deixar o checkpoint nulo e utilizar apenas `sincronizado_em` como marcador operacional.
+
 ## RBAC e auditoria
 
 - `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos, filtros, sugestoes e configuracoes de integracao.
-- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, classifica, concilia e configura integracoes.
-- Nova importacao gera auditoria `IMPORTAR`; classificacao gera `CLASSIFICAR`; matching efetivado gera `CONCILIAR`.
+- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, classifica, concilia, configura integracoes e registra sincronizacoes.
+- Nova importacao gera auditoria `IMPORTAR`; classificacao gera `CLASSIFICAR`; matching efetivado gera `CONCILIAR`; sincronizacao gera `SINCRONIZAR`.
 
 ## Proximos incrementos
 
-1. primeiro adaptador concreto de banco/PSP sobre a base de integracoes, mantendo segredos fora do banco operacional;
-2. sincronizacao incremental e checkpoint por integracao;
+1. primeiro adaptador concreto de banco/PSP sobre a base de integracoes e checkpoint, mantendo segredos fora do banco operacional;
+2. orquestrar importacao + avancar checkpoint na mesma transacao do adaptador concreto;
 3. regras de contabilizacao/liquidacao especificas quando o provedor exigir.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

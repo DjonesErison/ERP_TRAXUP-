@@ -15,6 +15,7 @@ public record ContaPagarResponse(
         String descricao,
         BigDecimal valorOriginal,
         BigDecimal valorPago,
+        BigDecimal saldoAberto,
         LocalDate vencimento,
         String status,
         UUID usuarioId,
@@ -25,7 +26,7 @@ public record ContaPagarResponse(
     public static ContaPagarResponse from(ContaPagar conta) {
         return new ContaPagarResponse(conta.getId(), conta.getFilialId(), conta.getFornecedorId(),
                 conta.getNumeroDocumento(), conta.getDescricao(), conta.getValorOriginal(), conta.getValorPago(),
-                conta.getVencimento(), conta.getStatus(), conta.getUsuarioId(), conta.getPagoEm(),
+                conta.getSaldoAberto(), conta.getVencimento(), conta.getStatus(), conta.getUsuarioId(), conta.getPagoEm(),
                 conta.getCriadoEm(), conta.getAtualizadoEm());
     }
 }

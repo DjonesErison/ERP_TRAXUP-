@@ -48,6 +48,14 @@ public class PedidoVendaController {
                 request.numero(), request.observacao(), tenantContext.usuarioIdOuNulo()));
     }
 
+    @PostMapping("/{pedidoId}/pagamento")
+    @PreAuthorize("hasAuthority('VENDA_PEDIDO_EDITAR')")
+    public PedidoVendaResponse configurarPagamento(@PathVariable UUID pedidoId,
+                                                    @Valid @RequestBody ConfigurarPagamentoPedidoVendaRequest request) {
+        return PedidoVendaResponse.from(service.configurarPagamento(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(),
+                pedidoId, request.formaPagamentoId(), request.condicaoPagamentoId()));
+    }
+
     @PostMapping("/{pedidoId}/abrir")
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_EDITAR')")
     public PedidoVendaResponse abrir(@PathVariable UUID pedidoId) {

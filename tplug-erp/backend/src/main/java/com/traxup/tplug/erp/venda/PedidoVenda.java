@@ -21,6 +21,8 @@ public class PedidoVenda {
     @Column(nullable = false, length = 20) private String status;
     @Column(length = 500) private String observacao;
     @Column(name = "usuario_id") private UUID usuarioId;
+    @Column(name = "forma_pagamento_id") private UUID formaPagamentoId;
+    @Column(name = "condicao_pagamento_id") private UUID condicaoPagamentoId;
     @Column(name = "criado_em", nullable = false) private Instant criadoEm;
     @Column(name = "atualizado_em", nullable = false) private Instant atualizadoEm;
 
@@ -46,6 +48,12 @@ public class PedidoVenda {
 
     @PreUpdate void preUpdate() { atualizadoEm = Instant.now(); }
 
+    public void configurarPagamento(UUID formaPagamentoId, UUID condicaoPagamentoId) {
+        if (!"RASCUNHO".equals(status)) throw new IllegalArgumentException("Pagamento so pode ser configurado em pedido RASCUNHO");
+        this.formaPagamentoId = formaPagamentoId;
+        this.condicaoPagamentoId = condicaoPagamentoId;
+    }
+
     public void abrir() {
         if (!"RASCUNHO".equals(status)) throw new IllegalArgumentException("Somente pedido de venda em RASCUNHO pode ser aberto");
         status = "ABERTO";
@@ -69,6 +77,8 @@ public class PedidoVenda {
     public String getStatus() { return status; }
     public String getObservacao() { return observacao; }
     public UUID getUsuarioId() { return usuarioId; }
+    public UUID getFormaPagamentoId() { return formaPagamentoId; }
+    public UUID getCondicaoPagamentoId() { return condicaoPagamentoId; }
     public Instant getCriadoEm() { return criadoEm; }
     public Instant getAtualizadoEm() { return atualizadoEm; }
 }

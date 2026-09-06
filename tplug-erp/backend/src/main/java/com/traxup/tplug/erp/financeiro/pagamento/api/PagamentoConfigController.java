@@ -61,7 +61,7 @@ public class PagamentoConfigController {
     @PreAuthorize("hasAuthority('FINANCEIRO_PAGAMENTO_CONFIG_EDITAR')")
     public CondicaoResponse criarCondicao(@RequestBody CriarCondicaoRequest request) {
         UUID tenantId = tenantContext.tenantId();
-        List<PagamentoConfigApplicationService.ParcelaDefinicao> parcelas = request.parcelas().stream()
+        List<PagamentoConfigApplicationService.ParcelaDefinicao> parcelas = request.parcelas() == null ? null : request.parcelas().stream()
                 .map(p -> new PagamentoConfigApplicationService.ParcelaDefinicao(p.numero(), p.dias(), p.percentual())).toList();
         CondicaoPagamento condicao = service.criarCondicao(tenantId, tenantContext.usuarioIdOuNulo(), request.codigo(), request.nome(), parcelas);
         return CondicaoResponse.from(condicao, service.listarParcelas(tenantId, condicao.getId()));

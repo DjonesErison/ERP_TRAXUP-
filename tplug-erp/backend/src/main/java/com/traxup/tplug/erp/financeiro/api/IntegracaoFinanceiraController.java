@@ -2,6 +2,7 @@ package com.traxup.tplug.erp.financeiro.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.financeiro.integracao.IntegracaoFinanceiraApplicationService;
+import com.traxup.tplug.erp.financeiro.integracao.IntegracaoFinanceiraSincronizacaoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,10 +15,14 @@ import java.util.UUID;
 @RequestMapping("/api/v1/financeiro/integracoes")
 public class IntegracaoFinanceiraController {
     private final IntegracaoFinanceiraApplicationService service;
+    private final IntegracaoFinanceiraSincronizacaoService sincronizacaoService;
     private final TenantContext tenantContext;
 
-    public IntegracaoFinanceiraController(IntegracaoFinanceiraApplicationService service, TenantContext tenantContext) {
+    public IntegracaoFinanceiraController(IntegracaoFinanceiraApplicationService service,
+                                          IntegracaoFinanceiraSincronizacaoService sincronizacaoService,
+                                          TenantContext tenantContext) {
         this.service = service;
+        this.sincronizacaoService = sincronizacaoService;
         this.tenantContext = tenantContext;
     }
 
@@ -46,6 +51,20 @@ public class IntegracaoFinanceiraController {
         return IntegracaoFinanceiraResponse.from(service.registrarSincronizacao(
                 tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), integracaoId,
                 request.checkpoint(), request.sincronizadoEm()));
+    }
+
+    @PostMapping("/{integracaoId}/sincronizar-lote")
+    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
+    public SincronizarIntegracaoFinanceiraResponse sincronizarLote(
+            @PathVariable UUID integracaoId,
+            @Valid @RequestBody SincronizarIntegracaoFinanceiraRequest request) {
+        var itens = request.lancamentos().stream()
+                .map(item -> new IntegracaoFinanceiraSincronizacaoService.LancamentoExterno(
+                        item.referenciaExterna(), item.tipo(), item.valor(), item.descricao(), item.ocorridoEm()))
+                .toList();
+        return SincronizarIntegracaoFinanceiraResponse.from(sincronizacaoService.sincronizar(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), integracaoId,
+                itens, request.checkpoint(), request.sincronizadoEm()));
     }
 
     @PostMapping("/{integracaoId}/desativar")

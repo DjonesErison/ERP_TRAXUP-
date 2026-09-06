@@ -3,6 +3,7 @@ package com.traxup.tplug.erp.venda;
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.estoque.EstoqueMovimentacaoApplicationService;
 import com.traxup.tplug.erp.filial.FilialRepository;
+import com.traxup.tplug.erp.financeiro.ContaReceberApplicationService;
 import com.traxup.tplug.erp.pessoa.PessoaRepository;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,11 +13,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -28,6 +29,7 @@ class PedidoVendaApplicationServiceTest {
     @Mock FilialRepository filialRepository;
     @Mock PessoaRepository pessoaRepository;
     @Mock EstoqueMovimentacaoApplicationService estoqueMovimentacaoService;
+    @Mock ContaReceberApplicationService contaReceberService;
     @Mock AuditoriaApplicationService auditoria;
 
     private PedidoVendaApplicationService service;
@@ -35,7 +37,7 @@ class PedidoVendaApplicationServiceTest {
     @BeforeEach
     void setUp() {
         service = new PedidoVendaApplicationService(repository, itemRepository, filialRepository,
-                pessoaRepository, estoqueMovimentacaoService, auditoria);
+                pessoaRepository, estoqueMovimentacaoService, contaReceberService, auditoria);
     }
 
     @Test
@@ -71,10 +73,42 @@ class PedidoVendaApplicationServiceTest {
                 eq("SAIDA"), eq(new BigDecimal("2.0000")), contains(pedidoId.toString()), eq(usuarioId));
         verify(estoqueMovimentacaoService).movimentar(eq(tenantId), eq(filialId), eq("GRADE"), eq(gradeId),
                 eq("SAIDA"), eq(new BigDecimal("1.0000")), contains(pedidoId.toString()), eq(usuarioId));
+        verifyNoInteractions(contaReceberService);
         verify(pedido).faturar();
         verify(repository).save(pedido);
         verify(auditoria).registrar(eq(tenantId), eq(usuarioId), isNull(), eq(filialId),
                 eq("FATURAR"), eq("PEDIDO_VENDA"), eq(pedidoId), eq("itens=2"));
+    }
+
+    @Test
+    void deveGerarContaReceberAoFaturarPedidoComCliente() {
+        UUID tenantId = UUID.randomUUID();
+        UUID filialId = UUID.randomUUID();
+        UUID pedidoId = UUID.randomUUID();
+        UUID clienteId = UUID.randomUUID();
+        UUID usuarioId = UUID.randomUUID();
+
+        PedidoVenda pedido = mock(PedidoVenda.class);
+        when(pedido.getId()).thenReturn(pedidoId);
+        when(pedido.getFilialId()).thenReturn(filialId);
+        when(pedido.getClienteId()).thenReturn(clienteId);
+        when(pedido.getNumero()).thenReturn("PV-100");
+        when(pedido.getStatus()).thenReturn("ABERTO");
+        when(repository.findByIdAndTenantId(pedidoId, tenantId)).thenReturn(Optional.of(pedido));
+
+        PedidoVendaItem item = mock(PedidoVendaItem.class);
+        when(item.getProdutoId()).thenReturn(UUID.randomUUID());
+        when(item.getGradeId()).thenReturn(null);
+        when(item.getQuantidade()).thenReturn(BigDecimal.ONE);
+        when(item.getTotalItem()).thenReturn(new BigDecimal("125.50"));
+        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId))
+                .thenReturn(List.of(item));
+
+        service.faturar(tenantId, usuarioId, pedidoId);
+
+        verify(contaReceberService).criar(
+                eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId), eq("PV-PV-100"),
+                contains("PV-100"), eq(new BigDecimal("125.50")), eq(LocalDate.now()));
     }
 
     @Test
@@ -87,6 +121,7 @@ class PedidoVendaApplicationServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> service.faturar(tenantId, UUID.randomUUID(), pedidoId));
         verifyNoInteractions(estoqueMovimentacaoService);
+        verifyNoInteractions(contaReceberService);
         verify(itemRepository, never()).findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(any(), any());
     }
 

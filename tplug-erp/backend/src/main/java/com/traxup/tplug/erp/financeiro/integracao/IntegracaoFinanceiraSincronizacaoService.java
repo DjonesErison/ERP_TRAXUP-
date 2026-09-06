@@ -31,7 +31,7 @@ public class IntegracaoFinanceiraSincronizacaoService {
     public ResultadoSincronizacao sincronizar(UUID tenantId, UUID usuarioId, UUID integracaoId,
                                                List<LancamentoExterno> lancamentos,
                                                String checkpoint, Instant sincronizadoEm) {
-        IntegracaoFinanceira integracao = repository.findByIdAndTenantId(integracaoId, tenantId)
+        IntegracaoFinanceira integracao = repository.findByIdAndTenantIdForUpdate(integracaoId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Integracao financeira nao encontrada para o tenant informado"));
         if (!integracao.isAtivo()) {

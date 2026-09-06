@@ -11,10 +11,15 @@ public record ContaFinanceiraMovimentoResponse(
         String tipo,
         BigDecimal valor,
         String descricao,
+        String origemTipo,
+        UUID origemId,
+        String origemReferencia,
         Instant ocorridoEm
 ) {
     public static ContaFinanceiraMovimentoResponse from(ContaFinanceiraMovimento movimento) {
         return new ContaFinanceiraMovimentoResponse(movimento.getId(), movimento.getContaFinanceiraId(),
-                movimento.getTipo(), movimento.getValor(), movimento.getDescricao(), movimento.getOcorridoEm());
+                movimento.getTipo(), movimento.getValor(), movimento.getDescricao(),
+                movimento.getOrigemTipo(), movimento.getOrigemId(), movimento.getOrigemReferencia(),
+                movimento.getOcorridoEm());
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -39,6 +40,13 @@ public class ContaReceberApplicationService {
         return repository.findAllByTenantIdOrderByVencimentoAscCriadoEmDesc(tenantId);
     }
 
+    public List<ContaReceber> listarPorOrigem(UUID tenantId, String origemTipo, UUID origemId) {
+        if (origemId == null) throw new RegraNegocioException("Identificador da origem e obrigatorio");
+        String tipo = normalizarObrigatorio(origemTipo, "Tipo da origem").toUpperCase(Locale.ROOT);
+        return repository.findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDesc(
+                tenantId, tipo, origemId);
+    }
+
     public ContaReceber buscar(UUID tenantId, UUID contaId) {
         return repository.findByIdAndTenantId(contaId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
@@ -63,7 +71,7 @@ public class ContaReceberApplicationService {
                                        String numeroDocumento, String descricao, BigDecimal valorOriginal,
                                        LocalDate vencimento, String origemTipo, UUID origemId,
                                        String origemReferencia) {
-        String tipo = normalizarObrigatorio(origemTipo, "Tipo da origem");
+        String tipo = normalizarObrigatorio(origemTipo, "Tipo da origem").toUpperCase(Locale.ROOT);
         String referencia = normalizarObrigatorio(origemReferencia, "Referencia da origem");
         if (origemId == null) throw new RegraNegocioException("Identificador da origem e obrigatorio");
         return criarInterno(tenantId, usuarioId, filialId, clienteId, numeroDocumento, descricao,

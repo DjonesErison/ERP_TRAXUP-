@@ -24,6 +24,8 @@ import java.util.UUID;
 @Service
 @Transactional(readOnly = true)
 public class PedidoVendaApplicationService {
+    private static final String ORIGEM_PEDIDO_VENDA = "PEDIDO_VENDA";
+
     private final PedidoVendaRepository repository;
     private final PedidoVendaItemRepository itemRepository;
     private final FilialRepository filialRepository;
@@ -149,10 +151,10 @@ public class PedidoVendaApplicationService {
                     .calcular(totalLiquido, condicao, parcelas, LocalDate.now());
             for (PedidoVendaPlanoFinanceiroCalculadora.Titulo titulo : plano.titulos()) {
                 if ("ENTRADA".equals(titulo.tipo())) {
-                    contaReceberService.criar(tenantId, usuarioId, pedido.getFilialId(), pedido.getClienteId(),
+                    contaReceberService.criarComOrigem(tenantId, usuarioId, pedido.getFilialId(), pedido.getClienteId(),
                             "PV-" + pedido.getNumero() + "-ENTRADA",
                             "Entrada do faturamento pedido de venda " + pedido.getNumero(),
-                            titulo.valor(), titulo.vencimento());
+                            titulo.valor(), titulo.vencimento(), ORIGEM_PEDIDO_VENDA, pedido.getId(), "ENTRADA");
                 } else {
                     criarParcelaFinanceira(tenantId, usuarioId, pedido, titulo.valor(), titulo.vencimento(), titulo.numero());
                 }
@@ -168,10 +170,10 @@ public class PedidoVendaApplicationService {
 
     private void criarParcelaFinanceira(UUID tenantId, UUID usuarioId, PedidoVenda pedido, BigDecimal valor,
                                         LocalDate vencimento, int numeroParcela) {
-        contaReceberService.criar(tenantId, usuarioId, pedido.getFilialId(), pedido.getClienteId(),
+        contaReceberService.criarComOrigem(tenantId, usuarioId, pedido.getFilialId(), pedido.getClienteId(),
                 "PV-" + pedido.getNumero() + "-" + numeroParcela,
                 "Faturamento pedido de venda " + pedido.getNumero() + " parcela " + numeroParcela,
-                valor, vencimento);
+                valor, vencimento, ORIGEM_PEDIDO_VENDA, pedido.getId(), "PARCELA:" + numeroParcela);
     }
 
     @Transactional

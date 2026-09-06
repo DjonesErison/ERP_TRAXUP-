@@ -75,7 +75,9 @@ class PedidoVendaApplicationServiceTest {
         PedidoVendaItem item = mock(PedidoVendaItem.class); when(item.getProdutoId()).thenReturn(UUID.randomUUID()); when(item.getGradeId()).thenReturn(null); when(item.getQuantidade()).thenReturn(BigDecimal.ONE); when(item.getTotalItem()).thenReturn(new BigDecimal("125.50"));
         when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId)).thenReturn(List.of(item));
         service.faturar(tenantId, usuarioId, pedidoId);
-        verify(contaReceberService).criar(eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId), eq("PV-PV-100-1"), contains("parcela 1"), eq(new BigDecimal("125.5000")), eq(LocalDate.now()));
+        verify(contaReceberService).criarComOrigem(eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId),
+                eq("PV-PV-100-1"), contains("parcela 1"), eq(new BigDecimal("125.5000")), eq(LocalDate.now()),
+                eq("PEDIDO_VENDA"), eq(pedidoId), eq("PARCELA:1"));
     }
 
     @Test
@@ -91,8 +93,12 @@ class PedidoVendaApplicationServiceTest {
         CondicaoPagamentoParcela segunda = new CondicaoPagamentoParcela(tenantId, condicaoId, 2, 60, new BigDecimal("50.0000"));
         when(parcelaRepository.findAllByTenantIdAndCondicaoPagamentoIdOrderByNumeroAsc(tenantId, condicaoId)).thenReturn(List.of(primeira, segunda));
         service.faturar(tenantId, usuarioId, pedidoId);
-        verify(contaReceberService).criar(eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId), eq("PV-200-1"), contains("parcela 1"), eq(new BigDecimal("50.0000")), eq(LocalDate.now().plusDays(30)));
-        verify(contaReceberService).criar(eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId), eq("PV-200-2"), contains("parcela 2"), eq(new BigDecimal("50.0000")), eq(LocalDate.now().plusDays(60)));
+        verify(contaReceberService).criarComOrigem(eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId),
+                eq("PV-200-1"), contains("parcela 1"), eq(new BigDecimal("50.0000")), eq(LocalDate.now().plusDays(30)),
+                eq("PEDIDO_VENDA"), eq(pedidoId), eq("PARCELA:1"));
+        verify(contaReceberService).criarComOrigem(eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId),
+                eq("PV-200-2"), contains("parcela 2"), eq(new BigDecimal("50.0000")), eq(LocalDate.now().plusDays(60)),
+                eq("PEDIDO_VENDA"), eq(pedidoId), eq("PARCELA:2"));
     }
 
     @Test

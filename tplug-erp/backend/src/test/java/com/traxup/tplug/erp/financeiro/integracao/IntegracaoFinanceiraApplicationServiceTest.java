@@ -18,8 +18,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -63,12 +65,12 @@ class IntegracaoFinanceiraApplicationServiceTest {
     }
 
     @Test
-    void deveRegistrarCheckpointSomenteNaIntegracaoDoTenant() {
+    void deveRegistrarCheckpointComLockTenantScoped() {
         UUID tenantId = UUID.randomUUID();
         UUID integracaoId = UUID.randomUUID();
         IntegracaoFinanceira integracao = novaIntegracao(tenantId);
         Instant sincronizadoEm = Instant.parse("2026-09-06T08:00:00Z");
-        when(repository.findByIdAndTenantId(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
+        when(repository.findByIdAndTenantIdForUpdate(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
         when(repository.save(any(IntegracaoFinanceira.class))).thenAnswer(inv -> inv.getArgument(0));
 
         IntegracaoFinanceira resultado = novoService().registrarSincronizacao(
@@ -76,7 +78,8 @@ class IntegracaoFinanceiraApplicationServiceTest {
 
         assertEquals("cursor-42", resultado.getCheckpoint());
         assertEquals(sincronizadoEm, resultado.getSincronizadoEm());
-        verify(repository).findByIdAndTenantId(integracaoId, tenantId);
+        verify(repository).findByIdAndTenantIdForUpdate(integracaoId, tenantId);
+        verify(repository, never()).findByIdAndTenantId(integracaoId, tenantId);
     }
 
     @Test
@@ -86,7 +89,7 @@ class IntegracaoFinanceiraApplicationServiceTest {
         IntegracaoFinanceira integracao = novaIntegracao(tenantId);
         Instant maisRecente = Instant.parse("2026-09-06T09:00:00Z");
         integracao.registrarSincronizacao("cursor-mais-recente", maisRecente);
-        when(repository.findByIdAndTenantId(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
+        when(repository.findByIdAndTenantIdForUpdate(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
 
         assertThrows(RecursoConflitanteException.class,
                 () -> novoService().registrarSincronizacao(
@@ -100,7 +103,7 @@ class IntegracaoFinanceiraApplicationServiceTest {
     void naoDeveAcessarCheckpointDeOutroTenant() {
         UUID tenantId = UUID.randomUUID();
         UUID integracaoId = UUID.randomUUID();
-        when(repository.findByIdAndTenantId(integracaoId, tenantId)).thenReturn(Optional.empty());
+        when(repository.findByIdAndTenantIdForUpdate(integracaoId, tenantId)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNaoEncontradoException.class,
                 () -> novoService().registrarSincronizacao(
@@ -113,11 +116,26 @@ class IntegracaoFinanceiraApplicationServiceTest {
         UUID integracaoId = UUID.randomUUID();
         IntegracaoFinanceira integracao = novaIntegracao(tenantId);
         integracao.desativar();
-        when(repository.findByIdAndTenantId(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
+        when(repository.findByIdAndTenantIdForUpdate(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
 
         assertThrows(RecursoConflitanteException.class,
                 () -> novoService().registrarSincronizacao(
                         tenantId, UUID.randomUUID(), integracaoId, "cursor", Instant.now()));
+    }
+
+    @Test
+    void deveDesativarComLockTenantScoped() {
+        UUID tenantId = UUID.randomUUID();
+        UUID integracaoId = UUID.randomUUID();
+        IntegracaoFinanceira integracao = novaIntegracao(tenantId);
+        when(repository.findByIdAndTenantIdForUpdate(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
+        when(repository.save(any(IntegracaoFinanceira.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        IntegracaoFinanceira resultado = novoService().desativar(tenantId, UUID.randomUUID(), integracaoId);
+
+        assertFalse(resultado.isAtivo());
+        verify(repository).findByIdAndTenantIdForUpdate(integracaoId, tenantId);
+        verify(repository, never()).findByIdAndTenantId(integracaoId, tenantId);
     }
 
     private IntegracaoFinanceira novaIntegracao(UUID tenantId) {

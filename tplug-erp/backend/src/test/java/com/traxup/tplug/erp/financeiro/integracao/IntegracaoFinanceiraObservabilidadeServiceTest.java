@@ -2,11 +2,13 @@ package com.traxup.tplug.erp.financeiro.integracao;
 
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Pageable;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class IntegracaoFinanceiraObservabilidadeServiceTest {
@@ -19,6 +21,48 @@ class IntegracaoFinanceiraObservabilidadeServiceTest {
         var service = new IntegracaoFinanceiraObservabilidadeService(tentativas, integracoes);
         assertThrows(RecursoNaoEncontradoException.class, () -> service.listar(tenant, integracaoId));
         verifyNoInteractions(tentativas);
+    }
+
+    @Test
+    void deveNormalizarStatusEAplicarPeriodoSemRemoverEscopoDoTenant() {
+        UUID tenant = UUID.randomUUID(); UUID integracaoId = UUID.randomUUID();
+        var integracao = new IntegracaoFinanceira(tenant, UUID.randomUUID(), UUID.randomUUID(), "banco-x", null, UUID.randomUUID());
+        var tentativas = mock(IntegracaoFinanceiraTentativaRepository.class);
+        var integracoes = mock(IntegracaoFinanceiraRepository.class);
+        Instant inicio = Instant.parse("2026-09-01T00:00:00Z");
+        Instant fim = Instant.parse("2026-09-06T23:59:59Z");
+        when(integracoes.findByIdAndTenantId(integracaoId, tenant)).thenReturn(Optional.of(integracao));
+        when(tentativas.filtrar(eq(tenant), eq(integracaoId), eq("FALHA"), eq(inicio), eq(fim), any(Pageable.class)))
+                .thenReturn(List.of());
+
+        var service = new IntegracaoFinanceiraObservabilidadeService(tentativas, integracoes);
+        service.listar(tenant, integracaoId, " falha ", inicio, fim);
+
+        verify(tentativas).filtrar(eq(tenant), eq(integracaoId), eq("FALHA"), eq(inicio), eq(fim), any(Pageable.class));
+    }
+
+    @Test
+    void deveRejeitarPeriodoInvertidoAntesDeConsultarRepositorios() {
+        var tentativas = mock(IntegracaoFinanceiraTentativaRepository.class);
+        var integracoes = mock(IntegracaoFinanceiraRepository.class);
+        var service = new IntegracaoFinanceiraObservabilidadeService(tentativas, integracoes);
+        Instant inicio = Instant.parse("2026-09-06T10:00:00Z");
+        Instant fim = inicio.minusSeconds(1);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.listar(UUID.randomUUID(), UUID.randomUUID(), null, inicio, fim));
+        verifyNoInteractions(tentativas, integracoes);
+    }
+
+    @Test
+    void deveRejeitarStatusDesconhecidoAntesDeConsultarRepositorios() {
+        var tentativas = mock(IntegracaoFinanceiraTentativaRepository.class);
+        var integracoes = mock(IntegracaoFinanceiraRepository.class);
+        var service = new IntegracaoFinanceiraObservabilidadeService(tentativas, integracoes);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.listar(UUID.randomUUID(), UUID.randomUUID(), "ERRO", null, null));
+        verifyNoInteractions(tentativas, integracoes);
     }
 
     @Test

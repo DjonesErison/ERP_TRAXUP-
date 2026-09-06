@@ -109,6 +109,7 @@ class IntegracaoFinanceiraObservabilidadeServiceTest {
         assertEquals(1, resumo.sucessos());
         assertEquals(2, resumo.falhas());
         assertEquals(20L, resumo.duracaoMediaMs());
+        assertEquals(33, resumo.taxaSucessoPercentual());
         verify(integracoes).findByIdAndTenantId(integracaoId, tenant);
     }
 
@@ -129,6 +130,7 @@ class IntegracaoFinanceiraObservabilidadeServiceTest {
         assertEquals(0, resumo.sucessos());
         assertEquals(0, resumo.falhas());
         assertNull(resumo.duracaoMediaMs());
+        assertNull(resumo.taxaSucessoPercentual());
         assertNull(resumo.ultimaTentativaEm());
     }
 }

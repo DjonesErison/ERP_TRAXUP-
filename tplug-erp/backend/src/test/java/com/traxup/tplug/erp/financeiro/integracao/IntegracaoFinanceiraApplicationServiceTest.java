@@ -66,8 +66,7 @@ class IntegracaoFinanceiraApplicationServiceTest {
     void deveRegistrarCheckpointSomenteNaIntegracaoDoTenant() {
         UUID tenantId = UUID.randomUUID();
         UUID integracaoId = UUID.randomUUID();
-        IntegracaoFinanceira integracao = new IntegracaoFinanceira(
-                tenantId, UUID.randomUUID(), UUID.randomUUID(), "PSP_TESTE", null, UUID.randomUUID());
+        IntegracaoFinanceira integracao = novaIntegracao(tenantId);
         Instant sincronizadoEm = Instant.parse("2026-09-06T08:00:00Z");
         when(repository.findByIdAndTenantId(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
         when(repository.save(any(IntegracaoFinanceira.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -78,6 +77,23 @@ class IntegracaoFinanceiraApplicationServiceTest {
         assertEquals("cursor-42", resultado.getCheckpoint());
         assertEquals(sincronizadoEm, resultado.getSincronizadoEm());
         verify(repository).findByIdAndTenantId(integracaoId, tenantId);
+    }
+
+    @Test
+    void naoDeveRegredirCheckpointComSincronizacaoForaDeOrdem() {
+        UUID tenantId = UUID.randomUUID();
+        UUID integracaoId = UUID.randomUUID();
+        IntegracaoFinanceira integracao = novaIntegracao(tenantId);
+        Instant maisRecente = Instant.parse("2026-09-06T09:00:00Z");
+        integracao.registrarSincronizacao("cursor-mais-recente", maisRecente);
+        when(repository.findByIdAndTenantId(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
+
+        assertThrows(RecursoConflitanteException.class,
+                () -> novoService().registrarSincronizacao(
+                        tenantId, UUID.randomUUID(), integracaoId, "cursor-antigo",
+                        Instant.parse("2026-09-06T08:59:59Z")));
+        assertEquals("cursor-mais-recente", integracao.getCheckpoint());
+        assertEquals(maisRecente, integracao.getSincronizadoEm());
     }
 
     @Test
@@ -95,14 +111,18 @@ class IntegracaoFinanceiraApplicationServiceTest {
     void naoDeveSincronizarIntegracaoInativa() {
         UUID tenantId = UUID.randomUUID();
         UUID integracaoId = UUID.randomUUID();
-        IntegracaoFinanceira integracao = new IntegracaoFinanceira(
-                tenantId, UUID.randomUUID(), UUID.randomUUID(), "PSP_TESTE", null, UUID.randomUUID());
+        IntegracaoFinanceira integracao = novaIntegracao(tenantId);
         integracao.desativar();
         when(repository.findByIdAndTenantId(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
 
         assertThrows(RecursoConflitanteException.class,
                 () -> novoService().registrarSincronizacao(
                         tenantId, UUID.randomUUID(), integracaoId, "cursor", Instant.now()));
+    }
+
+    private IntegracaoFinanceira novaIntegracao(UUID tenantId) {
+        return new IntegracaoFinanceira(
+                tenantId, UUID.randomUUID(), UUID.randomUUID(), "PSP_TESTE", null, UUID.randomUUID());
     }
 
     private IntegracaoFinanceiraApplicationService novoService() {

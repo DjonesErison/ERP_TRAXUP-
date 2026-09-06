@@ -38,6 +38,12 @@ public class IntegracaoFinanceiraController {
                 .map(IntegracaoFinanceiraTentativaResponse::from).toList();
     }
 
+    @GetMapping("/{integracaoId}/saude") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
+    public IntegracaoFinanceiraSaudeResponse consultarSaude(@PathVariable UUID integracaoId) {
+        return IntegracaoFinanceiraSaudeResponse.from(
+                observabilidadeService.resumirSaude(tenantContext.tenantId(), integracaoId));
+    }
+
     @PostMapping("/contas/{contaId}") @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
     public IntegracaoFinanceiraResponse criar(@PathVariable UUID contaId, @Valid @RequestBody CriarIntegracaoFinanceiraRequest request) {

@@ -27,8 +27,37 @@ public class IntegracaoFinanceiraObservabilidadeService {
     }
 
     public List<IntegracaoFinanceiraTentativa> listar(UUID tenantId, UUID integracaoId) {
-        integracaoRepository.findByIdAndTenantId(integracaoId, tenantId).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Integracao financeira nao encontrada para o tenant informado"));
+        validarIntegracao(tenantId, integracaoId);
         return tentativaRepository.findTop50ByTenantIdAndIntegracaoIdOrderByIniciadoEmDesc(tenantId, integracaoId);
     }
+
+    public ResumoSaude resumirSaude(UUID tenantId, UUID integracaoId) {
+        validarIntegracao(tenantId, integracaoId);
+        List<IntegracaoFinanceiraTentativa> tentativas =
+                tentativaRepository.findTop50ByTenantIdAndIntegracaoIdOrderByIniciadoEmDesc(tenantId, integracaoId);
+        if (tentativas.isEmpty()) {
+            return new ResumoSaude(integracaoId, "SEM_EXECUCAO", null, null, 0, 0);
+        }
+        Instant ultimaTentativaEm = tentativas.get(0).getFinalizadoEm();
+        Instant ultimoSucessoEm = tentativas.stream()
+                .filter(t -> "SUCESSO".equals(t.getStatus()))
+                .map(IntegracaoFinanceiraTentativa::getFinalizadoEm)
+                .findFirst().orElse(null);
+        int falhasConsecutivas = 0;
+        for (IntegracaoFinanceiraTentativa tentativa : tentativas) {
+            if (!"FALHA".equals(tentativa.getStatus())) break;
+            falhasConsecutivas++;
+        }
+        String status = falhasConsecutivas == 0 ? "SAUDAVEL" : "ATENCAO";
+        return new ResumoSaude(integracaoId, status, ultimaTentativaEm, ultimoSucessoEm,
+                falhasConsecutivas, tentativas.size());
+    }
+
+    private void validarIntegracao(UUID tenantId, UUID integracaoId) {
+        integracaoRepository.findByIdAndTenantId(integracaoId, tenantId).orElseThrow(() ->
+                new RecursoNaoEncontradoException("Integracao financeira nao encontrada para o tenant informado"));
+    }
+
+    public record ResumoSaude(UUID integracaoId, String status, Instant ultimaTentativaEm,
+                              Instant ultimoSucessoEm, int falhasConsecutivas, int tentativasConsideradas) {}
 }

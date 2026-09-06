@@ -1,5 +1,7 @@
 package com.traxup.tplug.erp.financeiro;
 
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
+import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -54,7 +56,10 @@ public class ConciliacaoLancamento {
     }
 
     public void conciliar(UUID movimentoId) {
-        if (!"PENDENTE".equals(status)) throw new IllegalArgumentException("Lancamento ja conciliado");
+        if (movimentoId == null) throw new RegraNegocioException("Movimento financeiro e obrigatorio");
+        if (!"PENDENTE".equals(status)) {
+            throw new RecursoConflitanteException("Lancamento ja conciliado");
+        }
         this.movimentoId = movimentoId;
         this.status = "CONCILIADO";
         this.conciliadoEm = Instant.now();

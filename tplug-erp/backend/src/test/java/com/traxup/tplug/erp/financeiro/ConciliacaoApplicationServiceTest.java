@@ -16,6 +16,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +42,25 @@ class ConciliacaoApplicationServiceTest {
 
         verify(contaRepository).findByIdAndTenantId(contaId, tenantId);
         verify(repository).save(any(ConciliacaoLancamento.class));
+    }
+
+    @Test
+    void deveImportarLoteNaMesmaContaDoTenant() {
+        UUID tenantId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        ContaFinanceira conta = new ContaFinanceira(tenantId, UUID.randomUUID(), "Banco", "BANCO", UUID.randomUUID());
+        when(contaRepository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
+        when(repository.save(any(ConciliacaoLancamento.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        var itens = List.of(
+                new ConciliacaoApplicationService.ImportacaoLancamento("api", "L1", "entrada", new BigDecimal("10.00"), "Credito 1", Instant.now()),
+                new ConciliacaoApplicationService.ImportacaoLancamento("api", "L2", "saida", new BigDecimal("5.00"), "Debito 1", Instant.now())
+        );
+
+        List<ConciliacaoLancamento> resultado = novoService().importarLote(tenantId, UUID.randomUUID(), contaId, itens);
+
+        assertEquals(2, resultado.size());
+        verify(contaRepository, times(2)).findByIdAndTenantId(contaId, tenantId);
+        verify(repository, times(2)).save(any(ConciliacaoLancamento.class));
     }
 
     @Test

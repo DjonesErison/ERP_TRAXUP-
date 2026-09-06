@@ -67,19 +67,17 @@ As baixas operacionais podem ser executadas junto com a movimentacao de caixa/ba
 
 ## Origem automatica a partir de vendas
 
-O faturamento de pedido de venda passa a integrar estoque e financeiro na mesma transacao.
+O faturamento de pedido de venda integra estoque e financeiro na mesma transacao.
 
-- Pedido faturado com cliente gera automaticamente uma conta a receber no mesmo tenant e filial.
-- O valor do titulo e a soma do total liquido dos itens, portanto descontos ja aplicados sao respeitados.
-- O numero do documento recebe prefixo `PV-` e referencia o numero do pedido.
-- Enquanto nao existir cadastro de condicao de pagamento, o vencimento inicial e a data do faturamento.
-- Pedido sem cliente continua podendo ser faturado, mas nao gera titulo automatico; isso preserva vendas sem identificacao do consumidor.
+- Pedido faturado com cliente gera automaticamente conta a receber no mesmo tenant e filial.
+- O valor financeiro usa a soma do total liquido dos itens, portanto descontos ja aplicados sao respeitados.
+- Pedido sem cliente continua podendo ser faturado sem titulo automatico, preservando vendas sem identificacao do consumidor.
 - Se a criacao financeira falhar, o faturamento inteiro e revertido junto com as movimentacoes de estoque.
-- O titulo gerado reutiliza validacoes multi-tenant, RBAC interno de dominio e auditoria do modulo financeiro.
+- O titulo gerado reutiliza validacoes multi-tenant e auditoria do modulo financeiro.
 
 ## Configuracao de formas e condicoes de pagamento
 
-O cadastro financeiro de pagamento passa a ser configuravel por tenant, sem acoplamento a adquirente, banco ou PSP especifico.
+O cadastro financeiro de pagamento e configuravel por tenant, sem acoplamento a adquirente, banco ou PSP especifico.
 
 - Formas de pagamento possuem `codigo`, `nome` e estado ativo/inativo, com codigo unico por tenant.
 - Condicoes de pagamento possuem `codigo`, `nome` e uma grade ordenada de parcelas.
@@ -89,14 +87,27 @@ O cadastro financeiro de pagamento passa a ser configuravel por tenant, sem acop
 - Todas as consultas e alteracoes sao isoladas por tenant.
 - Criacao e desativacao geram auditoria.
 - RBAC: `FINANCEIRO_PAGAMENTO_CONFIG_LER` e `FINANCEIRO_PAGAMENTO_CONFIG_EDITAR`.
-- Formas e condicoes inativas permanecem historicamente consultaveis, mas a integracao com vendas utilizara apenas configuracoes ativas.
+- Formas e condicoes inativas permanecem historicamente consultaveis, mas novas configuracoes de venda utilizam apenas configuracoes ativas.
+
+## Parcelamento financeiro no pedido de venda
+
+O pedido de venda pode registrar forma e condicao de pagamento enquanto estiver em `RASCUNHO`.
+
+- Forma e condicao sao buscadas sempre pelo tenant do pedido e precisam estar ativas no momento da configuracao.
+- As FKs do pedido para forma e condicao sao compostas por `tenant_id`, impedindo referencias cruzadas entre tenants tambem no PostgreSQL.
+- A configuracao exige `VENDA_PEDIDO_EDITAR` e gera auditoria `CONFIGURAR_PAGAMENTO`.
+- No faturamento, cada parcela da condicao gera uma conta a receber independente, com vencimento calculado pela quantidade de dias da parcela.
+- O valor de cada parcela deriva do percentual configurado; a ultima parcela absorve diferencas de arredondamento para que a soma dos titulos seja exatamente o total liquido da venda.
+- O documento financeiro identifica pedido e numero da parcela.
+- Pedidos antigos ou ainda sem condicao configurada mantem compatibilidade: geram uma unica parcela com vencimento na data do faturamento.
+- Faturamento, estoque e todas as parcelas financeiras participam da mesma transacao; qualquer falha reverte o conjunto.
 
 Conta bancaria compartilhada entre filiais, limite/cheque especial e conciliacao bancaria ficam fora deste incremento e poderao ser parametrizados sem alterar o ledger basico.
 
 ### Proximos blocos planejados
 
-1. associar forma/condicao ao pedido de venda e gerar uma conta a receber por parcela no faturamento;
-2. conciliacao, taxas e integracoes bancarias/PSP;
-3. evolucao de pagamentos parciais em contas a pagar.
+1. conciliacao, taxas e integracoes bancarias/PSP;
+2. evolucao de pagamentos parciais em contas a pagar;
+3. ampliar condicoes comerciais com juros, desconto e entrada quando o modelo fiscal/financeiro exigir.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface ContaReceberRepository extends JpaRepository<ContaReceber, UUID> {
     List<ContaReceber> findAllByTenantIdOrderByVencimentoAscCriadoEmDesc(UUID tenantId);
     Optional<ContaReceber> findByIdAndTenantId(UUID id, UUID tenantId);
+    List<ContaReceber> findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDesc(
+            UUID tenantId, String origemTipo, UUID origemId);
 }

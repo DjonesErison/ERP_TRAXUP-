@@ -33,20 +33,28 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 - O lote e transacional: qualquer item invalido ou referencia reutilizada com conteudo diferente interrompe a operacao e reverte o conjunto.
 - Repeticoes identicas sao retornadas sem nova persistencia ou auditoria.
 - Cada novo lancamento importado preserva sua propria referencia externa e auditoria `IMPORTAR`.
-- O contrato de lote funciona como ponto de entrada generico para adaptadores futuros de OFX, CNAB, bancos, adquirentes e PSPs, sem acoplar esses formatos ao dominio financeiro.
+
+## Adaptador OFX
+
+- O endpoint OFX converte transacoes `STMTTRN` para o contrato generico de importacao em lote.
+- `FITID` e usado como referencia externa idempotente e a origem e registrada como `OFX`.
+- `TRNAMT` positivo vira `ENTRADA`; negativo vira `SAIDA`, armazenando o valor absoluto no dominio.
+- `DTPOSTED` define a ocorrencia e `MEMO`/`NAME` alimentam a descricao.
+- O parser aceita OFX SGML/XML comum sem introduzir dependencia de fornecedor bancario.
+- O conteudo recebido e limitado e o lote continua restrito a 500 lancamentos.
+- Isolamento de tenant/filial/conta, RBAC e auditoria continuam centralizados no servico de conciliacao; o adaptador apenas traduz formato.
 
 ## RBAC e auditoria
 
 - `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos importados e sugestoes.
-- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, importa em lote e concilia lancamentos.
+- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, importa em lote, importa OFX e concilia lancamentos.
 - Nova importacao gera auditoria `IMPORTAR` em `CONCILIACAO_FINANCEIRA`.
 - Matching efetivado gera auditoria `CONCILIAR` em `CONCILIACAO_FINANCEIRA`.
 - Repeticoes idempotentes e consultas de sugestoes nao geram evento de auditoria de mutacao.
 
 ## Proximos incrementos
 
-1. adaptador OFX sobre o contrato de importacao em lote;
-2. taxas, antecipacoes, estornos e chargebacks;
-3. integracoes bancarias/PSP especificas por adaptadores.
+1. taxas, antecipacoes, estornos e chargebacks;
+2. integracoes bancarias/PSP especificas por adaptadores.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

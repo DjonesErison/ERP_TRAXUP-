@@ -2,6 +2,7 @@ package com.traxup.tplug.erp.financeiro.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.financeiro.ConciliacaoApplicationService;
+import com.traxup.tplug.erp.financeiro.ofx.OfxExtratoParser;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,10 +16,13 @@ import java.util.UUID;
 public class ConciliacaoController {
     private final ConciliacaoApplicationService service;
     private final TenantContext tenantContext;
+    private final OfxExtratoParser ofxParser;
 
-    public ConciliacaoController(ConciliacaoApplicationService service, TenantContext tenantContext) {
+    public ConciliacaoController(ConciliacaoApplicationService service, TenantContext tenantContext,
+                                 OfxExtratoParser ofxParser) {
         this.service = service;
         this.tenantContext = tenantContext;
+        this.ofxParser = ofxParser;
     }
 
     @GetMapping("/contas/{contaId}/lancamentos")
@@ -56,8 +60,15 @@ public class ConciliacaoController {
                         item.origem(), item.referenciaExterna(), item.tipo(), item.valor(),
                         item.descricao(), item.ocorridoEm()))
                 .toList();
-        return service.importarLote(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId, itens).stream()
-                .map(ConciliacaoLancamentoResponse::from).toList();
+        return importarItens(contaId, itens);
+    }
+
+    @PostMapping("/contas/{contaId}/ofx")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
+    public List<ConciliacaoLancamentoResponse> importarOfx(@PathVariable UUID contaId,
+                                                           @Valid @RequestBody ImportarOfxRequest request) {
+        return importarItens(contaId, ofxParser.parse(request.conteudo()));
     }
 
     @PostMapping("/lancamentos/{lancamentoId}/conciliar")
@@ -66,5 +77,11 @@ public class ConciliacaoController {
                                                     @Valid @RequestBody ConciliarLancamentoRequest request) {
         return ConciliacaoLancamentoResponse.from(service.conciliar(
                 tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), lancamentoId, request.movimentoId()));
+    }
+
+    private List<ConciliacaoLancamentoResponse> importarItens(
+            UUID contaId, List<ConciliacaoApplicationService.ImportacaoLancamento> itens) {
+        return service.importarLote(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId, itens).stream()
+                .map(ConciliacaoLancamentoResponse::from).toList();
     }
 }

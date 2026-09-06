@@ -22,39 +22,42 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 - A busca exige o mesmo tenant, conta financeira, filial, tipo e valor do lancamento externo.
 - A janela temporal inicial e de tres dias antes ate tres dias depois da ocorrencia externa.
 - O endpoint de sugestoes exige apenas `FINANCEIRO_CONCILIACAO_LER`; efetivar a conciliacao continua exigindo `FINANCEIRO_CONCILIACAO_EDITAR`.
-- A sugestao e deterministica e nao faz conciliacao automatica, evitando falsos positivos silenciosos.
 - Movimentos ja utilizados em outra conciliacao nao aparecem como candidatos.
-- Lancamentos ja conciliados nao recebem novas sugestoes.
 
 ## Importacao em lote por API
 
 - A API aceita lotes de ate 500 lancamentos por conta financeira.
-- Todos os itens do lote reutilizam as mesmas validacoes de tenant, filial, conta, origem, referencia externa, tipo e valor da importacao individual.
-- O lote e transacional: qualquer item invalido ou referencia reutilizada com conteudo diferente interrompe a operacao e reverte o conjunto.
-- Repeticoes identicas sao retornadas sem nova persistencia ou auditoria.
-- Cada novo lancamento importado preserva sua propria referencia externa e auditoria `IMPORTAR`.
+- O lote e transacional e reutiliza as mesmas validacoes multi-tenant da importacao individual.
+- Repeticoes identicas sao retornadas sem nova persistencia ou auditoria; referencias reutilizadas com conteudo diferente geram conflito.
 
 ## Adaptador OFX
 
-- O endpoint OFX converte transacoes `STMTTRN` para o contrato generico de importacao em lote.
-- `FITID` e usado como referencia externa idempotente e a origem e registrada como `OFX`.
-- `TRNAMT` positivo vira `ENTRADA`; negativo vira `SAIDA`, armazenando o valor absoluto no dominio.
-- `DTPOSTED` define a ocorrencia e `MEMO`/`NAME` alimentam a descricao.
-- O parser aceita OFX SGML/XML comum sem introduzir dependencia de fornecedor bancario.
-- O conteudo recebido e limitado e o lote continua restrito a 500 lancamentos.
-- Isolamento de tenant/filial/conta, RBAC e auditoria continuam centralizados no servico de conciliacao; o adaptador apenas traduz formato.
+- O endpoint OFX converte `STMTTRN` para o contrato generico de importacao em lote.
+- `FITID` e a referencia idempotente, `TRNAMT` define `ENTRADA`/`SAIDA`, `DTPOSTED` define a ocorrencia e `MEMO`/`NAME` a descricao.
+- O adaptador nao persiste diretamente e nao conhece fornecedor especifico.
+
+## Taxas, antecipacoes, estornos e chargebacks
+
+- Todo lancamento externo inicia com natureza `NORMAL`.
+- Enquanto estiver `PENDENTE`, pode ser classificado como `NORMAL`, `TAXA`, `ANTECIPACAO`, `ESTORNO` ou `CHARGEBACK`.
+- A classificacao permanece isolada por tenant e usa bloqueio do lancamento para nao competir com a conciliacao concorrente.
+- A alteracao exige `FINANCEIRO_CONCILIACAO_EDITAR` e gera auditoria `CLASSIFICAR` em `CONCILIACAO_FINANCEIRA`.
+- Lancamentos ja conciliados nao podem ser reclassificados.
+- A classificacao nao cria movimento, nao altera saldo e nao presume contabilizacao automatica por adquirente/PSP.
+- O PostgreSQL restringe as naturezas validas e possui indice por tenant, natureza e status.
 
 ## RBAC e auditoria
 
 - `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos importados e sugestoes.
-- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, importa em lote, importa OFX e concilia lancamentos.
-- Nova importacao gera auditoria `IMPORTAR` em `CONCILIACAO_FINANCEIRA`.
-- Matching efetivado gera auditoria `CONCILIAR` em `CONCILIACAO_FINANCEIRA`.
-- Repeticoes idempotentes e consultas de sugestoes nao geram evento de auditoria de mutacao.
+- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, importa em lote, importa OFX, classifica e concilia lancamentos.
+- Nova importacao gera auditoria `IMPORTAR`.
+- Classificacao gera auditoria `CLASSIFICAR`.
+- Matching efetivado gera auditoria `CONCILIAR`.
 
 ## Proximos incrementos
 
-1. taxas, antecipacoes, estornos e chargebacks;
-2. integracoes bancarias/PSP especificas por adaptadores.
+1. consultas e filtros operacionais por natureza, origem, status e periodo;
+2. integracoes bancarias/PSP especificas por adaptadores;
+3. regras de contabilizacao/liquidacao especificas quando o provedor exigir.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

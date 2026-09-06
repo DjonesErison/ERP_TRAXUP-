@@ -17,20 +17,29 @@ public class IntegracaoFinanceiraController {
     private final IntegracaoFinanceiraSincronizacaoService sincronizacaoService;
     private final IntegracaoFinanceiraAdapterSincronizacaoService adapterSincronizacaoService;
     private final IntegracaoFinanceiraObservabilidadeService observabilidadeService;
+    private final IntegracaoFinanceiraPainelOperacionalService painelOperacionalService;
     private final TenantContext tenantContext;
 
     public IntegracaoFinanceiraController(IntegracaoFinanceiraApplicationService service,
             IntegracaoFinanceiraSincronizacaoService sincronizacaoService,
             IntegracaoFinanceiraAdapterSincronizacaoService adapterSincronizacaoService,
-            IntegracaoFinanceiraObservabilidadeService observabilidadeService, TenantContext tenantContext) {
+            IntegracaoFinanceiraObservabilidadeService observabilidadeService,
+            IntegracaoFinanceiraPainelOperacionalService painelOperacionalService,
+            TenantContext tenantContext) {
         this.service = service; this.sincronizacaoService = sincronizacaoService;
         this.adapterSincronizacaoService = adapterSincronizacaoService; this.observabilidadeService = observabilidadeService;
-        this.tenantContext = tenantContext;
+        this.painelOperacionalService = painelOperacionalService; this.tenantContext = tenantContext;
     }
 
     @GetMapping("/contas/{contaId}") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
     public List<IntegracaoFinanceiraResponse> listar(@PathVariable UUID contaId) {
         return service.listar(tenantContext.tenantId(), contaId).stream().map(IntegracaoFinanceiraResponse::from).toList();
+    }
+
+    @GetMapping("/contas/{contaId}/painel") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
+    public List<IntegracaoFinanceiraPainelOperacionalResponse> painelOperacional(@PathVariable UUID contaId) {
+        return painelOperacionalService.listar(tenantContext.tenantId(), contaId).stream()
+                .map(IntegracaoFinanceiraPainelOperacionalResponse::from).toList();
     }
 
     @GetMapping("/{integracaoId}/tentativas") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")

@@ -24,6 +24,15 @@ A composicao dos titulos financeiros e centralizada em uma unica calculadora de 
 - Se existir saldo a parcelar e a condicao nao possuir grade de parcelas, o plano e rejeitado antes da geracao financeira.
 - A unificacao nao altera valores, RBAC, auditoria ou regras fiscais; remove apenas duplicacao de regra entre consulta e execucao.
 
+## Concorrencia do faturamento
+
+O faturamento adquire lock pessimista de escrita sobre o pedido usando `id + tenant_id` antes de validar o estado e iniciar qualquer baixa de estoque ou geracao de contas a receber.
+
+- Duas requisicoes concorrentes para o mesmo pedido sao serializadas pela linha do pedido.
+- A segunda requisicao somente prossegue depois da primeira transacao terminar e entao reenxerga o pedido como `FATURADO`, sendo rejeitada antes de movimentar estoque ou gerar novos titulos.
+- O lock continua tenant-scoped; um tenant nao consegue bloquear ou faturar pedido pertencente a outro tenant.
+- Nao ha nova migration: a protecao utiliza o lock transacional do PostgreSQL/JPA sobre a linha ja existente.
+
 ## Previa financeira do pedido
 
 Antes do faturamento, `GET /api/v1/vendas/pedidos/{pedidoId}/previa-financeira` permite consultar como o pedido sera convertido em titulos financeiros.

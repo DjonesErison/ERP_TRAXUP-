@@ -119,7 +119,8 @@ public class PedidoVendaApplicationService {
 
     @Transactional
     public PedidoVenda faturar(UUID tenantId, UUID usuarioId, UUID pedidoId) {
-        PedidoVenda pedido = buscar(tenantId, pedidoId);
+        PedidoVenda pedido = repository.buscarParaFaturar(pedidoId, tenantId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido de venda nao encontrado para o tenant informado"));
         if (!"ABERTO".equals(pedido.getStatus())) {
             throw new IllegalArgumentException("Somente pedido de venda ABERTO pode ser faturado");
         }

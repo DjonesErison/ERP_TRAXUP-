@@ -31,7 +31,25 @@ A Fase 4 estabelece o nucleo financeiro desacoplado de bancos, boletos, adquiren
 
 ## Contas a pagar
 
-O nucleo de contas a pagar usa fornecedor ativo do mesmo tenant, filial obrigatoria, estados `ABERTO`, `PAGO` e `CANCELADO`, baixa integral inicial, concorrencia otimista, auditoria e RBAC `FINANCEIRO_PAGAR_*`.
+O nucleo de contas a pagar usa fornecedor ativo do mesmo tenant e filial obrigatoria, com pagamentos integrais ou parciais, concorrencia otimista, auditoria e RBAC `FINANCEIRO_PAGAR_*`.
+
+- Estados: `ABERTO`, `PARCIAL`, `PAGO` e `CANCELADO`.
+- Pagamento parcial altera o titulo para `PARCIAL`; pagamentos subsequentes utilizam somente o saldo aberto.
+- O valor de cada pagamento deve ser positivo e nunca pode superar o saldo aberto.
+- Ao atingir o valor original, o titulo passa para `PAGO` e registra `pago_em`.
+- Cada baixa gera registro imutavel em `contas_pagar_pagamentos`, com tenant, filial, titulo, valor, usuario e data/hora.
+- O endpoint de pagamento integral permanece compativel e liquida apenas o saldo restante.
+- Titulos com qualquer pagamento nao podem ser cancelados; cancelamento permanece permitido apenas em `ABERTO`.
+- A consulta do historico valida primeiro `titulo + tenant`, e as FKs de filial, fornecedor, titulo e pagamentos preservam o tenant no PostgreSQL.
+- Pagamentos integrais existentes antes da V39 sao retroalimentados no historico durante a migracao.
+- Criacao, cada baixa e cancelamento geram auditoria.
+
+### RBAC de pagamentos
+
+- `FINANCEIRO_PAGAR_LER`
+- `FINANCEIRO_PAGAR_CRIAR`
+- `FINANCEIRO_PAGAR_BAIXAR`
+- `FINANCEIRO_PAGAR_CANCELAR`
 
 ## Caixa e contas bancarias
 
@@ -58,7 +76,7 @@ O primeiro incremento de tesouraria cria contas financeiras por filial dos tipos
 As baixas operacionais podem ser executadas junto com a movimentacao de caixa/banco em uma unica transacao.
 
 - Recebimento de conta a receber gera `ENTRADA` na conta financeira pelo mesmo valor da baixa, inclusive parcial.
-- Pagamento de conta a pagar gera `SAIDA` pelo saldo integral do titulo.
+- Pagamento de conta a pagar gera `SAIDA` pelo mesmo valor informado; quando o valor e omitido, liquida o saldo restante para manter compatibilidade com o fluxo integral.
 - Titulo e conta financeira precisam pertencer ao mesmo tenant e a mesma filial.
 - O endpoint exige simultaneamente a permissao de baixa do titulo e `FINANCEIRO_CONTA_MOVIMENTAR`.
 - Historico do titulo, movimento da conta, saldo e auditorias participam da mesma transacao; qualquer falha reverte o conjunto.
@@ -106,8 +124,7 @@ Conta bancaria compartilhada entre filiais, limite/cheque especial e conciliacao
 
 ### Proximos blocos planejados
 
-1. conciliacao, taxas e integracoes bancarias/PSP;
-2. evolucao de pagamentos parciais em contas a pagar;
-3. ampliar condicoes comerciais com juros, desconto e entrada quando o modelo fiscal/financeiro exigir.
+1. conciliacao, taxas e integracoes bancarias/PSP permanecem condicionadas ao provedor concreto escolhido;
+2. ampliar condicoes comerciais com juros, desconto e entrada quando o modelo fiscal/financeiro exigir.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

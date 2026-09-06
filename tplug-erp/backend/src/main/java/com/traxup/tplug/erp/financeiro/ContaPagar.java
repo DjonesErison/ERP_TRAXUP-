@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.financeiro;
 
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -54,14 +55,38 @@ public class ContaPagar {
     @PreUpdate void preUpdate() { atualizadoEm = Instant.now(); }
 
     public void pagar() {
-        if (!"ABERTO".equals(status)) throw new IllegalArgumentException("Somente conta ABERTA pode ser paga");
-        valorPago = valorOriginal;
-        status = "PAGO";
-        pagoEm = Instant.now();
+        pagar(getSaldoAberto());
+    }
+
+    public void pagar(BigDecimal valor) {
+        if (!("ABERTO".equals(status) || "PARCIAL".equals(status))) {
+            throw new RegraNegocioException("Somente conta ABERTA ou PARCIAL pode receber pagamento");
+        }
+        if (valor == null || valor.signum() <= 0) {
+            throw new RegraNegocioException("Valor do pagamento deve ser maior que zero");
+        }
+        BigDecimal saldo = getSaldoAberto();
+        if (valor.compareTo(saldo) > 0) {
+            throw new RegraNegocioException("Valor do pagamento nao pode exceder o saldo aberto");
+        }
+        valorPago = valorPago.add(valor);
+        if (valorPago.compareTo(valorOriginal) == 0) {
+            status = "PAGO";
+            pagoEm = Instant.now();
+        } else {
+            status = "PARCIAL";
+            pagoEm = null;
+        }
+    }
+
+    public BigDecimal getSaldoAberto() {
+        return valorOriginal.subtract(valorPago);
     }
 
     public void cancelar() {
-        if (!"ABERTO".equals(status)) throw new IllegalArgumentException("Somente conta ABERTA pode ser cancelada");
+        if (!"ABERTO".equals(status)) {
+            throw new RegraNegocioException("Somente conta ABERTA pode ser cancelada");
+        }
         status = "CANCELADO";
     }
 

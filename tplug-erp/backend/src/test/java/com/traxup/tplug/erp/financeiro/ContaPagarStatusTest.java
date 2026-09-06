@@ -1,5 +1,6 @@
 package com.traxup.tplug.erp.financeiro;
 
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -26,10 +27,38 @@ class ContaPagarStatusTest {
     }
 
     @Test
+    void deveEvoluirDeParcialParaPago() {
+        ContaPagar conta = novaConta();
+        conta.pagar(new BigDecimal("40.0000"));
+        assertEquals("PARCIAL", conta.getStatus());
+        assertEquals(0, conta.getValorPago().compareTo(new BigDecimal("40.0000")));
+        assertEquals(0, conta.getSaldoAberto().compareTo(new BigDecimal("60.0000")));
+
+        conta.pagar(new BigDecimal("60.0000"));
+        assertEquals("PAGO", conta.getStatus());
+        assertEquals(0, conta.getSaldoAberto().compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void naoDeveAceitarPagamentoAcimaDoSaldo() {
+        ContaPagar conta = novaConta();
+        conta.pagar(new BigDecimal("40.0000"));
+        assertThrows(RegraNegocioException.class,
+                () -> conta.pagar(new BigDecimal("61.0000")));
+    }
+
+    @Test
     void naoDevePagarDuasVezes() {
         ContaPagar conta = novaConta();
         conta.pagar();
-        assertThrows(IllegalArgumentException.class, conta::pagar);
+        assertThrows(RegraNegocioException.class, conta::pagar);
+    }
+
+    @Test
+    void naoDeveCancelarContaComPagamentoParcial() {
+        ContaPagar conta = novaConta();
+        conta.pagar(new BigDecimal("10.0000"));
+        assertThrows(RegraNegocioException.class, conta::cancelar);
     }
 
     @Test
@@ -37,7 +66,7 @@ class ContaPagarStatusTest {
         ContaPagar conta = novaConta();
         conta.cancelar();
         assertEquals("CANCELADO", conta.getStatus());
-        assertThrows(IllegalArgumentException.class, conta::cancelar);
+        assertThrows(RegraNegocioException.class, conta::cancelar);
     }
 
     private ContaPagar novaConta() {

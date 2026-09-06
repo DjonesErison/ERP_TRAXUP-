@@ -57,7 +57,9 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 
 - Cada integracao pode armazenar um `checkpoint` opaco de ate 500 caracteres e a data/hora da ultima sincronizacao concluida.
 - O checkpoint representa apenas a posicao operacional do provedor; ele nao deve conter token, chave, certificado, senha ou qualquer credencial.
-- A atualizacao e sempre localizada por `id + tenant`, exige integracao ativa e usa versionamento otimista para impedir perda silenciosa de checkpoint em atualizacoes concorrentes.
+- A atualizacao e sempre localizada por `id + tenant`, exige integracao ativa e usa versionamento otimista para impedir perda silenciosa em atualizacoes concorrentes.
+- `sincronizado_em` deve avancar estritamente; requisicoes repetidas ou atrasadas retornam conflito e nao podem regredir o checkpoint.
+- A resposta da API inclui `versao` para diagnostico e controle operacional de concorrencia.
 - Registrar sincronizacao exige `FINANCEIRO_CONCILIACAO_EDITAR` e gera auditoria `SINCRONIZAR` sem copiar o valor bruto do checkpoint para o log.
 - Adaptadores concretos devem atualizar o checkpoint somente apos a importacao correspondente concluir com sucesso; falhas de importacao nao podem avancar a posicao de sincronizacao.
 - Provedores sem cursor podem deixar o checkpoint nulo e utilizar apenas `sincronizado_em` como marcador operacional.

@@ -15,13 +15,14 @@ public record IntegracaoFinanceiraResponse(
         Instant sincronizadoEm,
         boolean ativo,
         Instant criadoEm,
-        Instant atualizadoEm
+        Instant atualizadoEm,
+        long versao
 ) {
     public static IntegracaoFinanceiraResponse from(IntegracaoFinanceira integracao) {
         return new IntegracaoFinanceiraResponse(
                 integracao.getId(), integracao.getContaFinanceiraId(), integracao.getFilialId(),
                 integracao.getProvedor(), integracao.getIdentificadorExterno(), integracao.getCheckpoint(),
                 integracao.getSincronizadoEm(), integracao.isAtivo(), integracao.getCriadoEm(),
-                integracao.getAtualizadoEm());
+                integracao.getAtualizadoEm(), integracao.getVersao());
     }
 }

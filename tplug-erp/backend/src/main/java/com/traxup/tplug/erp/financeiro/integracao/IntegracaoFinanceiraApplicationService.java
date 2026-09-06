@@ -53,8 +53,7 @@ public class IntegracaoFinanceiraApplicationService {
     @Transactional
     public IntegracaoFinanceira registrarSincronizacao(UUID tenantId, UUID usuarioId, UUID integracaoId,
                                                        String checkpoint, Instant sincronizadoEm) {
-        IntegracaoFinanceira integracao = repository.findByIdAndTenantId(integracaoId, tenantId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Integracao financeira nao encontrada para o tenant informado"));
+        IntegracaoFinanceira integracao = buscarParaAtualizacao(tenantId, integracaoId);
         if (!integracao.isAtivo()) throw new RecursoConflitanteException("Integracao financeira inativa nao pode ser sincronizada");
         integracao.registrarSincronizacao(checkpoint, sincronizadoEm);
         repository.save(integracao);
@@ -66,14 +65,19 @@ public class IntegracaoFinanceiraApplicationService {
 
     @Transactional
     public IntegracaoFinanceira desativar(UUID tenantId, UUID usuarioId, UUID integracaoId) {
-        IntegracaoFinanceira integracao = repository.findByIdAndTenantId(integracaoId, tenantId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Integracao financeira nao encontrada para o tenant informado"));
+        IntegracaoFinanceira integracao = buscarParaAtualizacao(tenantId, integracaoId);
         integracao.desativar();
         repository.save(integracao);
         auditoria.registrar(tenantId, usuarioId, null, integracao.getFilialId(),
                 "DESATIVAR", "INTEGRACAO_FINANCEIRA", integracao.getId(),
                 "provedor=" + integracao.getProvedor());
         return integracao;
+    }
+
+    private IntegracaoFinanceira buscarParaAtualizacao(UUID tenantId, UUID integracaoId) {
+        return repository.findByIdAndTenantIdForUpdate(integracaoId, tenantId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Integracao financeira nao encontrada para o tenant informado"));
     }
 
     private String obrigatorio(String valor) {

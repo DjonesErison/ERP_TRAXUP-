@@ -42,15 +42,27 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 - A conta e validada no tenant corrente antes da consulta e o repositorio sempre filtra simultaneamente por `tenant_id` e `conta_financeira_id`.
 - A consulta permanece protegida por `FINANCEIRO_CONCILIACAO_LER` e nao gera auditoria de mutacao.
 
+## Base de integracoes bancarias e PSP
+
+- Cada integracao pertence a um tenant, filial e conta financeira existentes e e identificada por um `provedor` normalizado.
+- Uma mesma conta pode possuir provedores diferentes, mas nao pode repetir o mesmo provedor.
+- A configuracao armazena apenas identificadores operacionais nao secretos; tokens, chaves e certificados nao sao persistidos neste incremento.
+- Conta financeira inativa nao aceita nova integracao.
+- Criacao e desativacao sao auditadas como `CRIAR` e `DESATIVAR` em `INTEGRACAO_FINANCEIRA`.
+- Consulta reutiliza `FINANCEIRO_CONCILIACAO_LER`; configuracao e desativacao reutilizam `FINANCEIRO_CONCILIACAO_EDITAR`.
+- A tabela possui FKs compostas por tenant para conta financeira e filial, alem de unicidade por `(tenant, conta, provedor)`.
+- Esta base permite adicionar adaptadores concretos sem acoplar credenciais ou regras especificas ao dominio de conciliacao.
+
 ## RBAC e auditoria
 
-- `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos, filtros e sugestoes.
-- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, classifica e concilia lancamentos.
+- `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos, filtros, sugestoes e configuracoes de integracao.
+- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, classifica, concilia e configura integracoes.
 - Nova importacao gera auditoria `IMPORTAR`; classificacao gera `CLASSIFICAR`; matching efetivado gera `CONCILIAR`.
 
 ## Proximos incrementos
 
-1. integracoes bancarias/PSP especificas por adaptadores;
-2. regras de contabilizacao/liquidacao especificas quando o provedor exigir.
+1. primeiro adaptador concreto de banco/PSP sobre a base de integracoes, mantendo segredos fora do banco operacional;
+2. sincronizacao incremental e checkpoint por integracao;
+3. regras de contabilizacao/liquidacao especificas quando o provedor exigir.
 
 A TRAXUP Central permanece separada do runtime do TPlug ERP.

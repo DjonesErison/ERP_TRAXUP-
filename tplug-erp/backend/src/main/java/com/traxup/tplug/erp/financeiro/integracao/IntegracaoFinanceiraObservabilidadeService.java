@@ -47,7 +47,7 @@ public class IntegracaoFinanceiraObservabilidadeService {
         List<IntegracaoFinanceiraTentativa> tentativas =
                 tentativaRepository.findTop50ByTenantIdAndIntegracaoIdOrderByIniciadoEmDesc(tenantId, integracaoId);
         if (tentativas.isEmpty()) {
-            return new ResumoSaude(integracaoId, "SEM_EXECUCAO", null, null, 0, 0);
+            return new ResumoSaude(integracaoId, "SEM_EXECUCAO", null, null, 0, 0, 0, 0, null);
         }
         Instant ultimaTentativaEm = tentativas.get(0).getFinalizadoEm();
         Instant ultimoSucessoEm = tentativas.stream()
@@ -59,9 +59,13 @@ public class IntegracaoFinanceiraObservabilidadeService {
             if (!"FALHA".equals(tentativa.getStatus())) break;
             falhasConsecutivas++;
         }
+        int sucessos = (int) tentativas.stream().filter(t -> "SUCESSO".equals(t.getStatus())).count();
+        int falhas = (int) tentativas.stream().filter(t -> "FALHA".equals(t.getStatus())).count();
+        long somaDuracao = tentativas.stream().mapToLong(IntegracaoFinanceiraTentativa::getDuracaoMs).sum();
+        long duracaoMediaMs = somaDuracao / tentativas.size();
         String status = falhasConsecutivas == 0 ? "SAUDAVEL" : "ATENCAO";
         return new ResumoSaude(integracaoId, status, ultimaTentativaEm, ultimoSucessoEm,
-                falhasConsecutivas, tentativas.size());
+                falhasConsecutivas, tentativas.size(), sucessos, falhas, duracaoMediaMs);
     }
 
     private String normalizarStatus(String status) {
@@ -85,5 +89,6 @@ public class IntegracaoFinanceiraObservabilidadeService {
     }
 
     public record ResumoSaude(UUID integracaoId, String status, Instant ultimaTentativaEm,
-                              Instant ultimoSucessoEm, int falhasConsecutivas, int tentativasConsideradas) {}
+                              Instant ultimoSucessoEm, int falhasConsecutivas, int tentativasConsideradas,
+                              int sucessos, int falhas, Long duracaoMediaMs) {}
 }

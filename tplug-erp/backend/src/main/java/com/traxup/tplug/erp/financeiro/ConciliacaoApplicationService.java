@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -49,6 +50,19 @@ public class ConciliacaoApplicationService {
                 .findAllByTenantIdAndContaFinanceiraIdAndFilialIdAndTipoAndValorAndOcorridoEmBetweenOrderByOcorridoEmAsc(
                         tenantId, lancamento.getContaFinanceiraId(), lancamento.getFilialId(), lancamento.getTipo(),
                         lancamento.getValor(), inicio, fim);
+    }
+
+    @Transactional
+    public List<ConciliacaoLancamento> importarLote(UUID tenantId, UUID usuarioId, UUID contaId,
+                                                     List<ImportacaoLancamento> lancamentos) {
+        if (lancamentos == null || lancamentos.isEmpty()) throw new IllegalArgumentException("Lote deve possuir lancamentos");
+        if (lancamentos.size() > 500) throw new IllegalArgumentException("Lote excede o limite de 500 lancamentos");
+        List<ConciliacaoLancamento> resultado = new ArrayList<>(lancamentos.size());
+        for (ImportacaoLancamento item : lancamentos) {
+            resultado.add(importar(tenantId, usuarioId, contaId, item.origem(), item.referenciaExterna(),
+                    item.tipo(), item.valor(), item.descricao(), item.ocorridoEm()));
+        }
+        return resultado;
     }
 
     @Transactional
@@ -112,4 +126,7 @@ public class ConciliacaoApplicationService {
         if (valor == null || valor.isBlank()) throw new IllegalArgumentException(campo + " e obrigatorio");
         return valor.trim();
     }
+
+    public record ImportacaoLancamento(String origem, String referenciaExterna, String tipo, BigDecimal valor,
+                                       String descricao, Instant ocorridoEm) {}
 }

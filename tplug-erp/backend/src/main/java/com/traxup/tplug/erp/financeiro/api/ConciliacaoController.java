@@ -4,10 +4,12 @@ import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.financeiro.ConciliacaoApplicationService;
 import com.traxup.tplug.erp.financeiro.ofx.OfxExtratoParser;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,8 +29,14 @@ public class ConciliacaoController {
 
     @GetMapping("/contas/{contaId}/lancamentos")
     @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
-    public List<ConciliacaoLancamentoResponse> listar(@PathVariable UUID contaId) {
-        return service.listar(tenantContext.tenantId(), contaId).stream()
+    public List<ConciliacaoLancamentoResponse> listar(
+            @PathVariable UUID contaId,
+            @RequestParam(required = false) String origem,
+            @RequestParam(required = false) String natureza,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
+        return service.listar(tenantContext.tenantId(), contaId, origem, natureza, status, inicio, fim).stream()
                 .map(ConciliacaoLancamentoResponse::from).toList();
     }
 

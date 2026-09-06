@@ -71,6 +71,14 @@ public class ConciliacaoController {
         return importarItens(contaId, ofxParser.parse(request.conteudo()));
     }
 
+    @PostMapping("/lancamentos/{lancamentoId}/classificar")
+    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
+    public ConciliacaoLancamentoResponse classificar(@PathVariable UUID lancamentoId,
+                                                      @Valid @RequestBody ClassificarConciliacaoLancamentoRequest request) {
+        return ConciliacaoLancamentoResponse.from(service.classificar(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), lancamentoId, request.natureza()));
+    }
+
     @PostMapping("/lancamentos/{lancamentoId}/conciliar")
     @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
     public ConciliacaoLancamentoResponse conciliar(@PathVariable UUID lancamentoId,

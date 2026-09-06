@@ -6,11 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -31,22 +27,22 @@ public class TesourariaBaixaController {
     public ContaReceberResponse receber(@PathVariable UUID contaId,
                                         @Valid @RequestBody ReceberEmContaRequest request) {
         return ContaReceberResponse.from(service.receberEmConta(
-                tenantContext.tenantId(),
-                tenantContext.usuarioIdOuNulo(),
-                contaId,
-                request.contaFinanceiraId(),
-                request.valor()));
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId,
+                request.contaFinanceiraId(), request.valor()));
     }
 
     @PostMapping("/contas-pagar/{contaId}/pagar")
     @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_BAIXAR') and hasAuthority('FINANCEIRO_CONTA_MOVIMENTAR')")
     public ContaPagarResponse pagar(@PathVariable UUID contaId,
                                     @Valid @RequestBody PagarEmContaRequest request) {
+        if (request.valor() == null) {
+            return ContaPagarResponse.from(service.pagarEmConta(
+                    tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId,
+                    request.contaFinanceiraId()));
+        }
         return ContaPagarResponse.from(service.pagarEmConta(
-                tenantContext.tenantId(),
-                tenantContext.usuarioIdOuNulo(),
-                contaId,
-                request.contaFinanceiraId()));
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId,
+                request.contaFinanceiraId(), request.valor()));
     }
 
     public record ReceberEmContaRequest(
@@ -54,5 +50,8 @@ public class TesourariaBaixaController {
             @NotNull @DecimalMin(value = "0.0001") BigDecimal valor
     ) {}
 
-    public record PagarEmContaRequest(@NotNull UUID contaFinanceiraId) {}
+    public record PagarEmContaRequest(
+            @NotNull UUID contaFinanceiraId,
+            @DecimalMin(value = "0.0001") BigDecimal valor
+    ) {}
 }

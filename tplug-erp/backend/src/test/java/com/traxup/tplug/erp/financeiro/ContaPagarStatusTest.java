@@ -26,10 +26,38 @@ class ContaPagarStatusTest {
     }
 
     @Test
+    void deveEvoluirDeParcialParaPago() {
+        ContaPagar conta = novaConta();
+        conta.pagar(new BigDecimal("40.0000"));
+        assertEquals("PARCIAL", conta.getStatus());
+        assertEquals(0, conta.getValorPago().compareTo(new BigDecimal("40.0000")));
+        assertEquals(0, conta.getSaldoAberto().compareTo(new BigDecimal("60.0000")));
+
+        conta.pagar(new BigDecimal("60.0000"));
+        assertEquals("PAGO", conta.getStatus());
+        assertEquals(0, conta.getSaldoAberto().compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void naoDeveAceitarPagamentoAcimaDoSaldo() {
+        ContaPagar conta = novaConta();
+        conta.pagar(new BigDecimal("40.0000"));
+        assertThrows(IllegalArgumentException.class,
+                () -> conta.pagar(new BigDecimal("61.0000")));
+    }
+
+    @Test
     void naoDevePagarDuasVezes() {
         ContaPagar conta = novaConta();
         conta.pagar();
         assertThrows(IllegalArgumentException.class, conta::pagar);
+    }
+
+    @Test
+    void naoDeveCancelarContaComPagamentoParcial() {
+        ContaPagar conta = novaConta();
+        conta.pagar(new BigDecimal("10.0000"));
+        assertThrows(IllegalArgumentException.class, conta::cancelar);
     }
 
     @Test

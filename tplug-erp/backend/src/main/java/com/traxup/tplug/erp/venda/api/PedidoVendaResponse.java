@@ -13,11 +13,14 @@ public record PedidoVendaResponse(
         String status,
         String observacao,
         UUID usuarioId,
+        UUID formaPagamentoId,
+        UUID condicaoPagamentoId,
         Instant criadoEm,
         Instant atualizadoEm
 ) {
     public static PedidoVendaResponse from(PedidoVenda pedido) {
         return new PedidoVendaResponse(pedido.getId(), pedido.getFilialId(), pedido.getClienteId(), pedido.getNumero(),
-                pedido.getStatus(), pedido.getObservacao(), pedido.getUsuarioId(), pedido.getCriadoEm(), pedido.getAtualizadoEm());
+                pedido.getStatus(), pedido.getObservacao(), pedido.getUsuarioId(), pedido.getFormaPagamentoId(),
+                pedido.getCondicaoPagamentoId(), pedido.getCriadoEm(), pedido.getAtualizadoEm());
     }
 }

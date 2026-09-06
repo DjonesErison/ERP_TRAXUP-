@@ -21,17 +21,25 @@ A conciliacao financeira permanece generica e desacoplada de bancos, adquirentes
 - A sugestao e deterministica e nao faz conciliacao automatica, evitando falsos positivos silenciosos.
 - Lancamentos ja conciliados nao recebem novas sugestoes.
 
+## Importacao em lote por API
+
+- A API aceita lotes de ate 500 lancamentos por conta financeira.
+- Todos os itens do lote reutilizam as mesmas validacoes de tenant, filial, conta, origem, referencia externa, tipo e valor da importacao individual.
+- O lote e transacional: qualquer item invalido ou duplicado interrompe a operacao e reverte o conjunto.
+- Cada lancamento importado preserva sua propria referencia externa e auditoria `IMPORTAR`, mantendo rastreabilidade e idempotencia por item.
+- O contrato de lote funciona como ponto de entrada generico para adaptadores futuros de OFX, CNAB, bancos, adquirentes e PSPs, sem acoplar esses formatos ao dominio financeiro.
+
 ## RBAC e auditoria
 
 - `FINANCEIRO_CONCILIACAO_LER`: consulta lancamentos importados e sugestoes.
-- `FINANCEIRO_CONCILIACAO_EDITAR`: importa e concilia lancamentos.
+- `FINANCEIRO_CONCILIACAO_EDITAR`: importa, importa em lote e concilia lancamentos.
 - Importacao gera auditoria `IMPORTAR` em `CONCILIACAO_FINANCEIRA`.
 - Matching efetivado gera auditoria `CONCILIAR` em `CONCILIACAO_FINANCEIRA`.
 - Consultar sugestoes e uma operacao somente leitura e nao gera evento de auditoria de mutacao.
 
 ## Proximos incrementos
 
-1. importadores/adaptadores de extrato (ex.: OFX/API) sem acoplar o dominio a um fornecedor;
+1. adaptador OFX sobre o contrato de importacao em lote;
 2. taxas, antecipacoes, estornos e chargebacks;
 3. integracoes bancarias/PSP especificas por adaptadores.
 

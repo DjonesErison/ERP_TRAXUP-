@@ -14,6 +14,16 @@ Este incremento aplica ao financeiro do faturamento os ajustes opcionais configu
 
 Percentuais e valores fixos usam a configuracao tenant-scoped da condicao. Desconto fixo maior que o total liquido e entrada maior que o total financeiro sao rejeitados. O faturamento, estoque e geracao dos titulos continuam na mesma transacao.
 
+## Plano financeiro unificado
+
+A composicao dos titulos financeiros e centralizada em uma unica calculadora de plano do pedido. Tanto a previa quanto o faturamento usam exatamente a mesma rotina para aplicar ajustes, gerar a entrada, distribuir o saldo pelas parcelas, calcular vencimentos e absorver arredondamento na ultima parcela.
+
+- A data-base e informada explicitamente ao calculo, evitando regras de vencimento espalhadas em fluxos diferentes.
+- Sem condicao configurada, o plano gera uma unica parcela pelo total liquido.
+- Com condicao configurada, a busca de condicao e parcelas continua tenant-scoped antes do calculo.
+- Se existir saldo a parcelar e a condicao nao possuir grade de parcelas, o plano e rejeitado antes da geracao financeira.
+- A unificacao nao altera valores, RBAC, auditoria ou regras fiscais; remove apenas duplicacao de regra entre consulta e execucao.
+
 ## Previa financeira do pedido
 
 Antes do faturamento, `GET /api/v1/vendas/pedidos/{pedidoId}/previa-financeira` permite consultar como o pedido sera convertido em titulos financeiros.
@@ -23,7 +33,7 @@ Antes do faturamento, `GET /api/v1/vendas/pedidos/{pedidoId}/previa-financeira` 
 - Retorna total liquido, desconto, juros, entrada, total financeiro, saldo a parcelar e os titulos previstos com tipo, numero, vencimento e valor.
 - Sem condicao configurada, a previa mostra uma unica parcela no dia corrente, preservando o comportamento de compatibilidade do faturamento.
 - Com entrada, a previa apresenta o titulo `ENTRADA` separado e distribui somente o saldo restante pela grade da condicao.
-- A mesma calculadora deterministica usada no faturamento e reutilizada na previa, evitando divergencia de regra comercial entre consulta e execucao.
+- A mesma calculadora deterministica de plano usada no faturamento e reutilizada na previa, evitando divergencia de regra comercial entre consulta e execucao.
 
 ## Separacoes importantes
 

@@ -38,8 +38,7 @@ public class IntegracaoFinanceiraObservabilidadeService {
         if (tentativas.isEmpty()) {
             return new ResumoSaude(integracaoId, "SEM_EXECUCAO", null, null, 0, 0);
         }
-
-        Instant ultimaTentativaEm = tentativas.getFirst().getFinalizadoEm();
+        Instant ultimaTentativaEm = tentativas.get(0).getFinalizadoEm();
         Instant ultimoSucessoEm = tentativas.stream()
                 .filter(t -> "SUCESSO".equals(t.getStatus()))
                 .map(IntegracaoFinanceiraTentativa::getFinalizadoEm)

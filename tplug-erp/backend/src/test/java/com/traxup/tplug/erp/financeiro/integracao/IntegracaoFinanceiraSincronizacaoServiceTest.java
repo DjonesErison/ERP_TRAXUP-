@@ -29,7 +29,7 @@ class IntegracaoFinanceiraSincronizacaoServiceTest {
     @Mock AuditoriaApplicationService auditoria;
 
     @Test
-    void deveForcarOrigemDoProvedorEAvancarCheckpointDepoisDaImportacao() {
+    void deveForcarOrigemDoProvedorEAvancarCheckpointDepoisDaImportacaoComLockTenantScoped() {
         UUID tenantId = UUID.randomUUID();
         UUID usuarioId = UUID.randomUUID();
         UUID integracaoId = UUID.randomUUID();
@@ -37,7 +37,7 @@ class IntegracaoFinanceiraSincronizacaoServiceTest {
         IntegracaoFinanceira integracao = new IntegracaoFinanceira(
                 tenantId, UUID.randomUUID(), contaId, "psp_teste", "merchant", usuarioId);
         Instant sincronizadoEm = Instant.parse("2026-09-06T10:00:00Z");
-        when(repository.findByIdAndTenantId(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
+        when(repository.findByIdAndTenantIdForUpdate(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
         when(conciliacaoService.importarLote(eq(tenantId), eq(usuarioId), eq(contaId), anyList()))
                 .thenReturn(List.of());
         when(repository.save(integracao)).thenReturn(integracao);
@@ -48,6 +48,8 @@ class IntegracaoFinanceiraSincronizacaoServiceTest {
                 tenantId, usuarioId, integracaoId, List.of(item), "cursor-10", sincronizadoEm);
 
         ArgumentCaptor<List<ConciliacaoApplicationService.ImportacaoLancamento>> captor = ArgumentCaptor.forClass(List.class);
+        verify(repository).findByIdAndTenantIdForUpdate(integracaoId, tenantId);
+        verify(repository, never()).findByIdAndTenantId(integracaoId, tenantId);
         verify(conciliacaoService).importarLote(eq(tenantId), eq(usuarioId), eq(contaId), captor.capture());
         assertEquals("PSP_TESTE", captor.getValue().get(0).origem());
         assertEquals("cursor-10", resultado.integracao().getCheckpoint());
@@ -63,7 +65,7 @@ class IntegracaoFinanceiraSincronizacaoServiceTest {
         UUID contaId = UUID.randomUUID();
         IntegracaoFinanceira integracao = new IntegracaoFinanceira(
                 tenantId, UUID.randomUUID(), contaId, "BANCO_TESTE", null, usuarioId);
-        when(repository.findByIdAndTenantId(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
+        when(repository.findByIdAndTenantIdForUpdate(integracaoId, tenantId)).thenReturn(Optional.of(integracao));
         when(conciliacaoService.importarLote(eq(tenantId), eq(usuarioId), eq(contaId), anyList()))
                 .thenThrow(new IllegalArgumentException("falha de importacao"));
 
@@ -73,6 +75,8 @@ class IntegracaoFinanceiraSincronizacaoServiceTest {
         assertThrows(IllegalArgumentException.class, () -> novoService().sincronizar(
                 tenantId, usuarioId, integracaoId, List.of(item), "cursor-nao-aplicar", Instant.now()));
         assertEquals(null, integracao.getCheckpoint());
+        verify(repository).findByIdAndTenantIdForUpdate(integracaoId, tenantId);
+        verify(repository, never()).findByIdAndTenantId(integracaoId, tenantId);
         verify(repository, never()).save(any(IntegracaoFinanceira.class));
         verify(auditoria, never()).registrar(any(), any(), any(), any(), eq("SINCRONIZAR"), any(), any(), any());
     }

@@ -16,12 +16,21 @@ public class ContaFinanceiraMovimento {
     @Column(nullable = false, precision = 19, scale = 4) private BigDecimal valor;
     @Column(nullable = false, length = 200) private String descricao;
     @Column(name = "usuario_id") private UUID usuarioId;
+    @Column(name = "origem_tipo", length = 40) private String origemTipo;
+    @Column(name = "origem_id") private UUID origemId;
+    @Column(name = "origem_referencia", length = 120) private String origemReferencia;
     @Column(name = "ocorrido_em", nullable = false) private Instant ocorridoEm;
 
     protected ContaFinanceiraMovimento() {}
 
     public ContaFinanceiraMovimento(UUID tenantId, UUID filialId, UUID contaFinanceiraId,
                                     String tipo, BigDecimal valor, String descricao, UUID usuarioId) {
+        this(tenantId, filialId, contaFinanceiraId, tipo, valor, descricao, usuarioId, null, null, null);
+    }
+
+    public ContaFinanceiraMovimento(UUID tenantId, UUID filialId, UUID contaFinanceiraId,
+                                    String tipo, BigDecimal valor, String descricao, UUID usuarioId,
+                                    String origemTipo, UUID origemId, String origemReferencia) {
         this.id = UUID.randomUUID();
         this.tenantId = tenantId;
         this.filialId = filialId;
@@ -30,6 +39,9 @@ public class ContaFinanceiraMovimento {
         this.valor = valor;
         this.descricao = descricao;
         this.usuarioId = usuarioId;
+        this.origemTipo = origemTipo;
+        this.origemId = origemId;
+        this.origemReferencia = origemReferencia;
         this.ocorridoEm = Instant.now();
     }
 
@@ -46,5 +58,8 @@ public class ContaFinanceiraMovimento {
     public BigDecimal getValor() { return valor; }
     public String getDescricao() { return descricao; }
     public UUID getUsuarioId() { return usuarioId; }
+    public String getOrigemTipo() { return origemTipo; }
+    public UUID getOrigemId() { return origemId; }
+    public String getOrigemReferencia() { return origemReferencia; }
     public Instant getOcorridoEm() { return ocorridoEm; }
 }

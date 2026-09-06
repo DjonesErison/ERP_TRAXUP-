@@ -25,24 +25,26 @@ public class TesourariaBaixaController {
     @PostMapping("/contas-receber/{contaId}/receber")
     @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_BAIXAR') and hasAuthority('FINANCEIRO_CONTA_MOVIMENTAR')")
     public ContaReceberResponse receber(@PathVariable UUID contaId,
+                                        @RequestHeader("Idempotency-Key") String idempotencyKey,
                                         @Valid @RequestBody ReceberEmContaRequest request) {
         return ContaReceberResponse.from(service.receberEmConta(
                 tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId,
-                request.contaFinanceiraId(), request.valor()));
+                request.contaFinanceiraId(), request.valor(), idempotencyKey));
     }
 
     @PostMapping("/contas-pagar/{contaId}/pagar")
     @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_BAIXAR') and hasAuthority('FINANCEIRO_CONTA_MOVIMENTAR')")
     public ContaPagarResponse pagar(@PathVariable UUID contaId,
+                                    @RequestHeader("Idempotency-Key") String idempotencyKey,
                                     @Valid @RequestBody PagarEmContaRequest request) {
         if (request.valor() == null) {
             return ContaPagarResponse.from(service.pagarEmConta(
                     tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId,
-                    request.contaFinanceiraId()));
+                    request.contaFinanceiraId(), idempotencyKey));
         }
         return ContaPagarResponse.from(service.pagarEmConta(
                 tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId,
-                request.contaFinanceiraId(), request.valor()));
+                request.contaFinanceiraId(), request.valor(), idempotencyKey));
     }
 
     public record ReceberEmContaRequest(

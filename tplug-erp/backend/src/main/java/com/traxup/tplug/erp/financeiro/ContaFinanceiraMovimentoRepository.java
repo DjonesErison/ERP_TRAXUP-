@@ -13,15 +13,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ContaFinanceiraMovimentoRepository extends JpaRepository<ContaFinanceiraMovimento, UUID> {
-    List<ContaFinanceiraMovimento> findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDesc(
-            UUID tenantId, UUID contaFinanceiraId);
+    List<ContaFinanceiraMovimento> findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDesc(UUID tenantId, UUID contaFinanceiraId);
     Optional<ContaFinanceiraMovimento> findByIdAndTenantId(UUID id, UUID tenantId);
+    Optional<ContaFinanceiraMovimento> findByTenantIdAndOrigemTipoAndOrigemIdAndOrigemReferencia(
+            UUID tenantId, String origemTipo, UUID origemId, String origemReferencia);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT movimento FROM ContaFinanceiraMovimento movimento " +
-            "WHERE movimento.id = :id AND movimento.tenantId = :tenantId")
-    Optional<ContaFinanceiraMovimento> findByIdAndTenantIdForUpdate(@Param("id") UUID id,
-                                                                    @Param("tenantId") UUID tenantId);
+    @Query("SELECT movimento FROM ContaFinanceiraMovimento movimento WHERE movimento.id = :id AND movimento.tenantId = :tenantId")
+    Optional<ContaFinanceiraMovimento> findByIdAndTenantIdForUpdate(@Param("id") UUID id, @Param("tenantId") UUID tenantId);
 
     @Query("""
             SELECT movimento FROM ContaFinanceiraMovimento movimento
@@ -39,11 +38,7 @@ public interface ContaFinanceiraMovimentoRepository extends JpaRepository<ContaF
             ORDER BY movimento.ocorridoEm ASC
             """)
     List<ContaFinanceiraMovimento> findCandidatosDisponiveis(
-            @Param("tenantId") UUID tenantId,
-            @Param("contaFinanceiraId") UUID contaFinanceiraId,
-            @Param("filialId") UUID filialId,
-            @Param("tipo") String tipo,
-            @Param("valor") BigDecimal valor,
-            @Param("inicio") Instant inicio,
-            @Param("fim") Instant fim);
+            @Param("tenantId") UUID tenantId, @Param("contaFinanceiraId") UUID contaFinanceiraId,
+            @Param("filialId") UUID filialId, @Param("tipo") String tipo, @Param("valor") BigDecimal valor,
+            @Param("inicio") Instant inicio, @Param("fim") Instant fim);
 }

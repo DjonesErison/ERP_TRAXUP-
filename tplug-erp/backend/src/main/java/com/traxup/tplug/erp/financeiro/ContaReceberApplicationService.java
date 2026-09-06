@@ -122,24 +122,30 @@ public class ContaReceberApplicationService {
 
     @Transactional
     public ContaReceber receber(UUID tenantId, UUID usuarioId, UUID contaId) {
-        ContaReceber conta = buscar(tenantId, contaId);
+        ContaReceber conta = buscarParaAtualizacao(tenantId, contaId);
         return registrarRecebimento(tenantId, usuarioId, conta, conta.getSaldoAberto());
     }
 
     @Transactional
     public ContaReceber receber(UUID tenantId, UUID usuarioId, UUID contaId, BigDecimal valor) {
-        ContaReceber conta = buscar(tenantId, contaId);
+        ContaReceber conta = buscarParaAtualizacao(tenantId, contaId);
         return registrarRecebimento(tenantId, usuarioId, conta, valor);
     }
 
     @Transactional
     public ContaReceber cancelar(UUID tenantId, UUID usuarioId, UUID contaId) {
-        ContaReceber conta = buscar(tenantId, contaId);
+        ContaReceber conta = buscarParaAtualizacao(tenantId, contaId);
         conta.cancelar();
         repository.save(conta);
         auditoria.registrar(tenantId, usuarioId, null, conta.getFilialId(),
                 "CANCELAR", "CONTA_RECEBER", conta.getId(), null);
         return conta;
+    }
+
+    private ContaReceber buscarParaAtualizacao(UUID tenantId, UUID contaId) {
+        return repository.findByIdAndTenantIdForUpdate(contaId, tenantId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Conta a receber nao encontrada para o tenant informado"));
     }
 
     private ContaReceber registrarRecebimento(UUID tenantId, UUID usuarioId,

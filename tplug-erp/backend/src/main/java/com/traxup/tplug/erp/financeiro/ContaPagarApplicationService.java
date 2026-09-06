@@ -81,24 +81,29 @@ public class ContaPagarApplicationService {
 
     @Transactional
     public ContaPagar pagar(UUID tenantId, UUID usuarioId, UUID contaId) {
-        ContaPagar conta = buscar(tenantId, contaId);
+        ContaPagar conta = buscarParaAtualizacao(tenantId, contaId);
         return registrarPagamento(tenantId, usuarioId, conta, conta.getSaldoAberto());
     }
 
     @Transactional
     public ContaPagar pagar(UUID tenantId, UUID usuarioId, UUID contaId, BigDecimal valor) {
-        ContaPagar conta = buscar(tenantId, contaId);
+        ContaPagar conta = buscarParaAtualizacao(tenantId, contaId);
         return registrarPagamento(tenantId, usuarioId, conta, valor);
     }
 
     @Transactional
     public ContaPagar cancelar(UUID tenantId, UUID usuarioId, UUID contaId) {
-        ContaPagar conta = buscar(tenantId, contaId);
+        ContaPagar conta = buscarParaAtualizacao(tenantId, contaId);
         conta.cancelar();
         repository.save(conta);
         auditoria.registrar(tenantId, usuarioId, null, conta.getFilialId(),
                 "CANCELAR", "CONTA_PAGAR", conta.getId(), null);
         return conta;
+    }
+
+    private ContaPagar buscarParaAtualizacao(UUID tenantId, UUID contaId) {
+        return repository.findByIdAndTenantIdForUpdate(contaId, tenantId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta a pagar nao encontrada para o tenant informado"));
     }
 
     private ContaPagar registrarPagamento(UUID tenantId, UUID usuarioId,

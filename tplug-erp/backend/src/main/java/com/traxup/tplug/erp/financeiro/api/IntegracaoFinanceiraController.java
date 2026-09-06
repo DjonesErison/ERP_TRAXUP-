@@ -1,14 +1,11 @@
 package com.traxup.tplug.erp.financeiro.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
-import com.traxup.tplug.erp.financeiro.integracao.IntegracaoFinanceiraAdapterSincronizacaoService;
-import com.traxup.tplug.erp.financeiro.integracao.IntegracaoFinanceiraApplicationService;
-import com.traxup.tplug.erp.financeiro.integracao.IntegracaoFinanceiraSincronizacaoService;
+import com.traxup.tplug.erp.financeiro.integracao.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -18,70 +15,60 @@ public class IntegracaoFinanceiraController {
     private final IntegracaoFinanceiraApplicationService service;
     private final IntegracaoFinanceiraSincronizacaoService sincronizacaoService;
     private final IntegracaoFinanceiraAdapterSincronizacaoService adapterSincronizacaoService;
+    private final IntegracaoFinanceiraObservabilidadeService observabilidadeService;
     private final TenantContext tenantContext;
 
     public IntegracaoFinanceiraController(IntegracaoFinanceiraApplicationService service,
-                                          IntegracaoFinanceiraSincronizacaoService sincronizacaoService,
-                                          IntegracaoFinanceiraAdapterSincronizacaoService adapterSincronizacaoService,
-                                          TenantContext tenantContext) {
-        this.service = service;
-        this.sincronizacaoService = sincronizacaoService;
-        this.adapterSincronizacaoService = adapterSincronizacaoService;
+            IntegracaoFinanceiraSincronizacaoService sincronizacaoService,
+            IntegracaoFinanceiraAdapterSincronizacaoService adapterSincronizacaoService,
+            IntegracaoFinanceiraObservabilidadeService observabilidadeService, TenantContext tenantContext) {
+        this.service = service; this.sincronizacaoService = sincronizacaoService;
+        this.adapterSincronizacaoService = adapterSincronizacaoService; this.observabilidadeService = observabilidadeService;
         this.tenantContext = tenantContext;
     }
 
-    @GetMapping("/contas/{contaId}")
-    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
+    @GetMapping("/contas/{contaId}") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
     public List<IntegracaoFinanceiraResponse> listar(@PathVariable UUID contaId) {
-        return service.listar(tenantContext.tenantId(), contaId).stream()
-                .map(IntegracaoFinanceiraResponse::from).toList();
+        return service.listar(tenantContext.tenantId(), contaId).stream().map(IntegracaoFinanceiraResponse::from).toList();
     }
 
-    @PostMapping("/contas/{contaId}")
-    @ResponseStatus(HttpStatus.CREATED)
+    @GetMapping("/{integracaoId}/tentativas") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
+    public List<IntegracaoFinanceiraTentativaResponse> listarTentativas(@PathVariable UUID integracaoId) {
+        return observabilidadeService.listar(tenantContext.tenantId(), integracaoId).stream()
+                .map(IntegracaoFinanceiraTentativaResponse::from).toList();
+    }
+
+    @PostMapping("/contas/{contaId}") @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
-    public IntegracaoFinanceiraResponse criar(@PathVariable UUID contaId,
-                                               @Valid @RequestBody CriarIntegracaoFinanceiraRequest request) {
-        return IntegracaoFinanceiraResponse.from(service.criar(
-                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId,
+    public IntegracaoFinanceiraResponse criar(@PathVariable UUID contaId, @Valid @RequestBody CriarIntegracaoFinanceiraRequest request) {
+        return IntegracaoFinanceiraResponse.from(service.criar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId,
                 request.provedor(), request.identificadorExterno()));
     }
 
-    @PostMapping("/{integracaoId}/sincronizacao")
-    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
-    public IntegracaoFinanceiraResponse registrarSincronizacao(
-            @PathVariable UUID integracaoId,
+    @PostMapping("/{integracaoId}/sincronizacao") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
+    public IntegracaoFinanceiraResponse registrarSincronizacao(@PathVariable UUID integracaoId,
             @Valid @RequestBody RegistrarSincronizacaoIntegracaoRequest request) {
-        return IntegracaoFinanceiraResponse.from(service.registrarSincronizacao(
-                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), integracaoId,
-                request.checkpoint(), request.sincronizadoEm()));
+        return IntegracaoFinanceiraResponse.from(service.registrarSincronizacao(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(),
+                integracaoId, request.checkpoint(), request.sincronizadoEm()));
     }
 
-    @PostMapping("/{integracaoId}/sincronizar-lote")
-    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
-    public SincronizarIntegracaoFinanceiraResponse sincronizarLote(
-            @PathVariable UUID integracaoId,
+    @PostMapping("/{integracaoId}/sincronizar-lote") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
+    public SincronizarIntegracaoFinanceiraResponse sincronizarLote(@PathVariable UUID integracaoId,
             @Valid @RequestBody SincronizarIntegracaoFinanceiraRequest request) {
-        var itens = request.lancamentos().stream()
-                .map(item -> new IntegracaoFinanceiraSincronizacaoService.LancamentoExterno(
-                        item.referenciaExterna(), item.tipo(), item.valor(), item.descricao(), item.ocorridoEm()))
-                .toList();
-        return SincronizarIntegracaoFinanceiraResponse.from(sincronizacaoService.sincronizar(
-                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), integracaoId,
-                itens, request.checkpoint(), request.sincronizadoEm()));
+        var itens = request.lancamentos().stream().map(item -> new IntegracaoFinanceiraSincronizacaoService.LancamentoExterno(
+                item.referenciaExterna(), item.tipo(), item.valor(), item.descricao(), item.ocorridoEm())).toList();
+        return SincronizarIntegracaoFinanceiraResponse.from(sincronizacaoService.sincronizar(tenantContext.tenantId(),
+                tenantContext.usuarioIdOuNulo(), integracaoId, itens, request.checkpoint(), request.sincronizadoEm()));
     }
 
-    @PostMapping("/{integracaoId}/sincronizar")
-    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
+    @PostMapping("/{integracaoId}/sincronizar") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
     public SincronizarIntegracaoFinanceiraResponse sincronizarPorAdapter(@PathVariable UUID integracaoId) {
         return SincronizarIntegracaoFinanceiraResponse.from(adapterSincronizacaoService.sincronizar(
                 tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), integracaoId));
     }
 
-    @PostMapping("/{integracaoId}/desativar")
-    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
+    @PostMapping("/{integracaoId}/desativar") @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_EDITAR')")
     public IntegracaoFinanceiraResponse desativar(@PathVariable UUID integracaoId) {
-        return IntegracaoFinanceiraResponse.from(service.desativar(
-                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), integracaoId));
+        return IntegracaoFinanceiraResponse.from(service.desativar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), integracaoId));
     }
 }

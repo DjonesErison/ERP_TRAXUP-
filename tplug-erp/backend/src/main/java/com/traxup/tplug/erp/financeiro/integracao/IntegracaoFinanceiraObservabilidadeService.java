@@ -47,7 +47,7 @@ public class IntegracaoFinanceiraObservabilidadeService {
         List<IntegracaoFinanceiraTentativa> tentativas =
                 tentativaRepository.findTop50ByTenantIdAndIntegracaoIdOrderByIniciadoEmDesc(tenantId, integracaoId);
         if (tentativas.isEmpty()) {
-            return new ResumoSaude(integracaoId, "SEM_EXECUCAO", null, null, 0, 0, 0, 0, null);
+            return new ResumoSaude(integracaoId, "SEM_EXECUCAO", null, null, 0, 0, 0, 0, null, null);
         }
         Instant ultimaTentativaEm = tentativas.get(0).getFinalizadoEm();
         Instant ultimoSucessoEm = tentativas.stream()
@@ -63,9 +63,10 @@ public class IntegracaoFinanceiraObservabilidadeService {
         int falhas = (int) tentativas.stream().filter(t -> "FALHA".equals(t.getStatus())).count();
         long somaDuracao = tentativas.stream().mapToLong(IntegracaoFinanceiraTentativa::getDuracaoMs).sum();
         long duracaoMediaMs = somaDuracao / tentativas.size();
+        int taxaSucessoPercentual = (int) Math.round((sucessos * 100.0d) / tentativas.size());
         String status = falhasConsecutivas == 0 ? "SAUDAVEL" : "ATENCAO";
         return new ResumoSaude(integracaoId, status, ultimaTentativaEm, ultimoSucessoEm,
-                falhasConsecutivas, tentativas.size(), sucessos, falhas, duracaoMediaMs);
+                falhasConsecutivas, tentativas.size(), sucessos, falhas, duracaoMediaMs, taxaSucessoPercentual);
     }
 
     private String normalizarStatus(String status) {
@@ -90,11 +91,11 @@ public class IntegracaoFinanceiraObservabilidadeService {
 
     public record ResumoSaude(UUID integracaoId, String status, Instant ultimaTentativaEm,
                               Instant ultimoSucessoEm, int falhasConsecutivas, int tentativasConsideradas,
-                              int sucessos, int falhas, Long duracaoMediaMs) {
+                              int sucessos, int falhas, Long duracaoMediaMs, Integer taxaSucessoPercentual) {
         public ResumoSaude(UUID integracaoId, String status, Instant ultimaTentativaEm,
                            Instant ultimoSucessoEm, int falhasConsecutivas, int tentativasConsideradas) {
             this(integracaoId, status, ultimaTentativaEm, ultimoSucessoEm,
-                    falhasConsecutivas, tentativasConsideradas, 0, 0, null);
+                    falhasConsecutivas, tentativasConsideradas, 0, 0, null, null);
         }
     }
 }

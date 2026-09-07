@@ -37,7 +37,7 @@ public class PedidoVendaItemApplicationService {
 
     public List<PedidoVendaItem> listar(UUID tenantId, UUID pedidoId) {
         buscarPedido(tenantId, pedidoId, false);
-        return itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId);
+        return itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId);
     }
 
     @Transactional

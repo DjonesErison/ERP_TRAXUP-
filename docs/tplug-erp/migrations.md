@@ -51,11 +51,12 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 - `V45` — integridade tenant-safe do usuário nos históricos de baixas financeiras.
 - `V46` — integridade tenant-safe do usuário nos lançamentos de conciliação financeira, preservando registros históricos sem usuário.
 - `V47` — integridade tenant-safe das referências de integrações financeiras, vinculando conta à filial correta e usuário ao mesmo tenant.
+- `V48` — integridade tenant-safe das contas financeiras e movimentos de tesouraria, vinculando usuário ao tenant e movimento à conta da filial correta.
 
 ## Regras para novas migrations
 
-- Não editar migrations já aplicadas (`V1`–`V47`).
-- A próxima alteração de schema deve usar `V48`.
+- Não editar migrations já aplicadas (`V1`–`V48`).
+- A próxima alteração de schema deve usar `V49`.
 - Migrations devem executar do zero em banco limpo no CI.
 - Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema.
 - Toda constraint multi-tenant nova deve ser analisada também no nível do banco, não apenas na aplicação.

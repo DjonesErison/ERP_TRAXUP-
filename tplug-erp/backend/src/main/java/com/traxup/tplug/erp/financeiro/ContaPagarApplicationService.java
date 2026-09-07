@@ -46,6 +46,12 @@ public class ContaPagarApplicationService {
         return repository.filtrar(tenantId, normalizarStatus(status), vencimentoInicio, vencimentoFim);
     }
 
+    public TituloFinanceiroResumo resumir(UUID tenantId, String status,
+                                          LocalDate vencimentoInicio, LocalDate vencimentoFim) {
+        return TituloFinanceiroResumo.deContasPagar(
+                listar(tenantId, status, vencimentoInicio, vencimentoFim));
+    }
+
     public ContaPagar buscar(UUID tenantId, UUID contaId) {
         return repository.findByIdAndTenantId(contaId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Conta a pagar nao encontrada para o tenant informado"));

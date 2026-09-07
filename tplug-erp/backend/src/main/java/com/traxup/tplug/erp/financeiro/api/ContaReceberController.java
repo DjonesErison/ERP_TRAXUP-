@@ -41,6 +41,16 @@ public class ContaReceberController {
                 .toList();
     }
 
+    @GetMapping("/resumo")
+    @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_LER')")
+    public TituloFinanceiroResumoResponse resumir(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoFim) {
+        return TituloFinanceiroResumoResponse.from(
+                service.resumir(tenantContext.tenantId(), status, vencimentoInicio, vencimentoFim));
+    }
+
     @GetMapping("/origens/{origemTipo}/{origemId}")
     @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_LER')")
     public List<ContaReceberResponse> listarPorOrigem(@PathVariable String origemTipo,

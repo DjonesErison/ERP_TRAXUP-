@@ -46,6 +46,12 @@ public class ContaReceberApplicationService {
         return repository.filtrar(tenantId, normalizarStatus(status), vencimentoInicio, vencimentoFim);
     }
 
+    public TituloFinanceiroResumo resumir(UUID tenantId, String status,
+                                          LocalDate vencimentoInicio, LocalDate vencimentoFim) {
+        return TituloFinanceiroResumo.deContasReceber(
+                listar(tenantId, status, vencimentoInicio, vencimentoFim));
+    }
+
     public List<ContaReceber> listarPorOrigem(UUID tenantId, String origemTipo, UUID origemId) {
         if (origemId == null) throw new RegraNegocioException("Identificador da origem e obrigatorio");
         String tipo = normalizarObrigatorio(origemTipo, "Tipo da origem").toUpperCase(Locale.ROOT);

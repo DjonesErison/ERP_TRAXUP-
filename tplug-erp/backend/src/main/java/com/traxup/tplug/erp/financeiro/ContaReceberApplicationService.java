@@ -48,15 +48,17 @@ public class ContaReceberApplicationService {
     }
 
     public TituloFinanceiroResumo resumir(UUID tenantId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) {
-        return TituloFinanceiroResumo.deContasReceber(listar(tenantId, status, vencimentoInicio, vencimentoFim));
+        return resumir(tenantId, null, null, status, vencimentoInicio, vencimentoFim);
     }
 
     public TituloFinanceiroResumo resumir(UUID tenantId, UUID filialId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) {
-        return TituloFinanceiroResumo.deContasReceber(listar(tenantId, filialId, status, vencimentoInicio, vencimentoFim));
+        return resumir(tenantId, filialId, null, status, vencimentoInicio, vencimentoFim);
     }
 
     public TituloFinanceiroResumo resumir(UUID tenantId, UUID filialId, UUID clienteId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) {
-        return TituloFinanceiroResumo.deContasReceber(listar(tenantId, filialId, clienteId, status, vencimentoInicio, vencimentoFim));
+        validarPeriodo(vencimentoInicio, vencimentoFim);
+        return TituloFinanceiroResumo.deProjection(repository.resumir(
+                tenantId, filialId, clienteId, normalizarStatus(status), vencimentoInicio, vencimentoFim));
     }
 
     public List<ContaReceber> listarPorOrigem(UUID tenantId, String origemTipo, UUID origemId) {

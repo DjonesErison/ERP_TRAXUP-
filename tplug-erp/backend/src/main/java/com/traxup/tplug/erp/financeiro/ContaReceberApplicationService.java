@@ -37,7 +37,13 @@ public class ContaReceberApplicationService {
     }
 
     public List<ContaReceber> listar(UUID tenantId) {
-        return repository.findAllByTenantIdOrderByVencimentoAscCriadoEmDesc(tenantId);
+        return listar(tenantId, null, null, null);
+    }
+
+    public List<ContaReceber> listar(UUID tenantId, String status,
+                                     LocalDate vencimentoInicio, LocalDate vencimentoFim) {
+        validarPeriodo(vencimentoInicio, vencimentoFim);
+        return repository.filtrar(tenantId, normalizarStatus(status), vencimentoInicio, vencimentoFim);
     }
 
     public List<ContaReceber> listarPorOrigem(UUID tenantId, String origemTipo, UUID origemId) {
@@ -158,6 +164,22 @@ public class ContaReceberApplicationService {
                 "BAIXAR", "CONTA_RECEBER", conta.getId(),
                 "recebimentoId=" + recebimento.getId() + ";valor=" + valor + ";status=" + conta.getStatus());
         return conta;
+    }
+
+    private String normalizarStatus(String status) {
+        if (status == null || status.isBlank()) return null;
+        String normalizado = status.trim().toUpperCase(Locale.ROOT);
+        if (!"ABERTO".equals(normalizado) && !"PARCIAL".equals(normalizado)
+                && !"RECEBIDO".equals(normalizado) && !"CANCELADO".equals(normalizado)) {
+            throw new RegraNegocioException("Status de conta a receber invalido");
+        }
+        return normalizado;
+    }
+
+    private void validarPeriodo(LocalDate inicio, LocalDate fim) {
+        if (inicio != null && fim != null && inicio.isAfter(fim)) {
+            throw new RegraNegocioException("Vencimento inicial nao pode ser posterior ao vencimento final");
+        }
     }
 
     private String normalizarObrigatorio(String valor, String campo) {

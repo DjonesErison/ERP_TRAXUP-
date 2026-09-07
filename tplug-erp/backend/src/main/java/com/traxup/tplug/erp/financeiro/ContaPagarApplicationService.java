@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -36,7 +37,13 @@ public class ContaPagarApplicationService {
     }
 
     public List<ContaPagar> listar(UUID tenantId) {
-        return repository.findAllByTenantIdOrderByVencimentoAscCriadoEmDesc(tenantId);
+        return listar(tenantId, null, null, null);
+    }
+
+    public List<ContaPagar> listar(UUID tenantId, String status,
+                                   LocalDate vencimentoInicio, LocalDate vencimentoFim) {
+        validarPeriodo(vencimentoInicio, vencimentoFim);
+        return repository.filtrar(tenantId, normalizarStatus(status), vencimentoInicio, vencimentoFim);
     }
 
     public ContaPagar buscar(UUID tenantId, UUID contaId) {
@@ -116,6 +123,22 @@ public class ContaPagarApplicationService {
                 "BAIXAR", "CONTA_PAGAR", conta.getId(),
                 "pagamentoId=" + pagamento.getId() + ";valor=" + valor + ";status=" + conta.getStatus());
         return conta;
+    }
+
+    private String normalizarStatus(String status) {
+        if (status == null || status.isBlank()) return null;
+        String normalizado = status.trim().toUpperCase(Locale.ROOT);
+        if (!"ABERTO".equals(normalizado) && !"PARCIAL".equals(normalizado)
+                && !"PAGO".equals(normalizado) && !"CANCELADO".equals(normalizado)) {
+            throw new RegraNegocioException("Status de conta a pagar invalido");
+        }
+        return normalizado;
+    }
+
+    private void validarPeriodo(LocalDate inicio, LocalDate fim) {
+        if (inicio != null && fim != null && inicio.isAfter(fim)) {
+            throw new RegraNegocioException("Vencimento inicial nao pode ser posterior ao vencimento final");
+        }
     }
 
     private String normalizarObrigatorio(String valor, String campo) {

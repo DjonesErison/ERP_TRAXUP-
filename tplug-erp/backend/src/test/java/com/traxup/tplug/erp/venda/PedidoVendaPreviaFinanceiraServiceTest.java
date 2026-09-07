@@ -41,7 +41,7 @@ class PedidoVendaPreviaFinanceiraServiceTest {
 
         PedidoVendaItem item = mock(PedidoVendaItem.class);
         when(item.getTotalItem()).thenReturn(new BigDecimal("1000.0000"));
-        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId)).thenReturn(List.of(item));
+        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId)).thenReturn(List.of(item));
 
         CondicaoPagamento condicao = new CondicaoPagamento(tenantId, "10X", "10x",
                 AjusteComercialTipo.PERCENTUAL, new BigDecimal("5.0000"),
@@ -75,7 +75,7 @@ class PedidoVendaPreviaFinanceiraServiceTest {
         when(pedidoRepository.findByIdAndTenantId(pedidoId, tenantId)).thenReturn(Optional.of(pedido));
         PedidoVendaItem item = mock(PedidoVendaItem.class);
         when(item.getTotalItem()).thenReturn(new BigDecimal("125.50"));
-        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId)).thenReturn(List.of(item));
+        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId)).thenReturn(List.of(item));
 
         PedidoVendaPreviaFinanceiraService.PreviaFinanceira previa = service().prever(tenantId, pedidoId);
 

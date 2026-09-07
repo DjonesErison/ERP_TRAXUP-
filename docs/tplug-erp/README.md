@@ -21,7 +21,7 @@ A arquitetura segue monólito modular. Regras de negócio ficam no backend e tod
 - Consulta de auditoria protegida por `AUDITORIA_LER` e isolada pelo tenant do JWT.
 - Bootstrap seguro e opt-in do primeiro tenant/administrador, sem endpoint público.
 - OpenAPI/Swagger disponível de forma opt-in para documentação da API.
-- PostgreSQL com migrations Flyway V1 a V49; o inventário vigente está em `migrations.md`.
+- PostgreSQL com migrations Flyway V1 a V50; o inventário vigente está em `migrations.md`.
 - CI do backend no GitHub Actions com Java 21 e PostgreSQL 17 efêmero.
 - Dockerfile multi-stage do backend com runtime Java 21 não-root e validação de build da imagem no CI.
 - Contrato de variáveis de ambiente documentado em `.env.example`.

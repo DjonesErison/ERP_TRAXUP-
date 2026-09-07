@@ -5,6 +5,7 @@ import com.traxup.tplug.erp.filial.FilialRepository;
 import com.traxup.tplug.erp.pessoa.PessoaRepository;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -25,12 +26,25 @@ class TituloFinanceiroFiltroPessoaApplicationServiceTest {
     }
 
     @Test
-    void deveFiltrarPagaveisPorTenantFornecedorSemFilial() {
+    void deveResumirPagaveisPorTenantFornecedorSemFilial() {
         ContaPagarRepository repository = mock(ContaPagarRepository.class);
         UUID tenant = UUID.randomUUID(), fornecedor = UUID.randomUUID();
-        when(repository.filtrarPorFornecedor(tenant, fornecedor, null, "PARCIAL", null, null)).thenReturn(List.of());
+        when(repository.resumir(tenant, null, fornecedor, "PARCIAL", null, null)).thenReturn(resumoVazio());
         ContaPagarApplicationService service = new ContaPagarApplicationService(repository, mock(ContaPagarPagamentoRepository.class), mock(FilialRepository.class), mock(PessoaRepository.class), mock(AuditoriaApplicationService.class));
         assertEquals(0, service.resumir(tenant, null, fornecedor, " parcial ", null, null).quantidade());
-        verify(repository).filtrarPorFornecedor(tenant, fornecedor, null, "PARCIAL", null, null);
+        verify(repository).resumir(tenant, null, fornecedor, "PARCIAL", null, null);
+    }
+
+    private static TituloFinanceiroResumoProjection resumoVazio() {
+        TituloFinanceiroResumoProjection projection = mock(TituloFinanceiroResumoProjection.class);
+        when(projection.getQuantidade()).thenReturn(0L);
+        when(projection.getValorOriginalTotal()).thenReturn(BigDecimal.ZERO);
+        when(projection.getValorLiquidadoTotal()).thenReturn(BigDecimal.ZERO);
+        when(projection.getSaldoAtivoTotal()).thenReturn(BigDecimal.ZERO);
+        when(projection.getAbertos()).thenReturn(0L);
+        when(projection.getParciais()).thenReturn(0L);
+        when(projection.getLiquidados()).thenReturn(0L);
+        when(projection.getCancelados()).thenReturn(0L);
+        return projection;
     }
 }

@@ -71,6 +71,33 @@ class TituloFinanceiroOrdenacaoIntegrationTest {
                 resultado.stream().map(ContaPagar::getId).toList());
     }
 
+    @Test
+    void contaReceberPorOrigemDeveOrdenarEIsolarTenant() {
+        Fixture alvo = criarFixture("CR-ORIGEM");
+        Fixture outroTenant = criarFixture("CR-ORIGEM-OUTRO");
+        UUID origemId = UUID.randomUUID();
+        LocalDate vencimento = LocalDate.of(2026, 10, 30);
+        LocalDateTime antiga = LocalDateTime.of(2026, 9, 3, 9, 0);
+        LocalDateTime recente = LocalDateTime.of(2026, 9, 4, 9, 0);
+
+        UUID idAntigo = UUID.fromString("00000000-0000-0000-0000-000000000023");
+        UUID idEmpateMenor = UUID.fromString("00000000-0000-0000-0000-000000000021");
+        UUID idEmpateMaior = UUID.fromString("00000000-0000-0000-0000-000000000022");
+
+        inserirContaReceberComOrigem(alvo, idAntigo, vencimento, antiga, "PEDIDO_VENDA", origemId, "3");
+        inserirContaReceberComOrigem(alvo, idEmpateMaior, vencimento, recente, "PEDIDO_VENDA", origemId, "2");
+        inserirContaReceberComOrigem(alvo, idEmpateMenor, vencimento, recente, "PEDIDO_VENDA", origemId, "1");
+        inserirContaReceberComOrigem(outroTenant, UUID.randomUUID(), vencimento, recente,
+                "PEDIDO_VENDA", origemId, "OUTRO-TENANT");
+
+        List<ContaReceber> resultado = contaReceberRepository
+                .findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDescIdAsc(
+                        alvo.tenantId(), "PEDIDO_VENDA", origemId);
+
+        assertEquals(List.of(idEmpateMenor, idEmpateMaior, idAntigo),
+                resultado.stream().map(ContaReceber::getId).toList());
+    }
+
     private Fixture criarFixture(String sufixo) {
         UUID tenantId = UUID.randomUUID();
         UUID empresaId = UUID.randomUUID();
@@ -99,6 +126,19 @@ class TituloFinanceiroOrdenacaoIntegrationTest {
                 VALUES (?, ?, ?, ?, ?, 'Teste ordenacao', ?, ?, ?, 'ABERTO', ?, ?, 0)
                 """, id, f.tenantId(), f.filialId(), f.pessoaId(), "CR-" + id,
                 new BigDecimal("10.00"), BigDecimal.ZERO, vencimento, criadoEm, criadoEm);
+    }
+
+    private void inserirContaReceberComOrigem(Fixture f, UUID id, LocalDate vencimento, LocalDateTime criadoEm,
+                                               String origemTipo, UUID origemId, String origemReferencia) {
+        jdbcTemplate.update("""
+                INSERT INTO contas_receber
+                    (id, tenant_id, filial_id, cliente_id, numero_documento, descricao,
+                     valor_original, valor_recebido, vencimento, status, origem_tipo, origem_id, origem_referencia,
+                     criado_em, atualizado_em, versao)
+                VALUES (?, ?, ?, ?, ?, 'Teste ordenacao por origem', ?, ?, ?, 'ABERTO', ?, ?, ?, ?, ?, 0)
+                """, id, f.tenantId(), f.filialId(), f.pessoaId(), "CR-ORIGEM-" + id,
+                new BigDecimal("10.00"), BigDecimal.ZERO, vencimento, origemTipo, origemId, origemReferencia,
+                criadoEm, criadoEm);
     }
 
     private void inserirContaPagar(Fixture f, UUID id, LocalDate vencimento, LocalDateTime criadoEm) {

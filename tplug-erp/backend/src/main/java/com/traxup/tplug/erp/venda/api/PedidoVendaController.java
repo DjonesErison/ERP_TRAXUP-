@@ -1,10 +1,9 @@
 package com.traxup.tplug.erp.venda.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
-import com.traxup.tplug.erp.venda.PedidoVenda;
 import com.traxup.tplug.erp.venda.PedidoVendaApplicationService;
 import com.traxup.tplug.erp.venda.PedidoVendaConsultaRecenteService;
-import com.traxup.tplug.erp.venda.PedidoVendaItem;
+import com.traxup.tplug.erp.venda.PedidoVendaDetalheConsultaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,13 +18,16 @@ import java.util.UUID;
 public class PedidoVendaController {
     private final PedidoVendaApplicationService service;
     private final PedidoVendaConsultaRecenteService consultaRecenteService;
+    private final PedidoVendaDetalheConsultaService detalheConsultaService;
     private final TenantContext tenantContext;
 
     public PedidoVendaController(PedidoVendaApplicationService service,
                                  PedidoVendaConsultaRecenteService consultaRecenteService,
+                                 PedidoVendaDetalheConsultaService detalheConsultaService,
                                  TenantContext tenantContext) {
         this.service = service;
         this.consultaRecenteService = consultaRecenteService;
+        this.detalheConsultaService = detalheConsultaService;
         this.tenantContext = tenantContext;
     }
 
@@ -56,10 +58,8 @@ public class PedidoVendaController {
     @GetMapping("/{pedidoId}/detalhe")
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
     public PedidoVendaDetalheResponse detalhe(@PathVariable UUID pedidoId) {
-        UUID tenantId = tenantContext.tenantId();
-        PedidoVenda pedido = service.buscar(tenantId, pedidoId);
-        List<PedidoVendaItem> itens = service.listarItens(tenantId, pedidoId);
-        return PedidoVendaDetalheResponse.from(pedido, itens);
+        var detalhe = detalheConsultaService.consultar(tenantContext.tenantId(), pedidoId);
+        return PedidoVendaDetalheResponse.from(detalhe.pedido(), detalhe.itens());
     }
 
     @GetMapping("/{pedidoId}/totais")

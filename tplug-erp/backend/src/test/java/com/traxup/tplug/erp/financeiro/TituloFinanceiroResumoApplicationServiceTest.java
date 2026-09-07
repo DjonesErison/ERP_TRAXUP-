@@ -5,8 +5,8 @@ import com.traxup.tplug.erp.filial.FilialRepository;
 import com.traxup.tplug.erp.pessoa.PessoaRepository;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,7 +22,7 @@ class TituloFinanceiroResumoApplicationServiceTest {
         UUID tenantId = UUID.randomUUID();
         LocalDate inicio = LocalDate.of(2026, 9, 1);
         LocalDate fim = LocalDate.of(2026, 9, 30);
-        when(repository.filtrar(tenantId, "PARCIAL", inicio, fim)).thenReturn(List.of());
+        when(repository.resumir(tenantId, null, null, "PARCIAL", inicio, fim)).thenReturn(resumoVazio());
 
         ContaReceberApplicationService service = new ContaReceberApplicationService(
                 repository,
@@ -34,7 +34,7 @@ class TituloFinanceiroResumoApplicationServiceTest {
         TituloFinanceiroResumo resumo = service.resumir(tenantId, " parcial ", inicio, fim);
 
         assertEquals(0, resumo.quantidade());
-        verify(repository).filtrar(tenantId, "PARCIAL", inicio, fim);
+        verify(repository).resumir(tenantId, null, null, "PARCIAL", inicio, fim);
     }
 
     @Test
@@ -43,7 +43,7 @@ class TituloFinanceiroResumoApplicationServiceTest {
         UUID tenantId = UUID.randomUUID();
         LocalDate inicio = LocalDate.of(2026, 10, 1);
         LocalDate fim = LocalDate.of(2026, 10, 31);
-        when(repository.filtrar(tenantId, "ABERTO", inicio, fim)).thenReturn(List.of());
+        when(repository.resumir(tenantId, null, null, "ABERTO", inicio, fim)).thenReturn(resumoVazio());
 
         ContaPagarApplicationService service = new ContaPagarApplicationService(
                 repository,
@@ -55,6 +55,19 @@ class TituloFinanceiroResumoApplicationServiceTest {
         TituloFinanceiroResumo resumo = service.resumir(tenantId, " aberto ", inicio, fim);
 
         assertEquals(0, resumo.quantidade());
-        verify(repository).filtrar(tenantId, "ABERTO", inicio, fim);
+        verify(repository).resumir(tenantId, null, null, "ABERTO", inicio, fim);
+    }
+
+    private static TituloFinanceiroResumoProjection resumoVazio() {
+        TituloFinanceiroResumoProjection projection = mock(TituloFinanceiroResumoProjection.class);
+        when(projection.getQuantidade()).thenReturn(0L);
+        when(projection.getValorOriginalTotal()).thenReturn(BigDecimal.ZERO);
+        when(projection.getValorLiquidadoTotal()).thenReturn(BigDecimal.ZERO);
+        when(projection.getSaldoAtivoTotal()).thenReturn(BigDecimal.ZERO);
+        when(projection.getAbertos()).thenReturn(0L);
+        when(projection.getParciais()).thenReturn(0L);
+        when(projection.getLiquidados()).thenReturn(0L);
+        when(projection.getCancelados()).thenReturn(0L);
+        return projection;
     }
 }

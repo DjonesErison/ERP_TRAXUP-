@@ -17,75 +17,22 @@ import java.util.UUID;
 public class ContaPagarController {
     private final ContaPagarApplicationService service;
     private final TenantContext tenantContext;
+    public ContaPagarController(ContaPagarApplicationService service, TenantContext tenantContext) { this.service = service; this.tenantContext = tenantContext; }
 
-    public ContaPagarController(ContaPagarApplicationService service, TenantContext tenantContext) {
-        this.service = service;
-        this.tenantContext = tenantContext;
+    @GetMapping @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')")
+    public List<ContaPagarResponse> listar(@RequestParam(required = false) UUID filialId, @RequestParam(required = false) UUID fornecedorId, @RequestParam(required = false) String status, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoInicio, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoFim) {
+        return service.listar(tenantContext.tenantId(), filialId, fornecedorId, status, vencimentoInicio, vencimentoFim).stream().map(ContaPagarResponse::from).toList();
     }
 
-    @GetMapping
-    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')")
-    public List<ContaPagarResponse> listar(
-            @RequestParam(required = false) UUID filialId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoFim) {
-        return service.listar(tenantContext.tenantId(), filialId, status, vencimentoInicio, vencimentoFim).stream()
-                .map(ContaPagarResponse::from)
-                .toList();
+    @GetMapping("/resumo") @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')")
+    public TituloFinanceiroResumoResponse resumir(@RequestParam(required = false) UUID filialId, @RequestParam(required = false) UUID fornecedorId, @RequestParam(required = false) String status, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoInicio, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoFim) {
+        return TituloFinanceiroResumoResponse.from(service.resumir(tenantContext.tenantId(), filialId, fornecedorId, status, vencimentoInicio, vencimentoFim));
     }
 
-    @GetMapping("/resumo")
-    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')")
-    public TituloFinanceiroResumoResponse resumir(
-            @RequestParam(required = false) UUID filialId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoFim) {
-        return TituloFinanceiroResumoResponse.from(
-                service.resumir(tenantContext.tenantId(), filialId, status, vencimentoInicio, vencimentoFim));
-    }
-
-    @GetMapping("/{contaId}")
-    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')")
-    public ContaPagarResponse buscar(@PathVariable UUID contaId) {
-        return ContaPagarResponse.from(service.buscar(tenantContext.tenantId(), contaId));
-    }
-
-    @GetMapping("/{contaId}/pagamentos")
-    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')")
-    public List<ContaPagarPagamentoResponse> listarPagamentos(@PathVariable UUID contaId) {
-        return service.listarPagamentos(tenantContext.tenantId(), contaId).stream()
-                .map(ContaPagarPagamentoResponse::from)
-                .toList();
-    }
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_CRIAR')")
-    public ContaPagarResponse criar(@Valid @RequestBody CriarContaPagarRequest request) {
-        return ContaPagarResponse.from(service.criar(
-                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), request.filialId(), request.fornecedorId(),
-                request.numeroDocumento(), request.descricao(), request.valorOriginal(), request.vencimento()));
-    }
-
-    @PostMapping("/{contaId}/pagar")
-    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_BAIXAR')")
-    public ContaPagarResponse pagar(@PathVariable UUID contaId) {
-        return ContaPagarResponse.from(service.pagar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId));
-    }
-
-    @PostMapping("/{contaId}/pagamentos")
-    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_BAIXAR')")
-    public ContaPagarResponse registrarPagamento(@PathVariable UUID contaId,
-                                                  @Valid @RequestBody RegistrarPagamentoContaRequest request) {
-        return ContaPagarResponse.from(service.pagar(
-                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId, request.valor()));
-    }
-
-    @PostMapping("/{contaId}/cancelar")
-    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_CANCELAR')")
-    public ContaPagarResponse cancelar(@PathVariable UUID contaId) {
-        return ContaPagarResponse.from(service.cancelar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId));
-    }
+    @GetMapping("/{contaId}") @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')") public ContaPagarResponse buscar(@PathVariable UUID contaId) { return ContaPagarResponse.from(service.buscar(tenantContext.tenantId(), contaId)); }
+    @GetMapping("/{contaId}/pagamentos") @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')") public List<ContaPagarPagamentoResponse> listarPagamentos(@PathVariable UUID contaId) { return service.listarPagamentos(tenantContext.tenantId(), contaId).stream().map(ContaPagarPagamentoResponse::from).toList(); }
+    @PostMapping @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_CRIAR')") public ContaPagarResponse criar(@Valid @RequestBody CriarContaPagarRequest request) { return ContaPagarResponse.from(service.criar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), request.filialId(), request.fornecedorId(), request.numeroDocumento(), request.descricao(), request.valorOriginal(), request.vencimento())); }
+    @PostMapping("/{contaId}/pagar") @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_BAIXAR')") public ContaPagarResponse pagar(@PathVariable UUID contaId) { return ContaPagarResponse.from(service.pagar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId)); }
+    @PostMapping("/{contaId}/pagamentos") @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_BAIXAR')") public ContaPagarResponse registrarPagamento(@PathVariable UUID contaId, @Valid @RequestBody RegistrarPagamentoContaRequest request) { return ContaPagarResponse.from(service.pagar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId, request.valor())); }
+    @PostMapping("/{contaId}/cancelar") @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_CANCELAR')") public ContaPagarResponse cancelar(@PathVariable UUID contaId) { return ContaPagarResponse.from(service.cancelar(tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), contaId)); }
 }

@@ -1,7 +1,9 @@
 package com.traxup.tplug.erp.venda.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
+import com.traxup.tplug.erp.venda.PedidoVenda;
 import com.traxup.tplug.erp.venda.PedidoVendaApplicationService;
+import com.traxup.tplug.erp.venda.PedidoVendaItem;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,6 +39,15 @@ public class PedidoVendaController {
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
     public PedidoVendaResponse buscar(@PathVariable UUID pedidoId) {
         return PedidoVendaResponse.from(service.buscar(tenantContext.tenantId(), pedidoId));
+    }
+
+    @GetMapping("/{pedidoId}/detalhe")
+    @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
+    public PedidoVendaDetalheResponse detalhe(@PathVariable UUID pedidoId) {
+        UUID tenantId = tenantContext.tenantId();
+        PedidoVenda pedido = service.buscar(tenantId, pedidoId);
+        List<PedidoVendaItem> itens = service.listarItens(tenantId, pedidoId);
+        return PedidoVendaDetalheResponse.from(pedido, itens);
     }
 
     @GetMapping("/{pedidoId}/totais")

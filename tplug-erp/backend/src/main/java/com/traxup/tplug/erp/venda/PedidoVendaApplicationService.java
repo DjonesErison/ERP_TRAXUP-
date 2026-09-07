@@ -13,6 +13,7 @@ import com.traxup.tplug.erp.financeiro.pagamento.FormaPagamentoRepository;
 import com.traxup.tplug.erp.pessoa.Pessoa;
 import com.traxup.tplug.erp.pessoa.PessoaRepository;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class PedidoVendaApplicationService {
     private static final String ORIGEM_PEDIDO_VENDA = "PEDIDO_VENDA";
+    private static final int LIMITE_RECENTES_MAXIMO = 100;
 
     private final PedidoVendaRepository repository;
     private final PedidoVendaItemRepository itemRepository;
@@ -57,7 +59,16 @@ public class PedidoVendaApplicationService {
         this.auditoria = auditoria;
     }
 
-    public List<PedidoVenda> listar(UUID tenantId) { return repository.findAllByTenantIdOrderByCriadoEmDesc(tenantId); }
+    public List<PedidoVenda> listar(UUID tenantId) {
+        return repository.findAllByTenantIdOrderByCriadoEmDescIdAsc(tenantId);
+    }
+
+    public List<PedidoVenda> listarRecentes(UUID tenantId, int limite) {
+        if (limite < 1 || limite > LIMITE_RECENTES_MAXIMO) {
+            throw new IllegalArgumentException("Limite de vendas recentes deve estar entre 1 e 100");
+        }
+        return repository.findAllByTenantIdOrderByCriadoEmDescIdAsc(tenantId, PageRequest.of(0, limite));
+    }
 
     public PedidoVenda buscar(UUID tenantId, UUID pedidoId) {
         return repository.findByIdAndTenantId(pedidoId, tenantId)

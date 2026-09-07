@@ -68,14 +68,14 @@ class ContaReceberApplicationServiceTest {
     void deveListarOrigemSomenteNoTenantInformadoENormalizarTipo() {
         UUID tenantId = UUID.randomUUID();
         UUID origemId = UUID.randomUUID();
-        when(repository.findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDesc(
+        when(repository.findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDescIdAsc(
                 tenantId, "PEDIDO_VENDA", origemId)).thenReturn(List.of());
 
         ContaReceberApplicationService service = service();
 
         service.listarPorOrigem(tenantId, " pedido_venda ", origemId);
 
-        verify(repository).findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDesc(
+        verify(repository).findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDescIdAsc(
                 tenantId, "PEDIDO_VENDA", origemId);
     }
 

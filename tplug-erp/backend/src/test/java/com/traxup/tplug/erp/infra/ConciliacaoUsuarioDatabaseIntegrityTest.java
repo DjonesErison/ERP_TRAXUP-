@@ -20,6 +20,17 @@ class ConciliacaoUsuarioDatabaseIntegrityTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
+    void devePermitirUsuarioDoMesmoTenantNaConciliacao() {
+        UUID tenantId = inserirTenant("Tenant Conciliacao Usuario Mesmo Tenant");
+        UUID filialId = inserirFilial(tenantId, "Filial Mesmo Tenant");
+        UUID contaId = inserirContaFinanceira(tenantId, filialId, "Conta Mesmo Tenant");
+        UUID usuarioId = inserirUsuario(tenantId, "Usuario Mesmo Tenant");
+
+        assertDoesNotThrow(() -> inserirConciliacao(
+                tenantId, filialId, contaId, usuarioId, "REF-USUARIO-MESMO-TENANT"));
+    }
+
+    @Test
     void deveRejeitarUsuarioDeOutroTenantNaConciliacao() {
         UUID tenantA = inserirTenant("Tenant Conciliacao Usuario A");
         UUID tenantB = inserirTenant("Tenant Conciliacao Usuario B");

@@ -77,7 +77,7 @@ public class PedidoVendaApplicationService {
 
     public List<PedidoVendaItem> listarItens(UUID tenantId, UUID pedidoId) {
         buscar(tenantId, pedidoId);
-        return itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId);
+        return itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId);
     }
 
     @Transactional
@@ -121,7 +121,7 @@ public class PedidoVendaApplicationService {
     @Transactional
     public PedidoVenda abrir(UUID tenantId, UUID usuarioId, UUID pedidoId) {
         PedidoVenda pedido = buscar(tenantId, pedidoId);
-        if (itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId).isEmpty()) {
+        if (itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId).isEmpty()) {
             throw new IllegalArgumentException("Pedido de venda precisa possuir itens antes de ser aberto");
         }
         pedido.abrir();
@@ -137,7 +137,7 @@ public class PedidoVendaApplicationService {
         if (!"ABERTO".equals(pedido.getStatus())) {
             throw new IllegalArgumentException("Somente pedido de venda ABERTO pode ser faturado");
         }
-        List<PedidoVendaItem> itens = itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId);
+        List<PedidoVendaItem> itens = itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId);
         if (itens.isEmpty()) throw new IllegalArgumentException("Pedido de venda precisa possuir itens antes de ser faturado");
 
         for (PedidoVendaItem item : itens) {

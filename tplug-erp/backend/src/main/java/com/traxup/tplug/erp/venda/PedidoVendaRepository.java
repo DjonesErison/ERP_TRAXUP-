@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,11 +21,15 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
             where p.tenantId = :tenantId
               and (:filialId is null or p.filialId = :filialId)
               and (:status is null or p.status = :status)
+              and (:inicio is null or p.criadoEm >= :inicio)
+              and (:fim is null or p.criadoEm <= :fim)
             order by p.criadoEm desc, p.id asc
             """)
     List<PedidoVenda> buscarRecentesFiltrados(@Param("tenantId") UUID tenantId,
                                                @Param("filialId") UUID filialId,
                                                @Param("status") String status,
+                                               @Param("inicio") Instant inicio,
+                                               @Param("fim") Instant fim,
                                                Pageable pageable);
 
     Optional<PedidoVenda> findByIdAndTenantId(UUID id, UUID tenantId);

@@ -79,6 +79,30 @@ class TesourariaBaixaApplicationServiceTest {
     }
 
     @Test
+    void deveCalcularPagamentoIntegralComSaldoObtidoSobLock() {
+        UUID tenantId = UUID.randomUUID(); UUID usuarioId = UUID.randomUUID(); UUID filialId = UUID.randomUUID();
+        UUID tituloId = UUID.randomUUID(); UUID contaFinanceiraId = UUID.randomUUID(); String chave = "pagamento-integral-001";
+        ContaPagar titulo = new ContaPagar(tenantId, filialId, UUID.randomUUID(), "P-LOCK", "Pagar integral",
+                new BigDecimal("80.00"), LocalDate.now().plusDays(5), usuarioId);
+        titulo.pagar(new BigDecimal("30.00"));
+        BigDecimal saldoSobLock = new BigDecimal("50.00");
+        ContaFinanceira contaFinanceira = new ContaFinanceira(tenantId, filialId, "Banco", "BANCO", usuarioId);
+        when(contaFinanceiraService.existeMovimentoPorOrigem(tenantId, "PAGAMENTO_CONTA_PAGAR", tituloId, chave)).thenReturn(false);
+        when(contaPagarService.buscarParaAtualizacao(tenantId, tituloId)).thenReturn(titulo);
+        when(contaFinanceiraService.buscar(tenantId, contaFinanceiraId)).thenReturn(contaFinanceira);
+        when(contaPagarService.pagar(tenantId, usuarioId, tituloId, saldoSobLock)).thenReturn(titulo);
+
+        service().pagarEmConta(tenantId, usuarioId, tituloId, contaFinanceiraId, chave);
+
+        verify(contaPagarService).buscarParaAtualizacao(tenantId, tituloId);
+        verify(contaPagarService, never()).buscar(tenantId, tituloId);
+        verify(contaPagarService).pagar(tenantId, usuarioId, tituloId, saldoSobLock);
+        verify(contaFinanceiraService).movimentarComOrigem(
+                tenantId, usuarioId, contaFinanceiraId, "SAIDA", saldoSobLock,
+                "PAGAMENTO_CONTA_PAGAR:" + tituloId, "PAGAMENTO_CONTA_PAGAR", tituloId, chave);
+    }
+
+    @Test
     void deveDebitarSomenteValorParcialComOrigemIdempotente() {
         UUID tenantId = UUID.randomUUID(); UUID usuarioId = UUID.randomUUID(); UUID filialId = UUID.randomUUID();
         UUID tituloId = UUID.randomUUID(); UUID contaFinanceiraId = UUID.randomUUID();

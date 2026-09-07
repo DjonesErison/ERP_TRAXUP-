@@ -46,7 +46,7 @@ public class TesourariaBaixaApplicationService {
     public ContaPagar pagarEmConta(UUID tenantId, UUID usuarioId, UUID contaPagarId,
                                    UUID contaFinanceiraId, String idempotencyKey) {
         validarNaoProcessada(tenantId, ORIGEM_PAGAR, contaPagarId, idempotencyKey);
-        ContaPagar titulo = contaPagarService.buscar(tenantId, contaPagarId);
+        ContaPagar titulo = contaPagarService.buscarParaAtualizacao(tenantId, contaPagarId);
         return pagarEmContaValidado(tenantId, usuarioId, titulo, contaPagarId, contaFinanceiraId,
                 titulo.getSaldoAberto(), idempotencyKey);
     }

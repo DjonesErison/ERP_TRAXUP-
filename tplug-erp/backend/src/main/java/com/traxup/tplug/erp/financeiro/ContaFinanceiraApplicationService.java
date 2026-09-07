@@ -40,7 +40,7 @@ public class ContaFinanceiraApplicationService {
 
     public List<ContaFinanceiraMovimento> listarMovimentos(UUID tenantId, UUID contaId) {
         buscar(tenantId, contaId);
-        return movimentoRepository.findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDesc(tenantId, contaId);
+        return movimentoRepository.findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDescIdAsc(tenantId, contaId);
     }
 
     public boolean existeMovimentoPorOrigem(UUID tenantId, String origemTipo, UUID origemId, String origemReferencia) {

@@ -22,7 +22,7 @@ public class PedidoVendaConsultaRecenteService {
         this.repository = repository;
     }
 
-    public List<PedidoVenda> listar(UUID tenantId, int limite, UUID filialId, String status,
+    public List<PedidoVenda> listar(UUID tenantId, int limite, UUID filialId, UUID clienteId, String status,
                                    Instant inicio, Instant fim) {
         if (limite < 1 || limite > LIMITE_MAXIMO) {
             throw new IllegalArgumentException("Limite de vendas recentes deve estar entre 1 e 100");
@@ -35,6 +35,7 @@ public class PedidoVendaConsultaRecenteService {
         return repository.buscarRecentesFiltrados(
                 tenantId,
                 filialId,
+                clienteId,
                 statusNormalizado,
                 inicio,
                 fim,

@@ -48,11 +48,12 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 - `V42` — origem idempotente dos movimentos financeiros.
 - `V43` — índices operacionais de títulos financeiros.
 - `V44` — integridade de filial nos históricos de baixas financeiras.
+- `V45` — integridade tenant-safe do usuário nos históricos de baixas financeiras.
 
 ## Regras para novas migrations
 
-- Não editar migrations já aplicadas (`V1`–`V44`).
-- A próxima alteração de schema deve usar `V45`.
+- Não editar migrations já aplicadas (`V1`–`V45`).
+- A próxima alteração de schema deve usar `V46`.
 - Migrations devem executar do zero em banco limpo no CI.
 - Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema.
 - Toda constraint multi-tenant nova deve ser analisada também no nível do banco, não apenas na aplicação.

@@ -6,6 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ContaReceberRecebimentoRepository extends JpaRepository<ContaReceberRecebimento, UUID> {
-    List<ContaReceberRecebimento> findAllByTenantIdAndContaReceberIdOrderByRecebidoEmDesc(
+    List<ContaReceberRecebimento> findAllByTenantIdAndContaReceberIdOrderByRecebidoEmDescIdAsc(
             UUID tenantId, UUID contaReceberId);
 }

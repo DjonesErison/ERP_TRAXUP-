@@ -101,6 +101,31 @@ class PedidoVendaConsultaRecentePostgresIntegrationTest {
                 resultado.stream().map(PedidoVenda::getId).toList());
     }
 
+    @Test
+    void deveCombinarFilialStatusPeriodoERespeitarLimite() {
+        Fixture a = criarFixture("COMB");
+        UUID outraFilial = UUID.randomUUID();
+        jdbcTemplate.update("INSERT INTO filiais (id, tenant_id, empresa_id, nome) SELECT ?, tenant_id, empresa_id, ? FROM filiais WHERE id = ?",
+                outraFilial, "Filial vendas COMB 2", a.filialId());
+
+        Instant inicio = Instant.parse("2026-09-08T10:00:00Z");
+        Instant fim = Instant.parse("2026-09-08T12:00:00Z");
+        UUID esperadoMaisRecente = UUID.fromString("00000000-0000-0000-0000-000000000301");
+        UUID esperadoSegundo = UUID.fromString("00000000-0000-0000-0000-000000000302");
+
+        inserirPedidoComStatus(esperadoSegundo, a, a.filialId(), a.clienteId(), "COMB-2", "FATURADO", inicio.plusSeconds(1800));
+        inserirPedidoComStatus(esperadoMaisRecente, a, a.filialId(), a.clienteId(), "COMB-1", "FATURADO", inicio.plusSeconds(3600));
+        inserirPedidoComStatus(UUID.randomUUID(), a, a.filialId(), a.clienteId(), "COMB-RASCUNHO", "RASCUNHO", inicio.plusSeconds(5400));
+        inserirPedidoComStatus(UUID.randomUUID(), a, outraFilial, a.clienteId(), "COMB-OUTRA-FILIAL", "FATURADO", inicio.plusSeconds(5400));
+        inserirPedidoComStatus(UUID.randomUUID(), a, a.filialId(), a.clienteId(), "COMB-FORA-PERIODO", "FATURADO", fim.plusSeconds(1));
+
+        List<PedidoVenda> resultado = repository.buscarRecentesFiltrados(
+                a.tenantId(), a.filialId(), null, "FATURADO", inicio, fim, PageRequest.of(0, 2));
+
+        assertEquals(List.of(esperadoMaisRecente, esperadoSegundo),
+                resultado.stream().map(PedidoVenda::getId).toList());
+    }
+
     private Fixture criarFixture(String sufixo) {
         UUID tenantId = UUID.randomUUID();
         UUID empresaId = UUID.randomUUID();
@@ -135,11 +160,16 @@ class PedidoVendaConsultaRecentePostgresIntegrationTest {
     }
 
     private void inserirPedido(UUID pedidoId, Fixture fixture, UUID clienteId, String numero, Instant criadoEm) {
+        inserirPedidoComStatus(pedidoId, fixture, fixture.filialId(), clienteId, numero, "RASCUNHO", criadoEm);
+    }
+
+    private void inserirPedidoComStatus(UUID pedidoId, Fixture fixture, UUID filialId, UUID clienteId,
+                                        String numero, String status, Instant criadoEm) {
         jdbcTemplate.update("""
                 INSERT INTO pedidos_venda
                     (id, tenant_id, filial_id, cliente_id, numero, status, criado_em, atualizado_em)
-                VALUES (?, ?, ?, ?, ?, 'RASCUNHO', ?, ?)
-                """, pedidoId, fixture.tenantId(), fixture.filialId(), clienteId, numero,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, pedidoId, fixture.tenantId(), filialId, clienteId, numero, status,
                 Timestamp.from(criadoEm), Timestamp.from(criadoEm));
     }
 

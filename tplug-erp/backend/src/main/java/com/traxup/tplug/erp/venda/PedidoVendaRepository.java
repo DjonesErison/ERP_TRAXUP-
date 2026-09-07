@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.venda;
 
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +12,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> {
-    List<PedidoVenda> findAllByTenantIdOrderByCriadoEmDesc(UUID tenantId);
+    List<PedidoVenda> findAllByTenantIdOrderByCriadoEmDescIdAsc(UUID tenantId);
+    List<PedidoVenda> findAllByTenantIdOrderByCriadoEmDescIdAsc(UUID tenantId, Pageable pageable);
     Optional<PedidoVenda> findByIdAndTenantId(UUID id, UUID tenantId);
     boolean existsByTenantIdAndNumeroIgnoreCase(UUID tenantId, String numero);
 

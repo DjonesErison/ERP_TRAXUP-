@@ -23,7 +23,7 @@ public interface ContaReceberRepository extends JpaRepository<ContaReceber, UUID
               AND (:status IS NULL OR conta.status = :status)
               AND conta.vencimento >= COALESCE(:vencimentoInicio, conta.vencimento)
               AND conta.vencimento <= COALESCE(:vencimentoFim, conta.vencimento)
-            ORDER BY conta.vencimento ASC, conta.criadoEm DESC
+            ORDER BY conta.vencimento ASC, conta.criadoEm DESC, conta.id ASC
             """)
     List<ContaReceber> filtrar(@Param("tenantId") UUID tenantId,
                                @Param("status") String status,
@@ -37,7 +37,7 @@ public interface ContaReceberRepository extends JpaRepository<ContaReceber, UUID
               AND (:status IS NULL OR conta.status = :status)
               AND conta.vencimento >= COALESCE(:vencimentoInicio, conta.vencimento)
               AND conta.vencimento <= COALESCE(:vencimentoFim, conta.vencimento)
-            ORDER BY conta.vencimento ASC, conta.criadoEm DESC
+            ORDER BY conta.vencimento ASC, conta.criadoEm DESC, conta.id ASC
             """)
     List<ContaReceber> filtrarPorFilial(@Param("tenantId") UUID tenantId,
                                         @Param("filialId") UUID filialId,
@@ -53,7 +53,7 @@ public interface ContaReceberRepository extends JpaRepository<ContaReceber, UUID
               AND (:status IS NULL OR conta.status = :status)
               AND conta.vencimento >= COALESCE(:vencimentoInicio, conta.vencimento)
               AND conta.vencimento <= COALESCE(:vencimentoFim, conta.vencimento)
-            ORDER BY conta.vencimento ASC, conta.criadoEm DESC
+            ORDER BY conta.vencimento ASC, conta.criadoEm DESC, conta.id ASC
             """)
     List<ContaReceber> filtrarPorCliente(@Param("tenantId") UUID tenantId,
                                          @Param("clienteId") UUID clienteId,

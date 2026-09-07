@@ -3,6 +3,7 @@ package com.traxup.tplug.erp.venda.api;
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.venda.PedidoVenda;
 import com.traxup.tplug.erp.venda.PedidoVendaApplicationService;
+import com.traxup.tplug.erp.venda.PedidoVendaConsultaRecenteService;
 import com.traxup.tplug.erp.venda.PedidoVendaItem;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -16,10 +17,14 @@ import java.util.UUID;
 @RequestMapping("/api/v1/vendas/pedidos")
 public class PedidoVendaController {
     private final PedidoVendaApplicationService service;
+    private final PedidoVendaConsultaRecenteService consultaRecenteService;
     private final TenantContext tenantContext;
 
-    public PedidoVendaController(PedidoVendaApplicationService service, TenantContext tenantContext) {
+    public PedidoVendaController(PedidoVendaApplicationService service,
+                                 PedidoVendaConsultaRecenteService consultaRecenteService,
+                                 TenantContext tenantContext) {
         this.service = service;
+        this.consultaRecenteService = consultaRecenteService;
         this.tenantContext = tenantContext;
     }
 
@@ -31,8 +36,11 @@ public class PedidoVendaController {
 
     @GetMapping("/recentes")
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
-    public List<PedidoVendaResponse> listarRecentes(@RequestParam(defaultValue = "20") int limite) {
-        return service.listarRecentes(tenantContext.tenantId(), limite).stream().map(PedidoVendaResponse::from).toList();
+    public List<PedidoVendaResponse> listarRecentes(@RequestParam(defaultValue = "20") int limite,
+                                                    @RequestParam(required = false) UUID filialId,
+                                                    @RequestParam(required = false) String status) {
+        return consultaRecenteService.listar(tenantContext.tenantId(), limite, filialId, status)
+                .stream().map(PedidoVendaResponse::from).toList();
     }
 
     @GetMapping("/{pedidoId}")

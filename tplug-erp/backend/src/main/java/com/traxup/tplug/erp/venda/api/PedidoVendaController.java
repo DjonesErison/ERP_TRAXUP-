@@ -27,6 +27,12 @@ public class PedidoVendaController {
         return service.listar(tenantContext.tenantId()).stream().map(PedidoVendaResponse::from).toList();
     }
 
+    @GetMapping("/recentes")
+    @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
+    public List<PedidoVendaResponse> listarRecentes(@RequestParam(defaultValue = "20") int limite) {
+        return service.listarRecentes(tenantContext.tenantId(), limite).stream().map(PedidoVendaResponse::from).toList();
+    }
+
     @GetMapping("/{pedidoId}")
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
     public PedidoVendaResponse buscar(@PathVariable UUID pedidoId) {

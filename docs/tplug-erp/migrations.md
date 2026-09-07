@@ -1,46 +1,61 @@
 # Migrations Flyway — TPlug ERP
 
-As migrations abaixo já pertencem ao histórico oficial do backend e são imutáveis. Qualquer alteração futura deve entrar em uma nova migration.
+As migrations abaixo pertencem ao histórico oficial do backend e são imutáveis. Qualquer alteração futura deve entrar em uma nova migration.
 
-## V1 — Estrutura inicial de tenant, empresa e filial
+## Inventário atual
 
-Cria `tenants`, `empresas` e `filiais`, com UUIDs, timestamps, relacionamentos e índices iniciais.
-
-## V2 — Reforço de integridade multi-tenant
-
-Adiciona chave única composta em Empresa e FK composta em Filial para impedir associação de filial a empresa de outro tenant. Também adiciona índice `(tenant_id, empresa_id)`.
-
-## V3 — Usuários por tenant
-
-Cria `usuarios` com UUID, tenant, nome, e-mail, hash de senha, ativo e timestamps. E-mail é único por tenant.
-
-## V4 — Refresh tokens
-
-Adiciona a chave composta necessária em usuários e cria `refresh_tokens`, vinculados de forma tenant-safe a usuários. O token é persistido somente por hash.
-
-## V5 — RBAC
-
-Cria:
-
-- `permissoes`;
-- `perfis`;
-- `usuario_perfis`;
-- `perfil_permissoes`.
-
-As associações relevantes usam constraints compostas para preservar isolamento por tenant.
-
-## V6 — Catálogo fundamental de permissões
-
-Insere as permissões iniciais de Empresa, Filial e `RBAC_GERENCIAR`, com UUIDs determinísticos e `ON CONFLICT (chave) DO NOTHING`.
-
-## V7 — Auditoria multi-tenant
-
-Cria a estrutura persistente de eventos de auditoria com identificação de tenant, usuário, empresa, filial, operação, entidade, entidade afetada, detalhes e timestamp, além dos índices necessários para consulta por tenant e entidade.
+- `V1` — estrutura inicial de tenant, empresa e filial.
+- `V2` — reforço de integridade multi-tenant de empresa e filial.
+- `V3` — usuários por tenant.
+- `V4` — refresh tokens.
+- `V5` — perfis e permissões RBAC.
+- `V6` — catálogo de permissões fundamentais.
+- `V7` — fundação de auditoria multi-tenant.
+- `V8` — permissões de usuários.
+- `V9` — permissão de leitura de auditoria.
+- `V10` — produtos.
+- `V11` — grades de produto.
+- `V12` — saldos de estoque.
+- `V13` — movimentações de estoque.
+- `V14` — pessoas.
+- `V15` — endereços de pessoas.
+- `V16` — contatos de pessoas.
+- `V17` — sincronização de permissões do perfil ADMIN.
+- `V18` — pedidos de compra.
+- `V19` — itens de pedidos de compra.
+- `V20` — recebimentos de compra.
+- `V21` — integração do recebimento de compra com estoque.
+- `V22` — pedidos de venda.
+- `V23` — itens de pedidos de venda.
+- `V24` — desconto em itens de pedido de venda.
+- `V25` — contas a receber.
+- `V26` — hardening de contatos de pessoas.
+- `V27` — recebimentos parciais de contas a receber.
+- `V28` — contas a pagar.
+- `V29` — hardening dos recebimentos financeiros.
+- `V30` — contas financeiras e caixa.
+- `V31` — formas e condições de pagamento.
+- `V32` — forma e condição de pagamento nos pedidos de venda.
+- `V33` — conciliação financeira.
+- `V34` — hardening da conciliação financeira.
+- `V35` — classificação de eventos de conciliação.
+- `V36` — integrações financeiras.
+- `V37` — checkpoint de integrações financeiras.
+- `V38` — observabilidade das integrações financeiras.
+- `V39` — pagamentos parciais de contas a pagar.
+- `V40` — ajustes comerciais das condições de pagamento.
+- `V41` — origem idempotente das contas a receber.
+- `V42` — origem idempotente dos movimentos financeiros.
+- `V43` — índices operacionais de títulos financeiros.
+- `V44` — integridade de filial nos históricos de baixas financeiras.
 
 ## Regras para novas migrations
 
-- Não editar V1–V7.
-- Próxima alteração de banco: V8.
+- Não editar migrations já aplicadas (`V1`–`V44`).
+- A próxima alteração de schema deve usar `V45`.
 - Migrations devem executar do zero em banco limpo no CI.
 - Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema.
 - Toda constraint multi-tenant nova deve ser analisada também no nível do banco, não apenas na aplicação.
+- FKs que representam domínio tenant-scoped devem preferir chaves compostas que incluam `tenant_id` e, quando a regra exigir, `filial_id`.
+
+A TRAXUP Central não compartilha este histórico Flyway e permanece separada do runtime do TPlug ERP.

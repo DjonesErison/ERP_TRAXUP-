@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,8 +39,10 @@ public class PedidoVendaController {
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
     public List<PedidoVendaResponse> listarRecentes(@RequestParam(defaultValue = "20") int limite,
                                                     @RequestParam(required = false) UUID filialId,
-                                                    @RequestParam(required = false) String status) {
-        return consultaRecenteService.listar(tenantContext.tenantId(), limite, filialId, status)
+                                                    @RequestParam(required = false) String status,
+                                                    @RequestParam(required = false) Instant inicio,
+                                                    @RequestParam(required = false) Instant fim) {
+        return consultaRecenteService.listar(tenantContext.tenantId(), limite, filialId, status, inicio, fim)
                 .stream().map(PedidoVendaResponse::from).toList();
     }
 

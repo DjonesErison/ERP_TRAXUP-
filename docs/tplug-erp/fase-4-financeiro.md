@@ -17,7 +17,7 @@ A Fase 4 estabelece o nucleo financeiro desacoplado de bancos, boletos, adquiren
 - O endpoint de baixa integral permanece compativel e utiliza o saldo restante do titulo.
 - Titulos com qualquer recebimento nao podem ser cancelados; cancelamento e permitido somente em `ABERTO`.
 - Consulta do historico valida primeiro que o titulo pertence ao tenant corrente.
-- Concorrencia usa versao otimista; conflito simultaneo retorna HTTP 409 e reverte saldo e movimento.
+- Baixas e cancelamentos carregam o titulo com lock pessimista de escrita por `titulo + tenant`; operacoes concorrentes para o mesmo titulo sao serializadas e a seguinte reavalia saldo e estado ja atualizados antes de prosseguir.
 - Regras financeiras invalidas retornam HTTP 400.
 - Baixas integrais anteriores a V27 recebem um movimento historico na V28.
 - Criacao, baixa e cancelamento geram auditoria.
@@ -31,14 +31,14 @@ A Fase 4 estabelece o nucleo financeiro desacoplado de bancos, boletos, adquiren
 
 ## Contas a pagar
 
-O nucleo de contas a pagar usa fornecedor ativo do mesmo tenant e filial obrigatoria, com pagamentos integrais ou parciais, concorrencia otimista, auditoria e RBAC `FINANCEIRO_PAGAR_*`.
+O nucleo de contas a pagar usa fornecedor ativo do mesmo tenant e filial obrigatoria, com pagamentos integrais ou parciais, lock pessimista nos caminhos de alteracao, auditoria e RBAC `FINANCEIRO_PAGAR_*`.
 
 - Estados: `ABERTO`, `PARCIAL`, `PAGO` e `CANCELADO`.
 - Pagamento parcial altera o titulo para `PARCIAL`; pagamentos subsequentes utilizam somente o saldo aberto.
 - O valor de cada pagamento deve ser positivo e nunca pode superar o saldo aberto.
 - Ao atingir o valor original, o titulo passa para `PAGO` e registra `pago_em`.
 - Cada baixa gera registro imutavel em `contas_pagar_pagamentos`, com tenant, filial, titulo, valor, usuario e data/hora.
-- O endpoint de pagamento integral permanece compativel e liquida apenas o saldo restante.
+- O endpoint de pagamento integral permanece compativel e liquida apenas o saldo restante calculado com o titulo ja carregado sob lock de escrita.
 - Titulos com qualquer pagamento nao podem ser cancelados; cancelamento permanece permitido apenas em `ABERTO`.
 - A consulta do historico valida primeiro `titulo + tenant`, e as FKs de filial, fornecedor, titulo e pagamentos preservam o tenant no PostgreSQL.
 - Pagamentos integrais existentes antes da V39 sao retroalimentados no historico durante a migracao.
@@ -60,7 +60,7 @@ O primeiro incremento de tesouraria cria contas financeiras por filial dos tipos
 - Saldo inicia em zero e e alterado apenas por movimentos `ENTRADA` ou `SAIDA`.
 - Cada movimento e imutavel e registra tenant, filial, conta, valor, descricao, usuario e data/hora.
 - Saida maior que o saldo e bloqueada; saldo negativo nao e permitido neste incremento.
-- Atualizacao de saldo usa versao otimista para impedir perda de atualizacao em movimentos simultaneos.
+- Movimentacao e desativacao carregam a conta financeira com lock pessimista de escrita por `conta + tenant`, serializando alteracoes concorrentes de saldo da mesma conta.
 - Conta inativa permanece consultavel, mas nao aceita novos movimentos.
 - Criacao, movimentacao e desativacao geram auditoria.
 
@@ -80,7 +80,7 @@ As baixas operacionais podem ser executadas junto com a movimentacao de caixa/ba
 - Titulo e conta financeira precisam pertencer ao mesmo tenant e a mesma filial.
 - O endpoint exige simultaneamente a permissao de baixa do titulo e `FINANCEIRO_CONTA_MOVIMENTAR`.
 - Historico do titulo, movimento da conta, saldo e auditorias participam da mesma transacao; qualquer falha reverte o conjunto.
-- Saldo insuficiente, conta inativa, estado invalido do titulo ou conflito otimista impedem a baixa financeira completa.
+- Saldo insuficiente, conta inativa, estado invalido do titulo ou reavaliacao concorrente que invalide a operacao impedem a baixa financeira completa.
 - Os endpoints antigos de baixa sem tesouraria permanecem disponiveis para compatibilidade e fluxos que ainda nao informam conta financeira.
 
 ## Origem automatica a partir de vendas

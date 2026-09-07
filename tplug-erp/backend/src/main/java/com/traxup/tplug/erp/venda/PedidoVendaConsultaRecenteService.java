@@ -4,6 +4,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -21,9 +22,13 @@ public class PedidoVendaConsultaRecenteService {
         this.repository = repository;
     }
 
-    public List<PedidoVenda> listar(UUID tenantId, int limite, UUID filialId, String status) {
+    public List<PedidoVenda> listar(UUID tenantId, int limite, UUID filialId, String status,
+                                   Instant inicio, Instant fim) {
         if (limite < 1 || limite > LIMITE_MAXIMO) {
             throw new IllegalArgumentException("Limite de vendas recentes deve estar entre 1 e 100");
+        }
+        if (inicio != null && fim != null && inicio.isAfter(fim)) {
+            throw new IllegalArgumentException("Inicio do periodo nao pode ser posterior ao fim");
         }
 
         String statusNormalizado = normalizarStatus(status);
@@ -31,6 +36,8 @@ public class PedidoVendaConsultaRecenteService {
                 tenantId,
                 filialId,
                 statusNormalizado,
+                inicio,
+                fim,
                 PageRequest.of(0, limite));
     }
 

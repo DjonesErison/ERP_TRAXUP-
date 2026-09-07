@@ -6,5 +6,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ContaPagarPagamentoRepository extends JpaRepository<ContaPagarPagamento, UUID> {
-    List<ContaPagarPagamento> findAllByTenantIdAndContaPagarIdOrderByPagoEmDesc(UUID tenantId, UUID contaPagarId);
+    List<ContaPagarPagamento> findAllByTenantIdAndContaPagarIdOrderByPagoEmDescIdAsc(UUID tenantId, UUID contaPagarId);
 }

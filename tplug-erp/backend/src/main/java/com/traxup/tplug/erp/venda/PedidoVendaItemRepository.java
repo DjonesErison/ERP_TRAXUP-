@@ -7,6 +7,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface PedidoVendaItemRepository extends JpaRepository<PedidoVendaItem, UUID> {
-    List<PedidoVendaItem> findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(UUID tenantId, UUID pedidoVendaId);
+    List<PedidoVendaItem> findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(UUID tenantId, UUID pedidoVendaId);
     Optional<PedidoVendaItem> findByIdAndTenantIdAndPedidoVendaId(UUID id, UUID tenantId, UUID pedidoVendaId);
 }

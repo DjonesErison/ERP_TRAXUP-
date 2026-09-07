@@ -34,7 +34,7 @@ public class PedidoVendaPreviaFinanceiraService {
     public PreviaFinanceira prever(UUID tenantId, UUID pedidoId) {
         PedidoVenda pedido = pedidoRepository.findByIdAndTenantId(pedidoId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido de venda nao encontrado para o tenant informado"));
-        List<PedidoVendaItem> itens = itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId);
+        List<PedidoVendaItem> itens = itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId);
         if (itens.isEmpty()) throw new IllegalArgumentException("Pedido de venda precisa possuir itens para gerar previa financeira");
 
         BigDecimal totalLiquido = itens.stream().map(PedidoVendaItem::getTotalItem).reduce(BigDecimal.ZERO, BigDecimal::add);

@@ -33,9 +33,13 @@ public class ContaPagarApplicationService {
     public List<ContaPagar> listar(UUID tenantId, UUID filialId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) { if (filialId == null) return listar(tenantId, status, vencimentoInicio, vencimentoFim); validarPeriodo(vencimentoInicio, vencimentoFim); return repository.filtrarPorFilial(tenantId, filialId, normalizarStatus(status), vencimentoInicio, vencimentoFim); }
     public List<ContaPagar> listar(UUID tenantId, UUID filialId, UUID fornecedorId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) { if (fornecedorId == null) return listar(tenantId, filialId, status, vencimentoInicio, vencimentoFim); validarPeriodo(vencimentoInicio, vencimentoFim); return repository.filtrarPorFornecedor(tenantId, fornecedorId, filialId, normalizarStatus(status), vencimentoInicio, vencimentoFim); }
 
-    public TituloFinanceiroResumo resumir(UUID tenantId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) { return TituloFinanceiroResumo.deContasPagar(listar(tenantId, status, vencimentoInicio, vencimentoFim)); }
-    public TituloFinanceiroResumo resumir(UUID tenantId, UUID filialId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) { return TituloFinanceiroResumo.deContasPagar(listar(tenantId, filialId, status, vencimentoInicio, vencimentoFim)); }
-    public TituloFinanceiroResumo resumir(UUID tenantId, UUID filialId, UUID fornecedorId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) { return TituloFinanceiroResumo.deContasPagar(listar(tenantId, filialId, fornecedorId, status, vencimentoInicio, vencimentoFim)); }
+    public TituloFinanceiroResumo resumir(UUID tenantId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) { return resumir(tenantId, null, null, status, vencimentoInicio, vencimentoFim); }
+    public TituloFinanceiroResumo resumir(UUID tenantId, UUID filialId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) { return resumir(tenantId, filialId, null, status, vencimentoInicio, vencimentoFim); }
+    public TituloFinanceiroResumo resumir(UUID tenantId, UUID filialId, UUID fornecedorId, String status, LocalDate vencimentoInicio, LocalDate vencimentoFim) {
+        validarPeriodo(vencimentoInicio, vencimentoFim);
+        return TituloFinanceiroResumo.deProjection(repository.resumir(
+                tenantId, filialId, fornecedorId, normalizarStatus(status), vencimentoInicio, vencimentoFim));
+    }
 
     public ContaPagar buscar(UUID tenantId, UUID contaId) { return repository.findByIdAndTenantId(contaId, tenantId).orElseThrow(() -> new RecursoNaoEncontradoException("Conta a pagar nao encontrada para o tenant informado")); }
     public List<ContaPagarPagamento> listarPagamentos(UUID tenantId, UUID contaId) { buscar(tenantId, contaId); return pagamentoRepository.findAllByTenantIdAndContaPagarIdOrderByPagoEmDesc(tenantId, contaId); }

@@ -62,6 +62,31 @@ public interface ContaReceberRepository extends JpaRepository<ContaReceber, UUID
                                          @Param("vencimentoInicio") LocalDate vencimentoInicio,
                                          @Param("vencimentoFim") LocalDate vencimentoFim);
 
+    @Query("""
+            SELECT COUNT(conta) AS quantidade,
+                   COALESCE(SUM(conta.valorOriginal), 0) AS valorOriginalTotal,
+                   COALESCE(SUM(conta.valorRecebido), 0) AS valorLiquidadoTotal,
+                   COALESCE(SUM(CASE WHEN conta.status IN ('ABERTO', 'PARCIAL')
+                       THEN conta.valorOriginal - conta.valorRecebido ELSE 0 END), 0) AS saldoAtivoTotal,
+                   SUM(CASE WHEN conta.status = 'ABERTO' THEN 1 ELSE 0 END) AS abertos,
+                   SUM(CASE WHEN conta.status = 'PARCIAL' THEN 1 ELSE 0 END) AS parciais,
+                   SUM(CASE WHEN conta.status = 'RECEBIDO' THEN 1 ELSE 0 END) AS liquidados,
+                   SUM(CASE WHEN conta.status = 'CANCELADO' THEN 1 ELSE 0 END) AS cancelados
+            FROM ContaReceber conta
+            WHERE conta.tenantId = :tenantId
+              AND (:filialId IS NULL OR conta.filialId = :filialId)
+              AND (:clienteId IS NULL OR conta.clienteId = :clienteId)
+              AND (:status IS NULL OR conta.status = :status)
+              AND (:vencimentoInicio IS NULL OR conta.vencimento >= :vencimentoInicio)
+              AND (:vencimentoFim IS NULL OR conta.vencimento <= :vencimentoFim)
+            """)
+    TituloFinanceiroResumoProjection resumir(@Param("tenantId") UUID tenantId,
+                                             @Param("filialId") UUID filialId,
+                                             @Param("clienteId") UUID clienteId,
+                                             @Param("status") String status,
+                                             @Param("vencimentoInicio") LocalDate vencimentoInicio,
+                                             @Param("vencimentoFim") LocalDate vencimentoFim);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT conta FROM ContaReceber conta WHERE conta.id = :id AND conta.tenantId = :tenantId")
     Optional<ContaReceber> findByIdAndTenantIdForUpdate(@Param("id") UUID id,

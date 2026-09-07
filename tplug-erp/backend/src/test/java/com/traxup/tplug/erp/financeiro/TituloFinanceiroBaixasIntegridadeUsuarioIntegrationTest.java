@@ -48,6 +48,24 @@ class TituloFinanceiroBaixasIntegridadeUsuarioIntegrationTest {
                 fixture.tenantId(), fixture.filialId(), contaId, fixture.usuarioOutroTenantId(), UUID.randomUUID()));
     }
 
+    @Test
+    void recebimentoDeveAceitarUsuarioNuloParaCompatibilidadeHistorica() {
+        Fixture fixture = criarFixture("REC-SEM-USUARIO");
+        UUID contaId = inserirContaReceber(fixture, "CR-SEM-USUARIO");
+
+        assertDoesNotThrow(() -> inserirRecebimento(
+                fixture.tenantId(), fixture.filialId(), contaId, null, UUID.randomUUID()));
+    }
+
+    @Test
+    void pagamentoDeveAceitarUsuarioNuloParaCompatibilidadeHistorica() {
+        Fixture fixture = criarFixture("PAG-SEM-USUARIO");
+        UUID contaId = inserirContaPagar(fixture, "CP-SEM-USUARIO");
+
+        assertDoesNotThrow(() -> inserirPagamento(
+                fixture.tenantId(), fixture.filialId(), contaId, null, UUID.randomUUID()));
+    }
+
     private Fixture criarFixture(String sufixo) {
         UUID tenantId = UUID.randomUUID();
         UUID outroTenantId = UUID.randomUUID();

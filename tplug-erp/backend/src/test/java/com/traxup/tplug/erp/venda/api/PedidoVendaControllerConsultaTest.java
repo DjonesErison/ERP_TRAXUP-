@@ -86,4 +86,13 @@ class PedidoVendaControllerConsultaTest {
         verify(consultaRecenteService).listar(tenantId, 20, null, null, null, inicio, fim);
         verifyNoInteractions(service, detalheConsultaService);
     }
+
+    @Test
+    void deveRejeitarPeriodoHttpInvalidoSemChamarServico() throws Exception {
+        mockMvc.perform(get("/api/v1/vendas/pedidos/recentes")
+                        .param("inicio", "08-09-2026 10:15"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(service, consultaRecenteService, detalheConsultaService, tenantContext);
+    }
 }

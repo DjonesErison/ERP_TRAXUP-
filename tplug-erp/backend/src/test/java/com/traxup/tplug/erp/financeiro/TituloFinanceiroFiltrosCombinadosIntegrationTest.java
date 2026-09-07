@@ -96,19 +96,19 @@ class TituloFinanceiroFiltrosCombinadosIntegrationTest {
         TituloFinanceiroResumoProjection pagar = contaPagarRepository.resumir(
                 fixture.tenantId(), fixture.filialId(), fixture.pessoaId(), null, null, null);
 
-        assertResumoVazio(receber);
-        assertResumoVazio(pagar);
+        assertResumoVazio(TituloFinanceiroResumo.deProjection(receber));
+        assertResumoVazio(TituloFinanceiroResumo.deProjection(pagar));
     }
 
-    private void assertResumoVazio(TituloFinanceiroResumoProjection resumo) {
-        assertEquals(0L, resumo.getQuantidade());
-        assertEquals(0, BigDecimal.ZERO.compareTo(resumo.getValorOriginalTotal()));
-        assertEquals(0, BigDecimal.ZERO.compareTo(resumo.getValorLiquidadoTotal()));
-        assertEquals(0, BigDecimal.ZERO.compareTo(resumo.getSaldoAtivoTotal()));
-        assertEquals(0L, resumo.getAbertos());
-        assertEquals(0L, resumo.getParciais());
-        assertEquals(0L, resumo.getLiquidados());
-        assertEquals(0L, resumo.getCancelados());
+    private void assertResumoVazio(TituloFinanceiroResumo resumo) {
+        assertEquals(0L, resumo.quantidade());
+        assertEquals(0, BigDecimal.ZERO.compareTo(resumo.valorOriginalTotal()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(resumo.valorLiquidadoTotal()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(resumo.saldoAtivoTotal()));
+        assertEquals(0L, resumo.abertos());
+        assertEquals(0L, resumo.parciais());
+        assertEquals(0L, resumo.liquidados());
+        assertEquals(0L, resumo.cancelados());
     }
 
     private Fixture criarFixture(String sufixo) {

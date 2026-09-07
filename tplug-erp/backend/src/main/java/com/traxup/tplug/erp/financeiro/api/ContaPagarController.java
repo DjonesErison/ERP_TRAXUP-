@@ -3,10 +3,12 @@ package com.traxup.tplug.erp.financeiro.api;
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.financeiro.ContaPagarApplicationService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,8 +25,13 @@ public class ContaPagarController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')")
-    public List<ContaPagarResponse> listar() {
-        return service.listar(tenantContext.tenantId()).stream().map(ContaPagarResponse::from).toList();
+    public List<ContaPagarResponse> listar(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoFim) {
+        return service.listar(tenantContext.tenantId(), status, vencimentoInicio, vencimentoFim).stream()
+                .map(ContaPagarResponse::from)
+                .toList();
     }
 
     @GetMapping("/{contaId}")

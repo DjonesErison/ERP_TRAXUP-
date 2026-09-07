@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ContaPagarRepository extends JpaRepository<ContaPagar, UUID> {
-    List<ContaPagar> findAllByTenantIdOrderByVencimentoAscCriadoEmDesc(UUID tenantId);
+    List<ContaPagar> findAllByTenantIdOrderByVencimentoAscCriadoEmDescIdAsc(UUID tenantId);
     Optional<ContaPagar> findByIdAndTenantId(UUID id, UUID tenantId);
 
     @Query("""

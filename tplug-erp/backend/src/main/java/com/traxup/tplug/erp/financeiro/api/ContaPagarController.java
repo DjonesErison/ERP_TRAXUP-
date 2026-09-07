@@ -34,6 +34,16 @@ public class ContaPagarController {
                 .toList();
     }
 
+    @GetMapping("/resumo")
+    @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')")
+    public TituloFinanceiroResumoResponse resumir(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoFim) {
+        return TituloFinanceiroResumoResponse.from(
+                service.resumir(tenantContext.tenantId(), status, vencimentoInicio, vencimentoFim));
+    }
+
     @GetMapping("/{contaId}")
     @PreAuthorize("hasAuthority('FINANCEIRO_PAGAR_LER')")
     public ContaPagarResponse buscar(@PathVariable UUID contaId) {

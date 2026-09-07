@@ -64,7 +64,7 @@ public class ContaReceberApplicationService {
     public List<ContaReceber> listarPorOrigem(UUID tenantId, String origemTipo, UUID origemId) {
         if (origemId == null) throw new RegraNegocioException("Identificador da origem e obrigatorio");
         String tipo = normalizarObrigatorio(origemTipo, "Tipo da origem").toUpperCase(Locale.ROOT);
-        return repository.findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDesc(tenantId, tipo, origemId);
+        return repository.findAllByTenantIdAndOrigemTipoAndOrigemIdOrderByVencimentoAscCriadoEmDescIdAsc(tenantId, tipo, origemId);
     }
 
     public ContaReceber buscar(UUID tenantId, UUID contaId) {

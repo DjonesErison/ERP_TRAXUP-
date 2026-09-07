@@ -5,6 +5,7 @@ import com.traxup.tplug.erp.venda.PedidoVendaApplicationService;
 import com.traxup.tplug.erp.venda.PedidoVendaConsultaRecenteService;
 import com.traxup.tplug.erp.venda.PedidoVendaDetalheConsultaService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -43,8 +44,8 @@ public class PedidoVendaController {
                                                     @RequestParam(required = false) UUID filialId,
                                                     @RequestParam(required = false) UUID clienteId,
                                                     @RequestParam(required = false) String status,
-                                                    @RequestParam(required = false) Instant inicio,
-                                                    @RequestParam(required = false) Instant fim) {
+                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
+                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
         return consultaRecenteService.listar(tenantContext.tenantId(), limite, filialId, clienteId, status, inicio, fim)
                 .stream().map(PedidoVendaResponse::from).toList();
     }

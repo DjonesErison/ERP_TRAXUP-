@@ -29,7 +29,8 @@ class TituloFinanceiroFiltroPessoaApplicationServiceTest {
     void deveResumirPagaveisPorTenantFornecedorSemFilial() {
         ContaPagarRepository repository = mock(ContaPagarRepository.class);
         UUID tenant = UUID.randomUUID(), fornecedor = UUID.randomUUID();
-        when(repository.resumir(tenant, null, fornecedor, "PARCIAL", null, null)).thenReturn(resumoVazio());
+        TituloFinanceiroResumoProjection projection = resumoVazio();
+        when(repository.resumir(tenant, null, fornecedor, "PARCIAL", null, null)).thenReturn(projection);
         ContaPagarApplicationService service = new ContaPagarApplicationService(repository, mock(ContaPagarPagamentoRepository.class), mock(FilialRepository.class), mock(PessoaRepository.class), mock(AuditoriaApplicationService.class));
         assertEquals(0, service.resumir(tenant, null, fornecedor, " parcial ", null, null).quantidade());
         verify(repository).resumir(tenant, null, fornecedor, "PARCIAL", null, null);

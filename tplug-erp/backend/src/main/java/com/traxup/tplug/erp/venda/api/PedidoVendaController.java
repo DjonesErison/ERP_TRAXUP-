@@ -39,10 +39,11 @@ public class PedidoVendaController {
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
     public List<PedidoVendaResponse> listarRecentes(@RequestParam(defaultValue = "20") int limite,
                                                     @RequestParam(required = false) UUID filialId,
+                                                    @RequestParam(required = false) UUID clienteId,
                                                     @RequestParam(required = false) String status,
                                                     @RequestParam(required = false) Instant inicio,
                                                     @RequestParam(required = false) Instant fim) {
-        return consultaRecenteService.listar(tenantContext.tenantId(), limite, filialId, status, inicio, fim)
+        return consultaRecenteService.listar(tenantContext.tenantId(), limite, filialId, clienteId, status, inicio, fim)
                 .stream().map(PedidoVendaResponse::from).toList();
     }
 

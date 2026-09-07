@@ -20,6 +20,7 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
             select p from PedidoVenda p
             where p.tenantId = :tenantId
               and (:filialId is null or p.filialId = :filialId)
+              and (:clienteId is null or p.clienteId = :clienteId)
               and (:status is null or p.status = :status)
               and (:inicio is null or p.criadoEm >= :inicio)
               and (:fim is null or p.criadoEm <= :fim)
@@ -27,6 +28,7 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
             """)
     List<PedidoVenda> buscarRecentesFiltrados(@Param("tenantId") UUID tenantId,
                                                @Param("filialId") UUID filialId,
+                                               @Param("clienteId") UUID clienteId,
                                                @Param("status") String status,
                                                @Param("inicio") Instant inicio,
                                                @Param("fim") Instant fim,

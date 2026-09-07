@@ -46,10 +46,24 @@ public class ContaReceberApplicationService {
         return repository.filtrar(tenantId, normalizarStatus(status), vencimentoInicio, vencimentoFim);
     }
 
+    public List<ContaReceber> listar(UUID tenantId, UUID filialId, String status,
+                                     LocalDate vencimentoInicio, LocalDate vencimentoFim) {
+        if (filialId == null) return listar(tenantId, status, vencimentoInicio, vencimentoFim);
+        validarPeriodo(vencimentoInicio, vencimentoFim);
+        return repository.filtrarPorFilial(
+                tenantId, filialId, normalizarStatus(status), vencimentoInicio, vencimentoFim);
+    }
+
     public TituloFinanceiroResumo resumir(UUID tenantId, String status,
                                           LocalDate vencimentoInicio, LocalDate vencimentoFim) {
         return TituloFinanceiroResumo.deContasReceber(
                 listar(tenantId, status, vencimentoInicio, vencimentoFim));
+    }
+
+    public TituloFinanceiroResumo resumir(UUID tenantId, UUID filialId, String status,
+                                          LocalDate vencimentoInicio, LocalDate vencimentoFim) {
+        return TituloFinanceiroResumo.deContasReceber(
+                listar(tenantId, filialId, status, vencimentoInicio, vencimentoFim));
     }
 
     public List<ContaReceber> listarPorOrigem(UUID tenantId, String origemTipo, UUID origemId) {

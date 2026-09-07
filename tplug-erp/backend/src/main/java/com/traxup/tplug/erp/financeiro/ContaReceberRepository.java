@@ -30,6 +30,21 @@ public interface ContaReceberRepository extends JpaRepository<ContaReceber, UUID
                                @Param("vencimentoInicio") LocalDate vencimentoInicio,
                                @Param("vencimentoFim") LocalDate vencimentoFim);
 
+    @Query("""
+            SELECT conta FROM ContaReceber conta
+            WHERE conta.tenantId = :tenantId
+              AND conta.filialId = :filialId
+              AND (:status IS NULL OR conta.status = :status)
+              AND (:vencimentoInicio IS NULL OR conta.vencimento >= :vencimentoInicio)
+              AND (:vencimentoFim IS NULL OR conta.vencimento <= :vencimentoFim)
+            ORDER BY conta.vencimento ASC, conta.criadoEm DESC
+            """)
+    List<ContaReceber> filtrarPorFilial(@Param("tenantId") UUID tenantId,
+                                        @Param("filialId") UUID filialId,
+                                        @Param("status") String status,
+                                        @Param("vencimentoInicio") LocalDate vencimentoInicio,
+                                        @Param("vencimentoFim") LocalDate vencimentoFim);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT conta FROM ContaReceber conta WHERE conta.id = :id AND conta.tenantId = :tenantId")
     Optional<ContaReceber> findByIdAndTenantIdForUpdate(@Param("id") UUID id,

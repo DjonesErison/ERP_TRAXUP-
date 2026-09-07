@@ -46,10 +46,24 @@ public class ContaPagarApplicationService {
         return repository.filtrar(tenantId, normalizarStatus(status), vencimentoInicio, vencimentoFim);
     }
 
+    public List<ContaPagar> listar(UUID tenantId, UUID filialId, String status,
+                                   LocalDate vencimentoInicio, LocalDate vencimentoFim) {
+        if (filialId == null) return listar(tenantId, status, vencimentoInicio, vencimentoFim);
+        validarPeriodo(vencimentoInicio, vencimentoFim);
+        return repository.filtrarPorFilial(
+                tenantId, filialId, normalizarStatus(status), vencimentoInicio, vencimentoFim);
+    }
+
     public TituloFinanceiroResumo resumir(UUID tenantId, String status,
                                           LocalDate vencimentoInicio, LocalDate vencimentoFim) {
         return TituloFinanceiroResumo.deContasPagar(
                 listar(tenantId, status, vencimentoInicio, vencimentoFim));
+    }
+
+    public TituloFinanceiroResumo resumir(UUID tenantId, UUID filialId, String status,
+                                          LocalDate vencimentoInicio, LocalDate vencimentoFim) {
+        return TituloFinanceiroResumo.deContasPagar(
+                listar(tenantId, filialId, status, vencimentoInicio, vencimentoFim));
     }
 
     public ContaPagar buscar(UUID tenantId, UUID contaId) {

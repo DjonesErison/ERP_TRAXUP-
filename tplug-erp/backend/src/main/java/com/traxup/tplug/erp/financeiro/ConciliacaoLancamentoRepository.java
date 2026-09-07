@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ConciliacaoLancamentoRepository extends JpaRepository<ConciliacaoLancamento, UUID> {
-    List<ConciliacaoLancamento> findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDesc(UUID tenantId, UUID contaFinanceiraId);
+    List<ConciliacaoLancamento> findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDescIdAsc(UUID tenantId, UUID contaFinanceiraId);
 
     @Query("SELECT lancamento FROM ConciliacaoLancamento lancamento " +
             "WHERE lancamento.tenantId = :tenantId " +
@@ -22,7 +22,7 @@ public interface ConciliacaoLancamentoRepository extends JpaRepository<Conciliac
             "AND (:status IS NULL OR lancamento.status = :status) " +
             "AND (:inicio IS NULL OR lancamento.ocorridoEm >= :inicio) " +
             "AND (:fim IS NULL OR lancamento.ocorridoEm <= :fim) " +
-            "ORDER BY lancamento.ocorridoEm DESC")
+            "ORDER BY lancamento.ocorridoEm DESC, lancamento.id ASC")
     List<ConciliacaoLancamento> filtrar(@Param("tenantId") UUID tenantId,
                                         @Param("contaId") UUID contaId,
                                         @Param("origem") String origem,

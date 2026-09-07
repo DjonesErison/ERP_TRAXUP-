@@ -78,6 +78,29 @@ class PedidoVendaConsultaRecentePostgresIntegrationTest {
         assertEquals(List.of(menor, maior), resultado.stream().map(PedidoVenda::getId).toList());
     }
 
+    @Test
+    void deveIncluirOsLimitesDoPeriodoEExcluirRegistrosForaDaJanela() {
+        Fixture a = criarFixture("PER");
+        Instant inicio = Instant.parse("2026-09-07T21:00:00Z");
+        Instant fim = Instant.parse("2026-09-07T22:00:00Z");
+        UUID noInicio = UUID.fromString("00000000-0000-0000-0000-000000000201");
+        UUID noFim = UUID.fromString("00000000-0000-0000-0000-000000000202");
+
+        inserirPedido(UUID.fromString("00000000-0000-0000-0000-000000000200"), a, a.clienteId(), "PER-ANTES", inicio.minusMillis(1));
+        inserirPedido(noInicio, a, a.clienteId(), "PER-INICIO", inicio);
+        inserirPedido(UUID.fromString("00000000-0000-0000-0000-000000000203"), a, a.clienteId(), "PER-MEIO", inicio.plusSeconds(1800));
+        inserirPedido(noFim, a, a.clienteId(), "PER-FIM", fim);
+        inserirPedido(UUID.fromString("00000000-0000-0000-0000-000000000204"), a, a.clienteId(), "PER-DEPOIS", fim.plusMillis(1));
+
+        List<PedidoVenda> resultado = repository.buscarRecentesFiltrados(
+                a.tenantId(), null, null, null, inicio, fim, PageRequest.of(0, 20));
+
+        assertEquals(List.of(noFim,
+                        UUID.fromString("00000000-0000-0000-0000-000000000203"),
+                        noInicio),
+                resultado.stream().map(PedidoVenda::getId).toList());
+    }
+
     private Fixture criarFixture(String sufixo) {
         UUID tenantId = UUID.randomUUID();
         UUID empresaId = UUID.randomUUID();

@@ -22,15 +22,10 @@ class TituloFinanceiroResumoApplicationServiceTest {
         UUID tenantId = UUID.randomUUID();
         LocalDate inicio = LocalDate.of(2026, 9, 1);
         LocalDate fim = LocalDate.of(2026, 9, 30);
-        when(repository.resumir(tenantId, null, null, "PARCIAL", inicio, fim)).thenReturn(resumoVazio());
+        TituloFinanceiroResumoProjection projection = resumoVazio();
+        when(repository.resumir(tenantId, null, null, "PARCIAL", inicio, fim)).thenReturn(projection);
 
-        ContaReceberApplicationService service = new ContaReceberApplicationService(
-                repository,
-                mock(ContaReceberRecebimentoRepository.class),
-                mock(FilialRepository.class),
-                mock(PessoaRepository.class),
-                mock(AuditoriaApplicationService.class));
-
+        ContaReceberApplicationService service = new ContaReceberApplicationService(repository, mock(ContaReceberRecebimentoRepository.class), mock(FilialRepository.class), mock(PessoaRepository.class), mock(AuditoriaApplicationService.class));
         TituloFinanceiroResumo resumo = service.resumir(tenantId, " parcial ", inicio, fim);
 
         assertEquals(0, resumo.quantidade());
@@ -43,15 +38,10 @@ class TituloFinanceiroResumoApplicationServiceTest {
         UUID tenantId = UUID.randomUUID();
         LocalDate inicio = LocalDate.of(2026, 10, 1);
         LocalDate fim = LocalDate.of(2026, 10, 31);
-        when(repository.resumir(tenantId, null, null, "ABERTO", inicio, fim)).thenReturn(resumoVazio());
+        TituloFinanceiroResumoProjection projection = resumoVazio();
+        when(repository.resumir(tenantId, null, null, "ABERTO", inicio, fim)).thenReturn(projection);
 
-        ContaPagarApplicationService service = new ContaPagarApplicationService(
-                repository,
-                mock(ContaPagarPagamentoRepository.class),
-                mock(FilialRepository.class),
-                mock(PessoaRepository.class),
-                mock(AuditoriaApplicationService.class));
-
+        ContaPagarApplicationService service = new ContaPagarApplicationService(repository, mock(ContaPagarPagamentoRepository.class), mock(FilialRepository.class), mock(PessoaRepository.class), mock(AuditoriaApplicationService.class));
         TituloFinanceiroResumo resumo = service.resumir(tenantId, " aberto ", inicio, fim);
 
         assertEquals(0, resumo.quantidade());

@@ -58,7 +58,7 @@ class PedidoVendaApplicationServiceTest {
         when(repository.buscarParaFaturar(pedidoId, tenantId)).thenReturn(Optional.of(pedido));
         PedidoVendaItem produto = mock(PedidoVendaItem.class); when(produto.getProdutoId()).thenReturn(produtoId); when(produto.getGradeId()).thenReturn(null); when(produto.getQuantidade()).thenReturn(new BigDecimal("2.0000"));
         PedidoVendaItem grade = mock(PedidoVendaItem.class); when(grade.getGradeId()).thenReturn(gradeId); when(grade.getQuantidade()).thenReturn(new BigDecimal("1.0000"));
-        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId)).thenReturn(List.of(produto, grade));
+        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId)).thenReturn(List.of(produto, grade));
         service.faturar(tenantId, usuarioId, pedidoId);
         verify(repository).buscarParaFaturar(pedidoId, tenantId);
         verify(estoqueMovimentacaoService).movimentar(eq(tenantId), eq(filialId), eq("PRODUTO"), eq(produtoId), eq("SAIDA"), eq(new BigDecimal("2.0000")), contains(pedidoId.toString()), eq(usuarioId));
@@ -73,7 +73,7 @@ class PedidoVendaApplicationServiceTest {
         when(pedido.getId()).thenReturn(pedidoId); when(pedido.getFilialId()).thenReturn(filialId); when(pedido.getClienteId()).thenReturn(clienteId); when(pedido.getNumero()).thenReturn("PV-100"); when(pedido.getStatus()).thenReturn("ABERTO");
         when(repository.buscarParaFaturar(pedidoId, tenantId)).thenReturn(Optional.of(pedido));
         PedidoVendaItem item = mock(PedidoVendaItem.class); when(item.getProdutoId()).thenReturn(UUID.randomUUID()); when(item.getGradeId()).thenReturn(null); when(item.getQuantidade()).thenReturn(BigDecimal.ONE); when(item.getTotalItem()).thenReturn(new BigDecimal("125.50"));
-        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId)).thenReturn(List.of(item));
+        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId)).thenReturn(List.of(item));
         service.faturar(tenantId, usuarioId, pedidoId);
         verify(contaReceberService).criarComOrigem(eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId),
                 eq("PV-PV-100-1"), contains("parcela 1"), eq(new BigDecimal("125.5000")), eq(LocalDate.now()),
@@ -87,7 +87,7 @@ class PedidoVendaApplicationServiceTest {
         when(pedido.getId()).thenReturn(pedidoId); when(pedido.getFilialId()).thenReturn(filialId); when(pedido.getClienteId()).thenReturn(clienteId); when(pedido.getNumero()).thenReturn("200"); when(pedido.getStatus()).thenReturn("ABERTO"); when(pedido.getCondicaoPagamentoId()).thenReturn(condicaoId);
         when(repository.buscarParaFaturar(pedidoId, tenantId)).thenReturn(Optional.of(pedido));
         PedidoVendaItem item = mock(PedidoVendaItem.class); when(item.getProdutoId()).thenReturn(UUID.randomUUID()); when(item.getGradeId()).thenReturn(null); when(item.getQuantidade()).thenReturn(BigDecimal.ONE); when(item.getTotalItem()).thenReturn(new BigDecimal("100.0000"));
-        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(tenantId, pedidoId)).thenReturn(List.of(item));
+        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId)).thenReturn(List.of(item));
         when(condicaoPagamentoRepository.findByIdAndTenantId(condicaoId, tenantId)).thenReturn(Optional.of(new CondicaoPagamento(tenantId, "2X", "Duas parcelas")));
         CondicaoPagamentoParcela primeira = new CondicaoPagamentoParcela(tenantId, condicaoId, 1, 30, new BigDecimal("50.0000"));
         CondicaoPagamentoParcela segunda = new CondicaoPagamentoParcela(tenantId, condicaoId, 2, 60, new BigDecimal("50.0000"));
@@ -107,7 +107,7 @@ class PedidoVendaApplicationServiceTest {
         when(pedido.getStatus()).thenReturn("FATURADO"); when(repository.buscarParaFaturar(pedidoId, tenantId)).thenReturn(Optional.of(pedido));
         assertThrows(IllegalArgumentException.class, () -> service.faturar(tenantId, UUID.randomUUID(), pedidoId));
         verify(repository).buscarParaFaturar(pedidoId, tenantId);
-        verifyNoInteractions(estoqueMovimentacaoService); verifyNoInteractions(contaReceberService); verify(itemRepository, never()).findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAsc(any(), any());
+        verifyNoInteractions(estoqueMovimentacaoService); verifyNoInteractions(contaReceberService); verify(itemRepository, never()).findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(any(), any());
     }
 
     @Test

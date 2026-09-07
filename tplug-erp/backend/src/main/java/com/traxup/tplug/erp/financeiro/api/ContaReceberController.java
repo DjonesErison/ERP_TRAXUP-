@@ -33,10 +33,11 @@ public class ContaReceberController {
     @GetMapping
     @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_LER')")
     public List<ContaReceberResponse> listar(
+            @RequestParam(required = false) UUID filialId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoFim) {
-        return service.listar(tenantContext.tenantId(), status, vencimentoInicio, vencimentoFim).stream()
+        return service.listar(tenantContext.tenantId(), filialId, status, vencimentoInicio, vencimentoFim).stream()
                 .map(ContaReceberResponse::from)
                 .toList();
     }
@@ -44,11 +45,12 @@ public class ContaReceberController {
     @GetMapping("/resumo")
     @PreAuthorize("hasAuthority('FINANCEIRO_RECEBER_LER')")
     public TituloFinanceiroResumoResponse resumir(
+            @RequestParam(required = false) UUID filialId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate vencimentoFim) {
         return TituloFinanceiroResumoResponse.from(
-                service.resumir(tenantContext.tenantId(), status, vencimentoInicio, vencimentoFim));
+                service.resumir(tenantContext.tenantId(), filialId, status, vencimentoInicio, vencimentoFim));
     }
 
     @GetMapping("/origens/{origemTipo}/{origemId}")

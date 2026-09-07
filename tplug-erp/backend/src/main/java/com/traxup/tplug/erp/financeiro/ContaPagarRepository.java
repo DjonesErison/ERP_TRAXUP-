@@ -19,8 +19,8 @@ public interface ContaPagarRepository extends JpaRepository<ContaPagar, UUID> {
             SELECT conta FROM ContaPagar conta
             WHERE conta.tenantId = :tenantId
               AND (:status IS NULL OR conta.status = :status)
-              AND (:vencimentoInicio IS NULL OR conta.vencimento >= :vencimentoInicio)
-              AND (:vencimentoFim IS NULL OR conta.vencimento <= :vencimentoFim)
+              AND conta.vencimento >= COALESCE(:vencimentoInicio, conta.vencimento)
+              AND conta.vencimento <= COALESCE(:vencimentoFim, conta.vencimento)
             ORDER BY conta.vencimento ASC, conta.criadoEm DESC
             """)
     List<ContaPagar> filtrar(@Param("tenantId") UUID tenantId,
@@ -33,8 +33,8 @@ public interface ContaPagarRepository extends JpaRepository<ContaPagar, UUID> {
             WHERE conta.tenantId = :tenantId
               AND conta.filialId = :filialId
               AND (:status IS NULL OR conta.status = :status)
-              AND (:vencimentoInicio IS NULL OR conta.vencimento >= :vencimentoInicio)
-              AND (:vencimentoFim IS NULL OR conta.vencimento <= :vencimentoFim)
+              AND conta.vencimento >= COALESCE(:vencimentoInicio, conta.vencimento)
+              AND conta.vencimento <= COALESCE(:vencimentoFim, conta.vencimento)
             ORDER BY conta.vencimento ASC, conta.criadoEm DESC
             """)
     List<ContaPagar> filtrarPorFilial(@Param("tenantId") UUID tenantId,
@@ -49,8 +49,8 @@ public interface ContaPagarRepository extends JpaRepository<ContaPagar, UUID> {
               AND conta.fornecedorId = :fornecedorId
               AND (:filialId IS NULL OR conta.filialId = :filialId)
               AND (:status IS NULL OR conta.status = :status)
-              AND (:vencimentoInicio IS NULL OR conta.vencimento >= :vencimentoInicio)
-              AND (:vencimentoFim IS NULL OR conta.vencimento <= :vencimentoFim)
+              AND conta.vencimento >= COALESCE(:vencimentoInicio, conta.vencimento)
+              AND conta.vencimento <= COALESCE(:vencimentoFim, conta.vencimento)
             ORDER BY conta.vencimento ASC, conta.criadoEm DESC
             """)
     List<ContaPagar> filtrarPorFornecedor(@Param("tenantId") UUID tenantId,
@@ -75,8 +75,8 @@ public interface ContaPagarRepository extends JpaRepository<ContaPagar, UUID> {
               AND (:filialId IS NULL OR conta.filialId = :filialId)
               AND (:fornecedorId IS NULL OR conta.fornecedorId = :fornecedorId)
               AND (:status IS NULL OR conta.status = :status)
-              AND (:vencimentoInicio IS NULL OR conta.vencimento >= :vencimentoInicio)
-              AND (:vencimentoFim IS NULL OR conta.vencimento <= :vencimentoFim)
+              AND conta.vencimento >= COALESCE(:vencimentoInicio, conta.vencimento)
+              AND conta.vencimento <= COALESCE(:vencimentoFim, conta.vencimento)
             """)
     TituloFinanceiroResumoProjection resumir(@Param("tenantId") UUID tenantId,
                                              @Param("filialId") UUID filialId,

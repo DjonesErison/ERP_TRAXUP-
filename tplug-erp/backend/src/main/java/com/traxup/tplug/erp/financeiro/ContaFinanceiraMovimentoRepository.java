@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ContaFinanceiraMovimentoRepository extends JpaRepository<ContaFinanceiraMovimento, UUID> {
-    List<ContaFinanceiraMovimento> findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDesc(UUID tenantId, UUID contaFinanceiraId);
+    List<ContaFinanceiraMovimento> findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDescIdAsc(UUID tenantId, UUID contaFinanceiraId);
     Optional<ContaFinanceiraMovimento> findByIdAndTenantId(UUID id, UUID tenantId);
     Optional<ContaFinanceiraMovimento> findByTenantIdAndOrigemTipoAndOrigemIdAndOrigemReferencia(
             UUID tenantId, String origemTipo, UUID origemId, String origemReferencia);
@@ -35,7 +35,7 @@ public interface ContaFinanceiraMovimentoRepository extends JpaRepository<ContaF
                   WHERE lancamento.tenantId = movimento.tenantId
                     AND lancamento.movimentoId = movimento.id
               )
-            ORDER BY movimento.ocorridoEm ASC
+            ORDER BY movimento.ocorridoEm ASC, movimento.id ASC
             """)
     List<ContaFinanceiraMovimento> findCandidatosDisponiveis(
             @Param("tenantId") UUID tenantId, @Param("contaFinanceiraId") UUID contaFinanceiraId,

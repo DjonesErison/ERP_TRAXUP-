@@ -65,8 +65,8 @@ public class PedidoVendaController {
     @GetMapping("/{pedidoId}/totais")
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
     public PedidoVendaTotaisResponse totais(@PathVariable UUID pedidoId) {
-        service.buscar(tenantContext.tenantId(), pedidoId);
-        return PedidoVendaTotaisResponse.from(service.listarItens(tenantContext.tenantId(), pedidoId));
+        var detalhe = detalheConsultaService.consultar(tenantContext.tenantId(), pedidoId);
+        return PedidoVendaTotaisResponse.from(detalhe.itens());
     }
 
     @PostMapping

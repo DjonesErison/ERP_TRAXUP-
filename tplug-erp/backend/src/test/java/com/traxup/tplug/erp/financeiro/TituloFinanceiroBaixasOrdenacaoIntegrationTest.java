@@ -7,9 +7,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,7 +35,7 @@ class TituloFinanceiroBaixasOrdenacaoIntegrationTest {
         Fixture outroTenant = criarFixture("REC-OUTRO");
         UUID contaId = inserirContaReceber(principal, "CR-HIST");
         UUID contaOutroTenant = inserirContaReceber(outroTenant, "CR-OUTRO");
-        Instant instante = Instant.parse("2026-09-07T12:00:00Z");
+        OffsetDateTime instante = OffsetDateTime.of(2026, 9, 7, 12, 0, 0, 0, ZoneOffset.UTC);
         UUID idMenor = UUID.fromString("00000000-0000-0000-0000-000000000101");
         UUID idMaior = UUID.fromString("00000000-0000-0000-0000-000000000102");
 
@@ -55,7 +56,7 @@ class TituloFinanceiroBaixasOrdenacaoIntegrationTest {
         Fixture outroTenant = criarFixture("PAG-OUTRO");
         UUID contaId = inserirContaPagar(principal, "CP-HIST");
         UUID contaOutroTenant = inserirContaPagar(outroTenant, "CP-OUTRO");
-        Instant instante = Instant.parse("2026-09-07T13:00:00Z");
+        OffsetDateTime instante = OffsetDateTime.of(2026, 9, 7, 13, 0, 0, 0, ZoneOffset.UTC);
         UUID idMenor = UUID.fromString("00000000-0000-0000-0000-000000000201");
         UUID idMaior = UUID.fromString("00000000-0000-0000-0000-000000000202");
 
@@ -118,7 +119,7 @@ class TituloFinanceiroBaixasOrdenacaoIntegrationTest {
         return id;
     }
 
-    private void inserirRecebimento(Fixture f, UUID contaId, UUID id, Instant recebidoEm) {
+    private void inserirRecebimento(Fixture f, UUID contaId, UUID id, OffsetDateTime recebidoEm) {
         jdbcTemplate.update("""
                 INSERT INTO contas_receber_recebimentos
                     (id, tenant_id, filial_id, conta_receber_id, valor, recebido_em)
@@ -126,7 +127,7 @@ class TituloFinanceiroBaixasOrdenacaoIntegrationTest {
                 """, id, f.tenantId(), f.filialId(), contaId, new BigDecimal("10.00"), recebidoEm);
     }
 
-    private void inserirPagamento(Fixture f, UUID contaId, UUID id, Instant pagoEm) {
+    private void inserirPagamento(Fixture f, UUID contaId, UUID id, OffsetDateTime pagoEm) {
         jdbcTemplate.update("""
                 INSERT INTO contas_pagar_pagamentos
                     (id, tenant_id, filial_id, conta_pagar_id, valor, pago_em)

@@ -22,8 +22,8 @@ public class PedidoVendaConsultaRecenteService {
         this.repository = repository;
     }
 
-    public Page<PedidoVenda> listar(UUID tenantId, int pagina, int tamanho, UUID filialId, UUID clienteId, String status,
-                                   Instant inicio, Instant fim) {
+    public Page<PedidoVenda> listar(UUID tenantId, int pagina, int tamanho, UUID filialId, UUID clienteId, String numero,
+                                   String status, Instant inicio, Instant fim) {
         if (pagina < 0) {
             throw new IllegalArgumentException("Pagina de vendas recentes deve ser maior ou igual a zero");
         }
@@ -34,11 +34,13 @@ public class PedidoVendaConsultaRecenteService {
             throw new IllegalArgumentException("Inicio do periodo nao pode ser posterior ao fim");
         }
 
+        String numeroNormalizado = numero == null || numero.isBlank() ? null : numero.trim();
         String statusNormalizado = normalizarStatus(status);
         return repository.buscarRecentesFiltradosPaginado(
                 tenantId,
                 filialId,
                 clienteId,
+                numeroNormalizado,
                 statusNormalizado,
                 inicio,
                 fim,

@@ -34,12 +34,16 @@ type BarcodeDetectorConstructor = new () => BarcodeDetectorLike;
           <div class="form-row">
             <input [(ngModel)]="filialId" placeholder="UUID da filial">
             <input [(ngModel)]="descricao" placeholder="Descrição opcional">
+            <label class="blind-option">
+              <input type="checkbox" [(ngModel)]="contagemCega">
+              <span><strong>Contagem cega</strong><small>Oculta saldo do sistema e divergências enquanto a sessão estiver aberta.</small></span>
+            </label>
             <button type="button" (click)="criarSessao()" [disabled]="loading || !filialId.trim()">Abrir inventário</button>
           </div>
           <div class="session-list">
             <button type="button" class="session" *ngFor="let sessao of sessoes" (click)="selecionar(sessao)" [class.selected]="sessaoSelecionada?.id === sessao.id">
               <strong>{{ sessao.descricao || 'Inventário' }}</strong>
-              <span>{{ sessao.status }} · {{ sessao.id | slice:0:8 }}</span>
+              <span>{{ sessao.status }} · {{ sessao.id | slice:0:8 }} · {{ sessao.contagemCega ? 'cega' : 'convencional' }}</span>
             </button>
             <p class="empty" *ngIf="!loading && sessoes.length === 0">Nenhuma sessão encontrada.</p>
           </div>
@@ -49,9 +53,13 @@ type BarcodeDetectorConstructor = new () => BarcodeDetectorLike;
           <div class="scan-title">
             <div>
               <h3>Leitura e contagem</h3>
-              <small *ngIf="sessaoSelecionada">Sessão {{ sessaoSelecionada.id | slice:0:8 }} · {{ sessaoSelecionada.status }}</small>
+              <small *ngIf="sessaoSelecionada">Sessão {{ sessaoSelecionada.id | slice:0:8 }} · {{ sessaoSelecionada.status }} · {{ sessaoSelecionada.contagemCega ? 'contagem cega' : 'contagem convencional' }}</small>
             </div>
             <span class="status" *ngIf="sessaoSelecionada">{{ contagens.length }} itens</span>
+          </div>
+
+          <div class="blind-notice" *ngIf="ocultarConferencia">
+            Contagem cega ativa. O saldo do sistema e as divergências só serão liberados após a conclusão da sessão.
           </div>
 
           <form (ngSubmit)="localizarItem()" class="scan-form">
@@ -96,25 +104,32 @@ type BarcodeDetectorConstructor = new () => BarcodeDetectorLike;
       </div>
 
       <article class="card" *ngIf="sessaoSelecionada">
-        <div class="table-title"><h3>Contagens</h3><button type="button" class="secondary" (click)="carregarDivergencias()">Ver divergências</button></div>
+        <div class="table-title">
+          <h3>Contagens</h3>
+          <button type="button" class="secondary" *ngIf="!ocultarConferencia" (click)="carregarDivergencias()">Ver divergências</button>
+        </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Tipo</th><th>Item</th><th>Sistema</th><th>Contado</th><th>Divergência</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Tipo</th><th>Item</th><th *ngIf="!ocultarConferencia">Sistema</th><th>Contado</th><th *ngIf="!ocultarConferencia">Divergência</th>
+              </tr>
+            </thead>
             <tbody>
               <tr *ngFor="let item of contagens">
                 <td>{{ item.tipoItem }}</td>
                 <td>{{ item.itemId | slice:0:8 }}</td>
-                <td>{{ item.quantidadeSistema }}</td>
+                <td *ngIf="!ocultarConferencia">{{ item.quantidadeSistema }}</td>
                 <td>{{ item.quantidadeContada }}</td>
-                <td [class.negative]="item.divergencia < 0" [class.positive]="item.divergencia > 0">{{ item.divergencia }}</td>
+                <td *ngIf="!ocultarConferencia" [class.negative]="(item.divergencia || 0) < 0" [class.positive]="(item.divergencia || 0) > 0">{{ item.divergencia }}</td>
               </tr>
-              <tr *ngIf="contagens.length === 0"><td colspan="5" class="empty">Nenhuma contagem registrada.</td></tr>
+              <tr *ngIf="contagens.length === 0"><td [attr.colspan]="ocultarConferencia ? 3 : 5" class="empty">Nenhuma contagem registrada.</td></tr>
             </tbody>
           </table>
         </div>
       </article>
 
-      <article class="card" *ngIf="divergencias.length > 0">
+      <article class="card" *ngIf="!ocultarConferencia && divergencias.length > 0">
         <h3>Divergências</h3>
         <div class="divergence-list">
           <div class="divergence" *ngFor="let item of divergencias">
@@ -126,7 +141,7 @@ type BarcodeDetectorConstructor = new () => BarcodeDetectorLike;
     </section>
   `,
   styles: [`
-    .inventory-shell{display:grid;gap:18px;margin-top:28px}.inventory-header,.scan-title,.table-title{display:flex;align-items:center;justify-content:space-between;gap:16px}.inventory-header h2{margin:4px 0 6px}.inventory-header p{margin:0;color:#64748b}.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#475569}.inventory-grid{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.4fr);gap:18px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.04)}.form-row,.scan-form{display:grid;gap:10px}.form-row input,.scan-form input,.item-card input{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:11px 12px;font:inherit}.session-list{display:grid;gap:8px;margin-top:14px;max-height:320px;overflow:auto}.session{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid #e2e8f0;background:#f8fafc;border-radius:12px;padding:12px}.session.selected{border-color:#0f172a;background:#f1f5f9}.session span,.item-card small,.scan-title small,.divergence small,.camera-actions small{color:#64748b}.scan-form{grid-template-columns:1fr auto;align-items:end}.scan-form label{display:grid;gap:6px}.camera-actions{display:flex;align-items:center;gap:10px;margin-top:10px}.camera-box{margin-top:10px;display:grid;gap:8px}.camera-box video{width:100%;max-height:300px;object-fit:cover;border-radius:14px;background:#0f172a}.camera-box span{font-size:12px;color:#64748b}.item-card{margin-top:14px;border:1px solid #cbd5e1;border-radius:14px;padding:14px;display:grid;grid-template-columns:1fr minmax(130px,180px) auto;gap:14px;align-items:end}.item-card h4{margin:6px 0}.badge,.status{display:inline-flex;border-radius:999px;background:#e2e8f0;padding:4px 8px;font-size:12px;font-weight:700}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}button{border:0;border-radius:10px;background:#0f172a;color:#fff;padding:10px 14px;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.secondary{background:#e2e8f0;color:#0f172a}.warning{background:#b45309}.danger{background:#b91c1c}.alert,.success{border-radius:12px;padding:12px 14px}.alert{background:#fef2f2;color:#991b1b}.success{background:#f0fdf4;color:#166534}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0}.empty{color:#64748b;text-align:center}.positive{color:#166534;font-weight:700}.negative{color:#b91c1c;font-weight:700}.divergence-list{display:grid;gap:8px}.divergence{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #e2e8f0;border-radius:10px}.divergence div{display:flex;flex-direction:column;gap:3px}@media(max-width:820px){.inventory-grid{grid-template-columns:1fr}.inventory-header{align-items:flex-start;flex-direction:column}.scan-form{grid-template-columns:1fr}.item-card{grid-template-columns:1fr}.actions button{flex:1 1 140px}.camera-actions{align-items:flex-start;flex-direction:column}}
+    .inventory-shell{display:grid;gap:18px;margin-top:28px}.inventory-header,.scan-title,.table-title{display:flex;align-items:center;justify-content:space-between;gap:16px}.inventory-header h2{margin:4px 0 6px}.inventory-header p{margin:0;color:#64748b}.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#475569}.inventory-grid{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.4fr);gap:18px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.04)}.form-row,.scan-form{display:grid;gap:10px}.form-row input:not([type=checkbox]),.scan-form input,.item-card input{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:11px 12px;font:inherit}.blind-option{display:flex;gap:10px;align-items:flex-start;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px}.blind-option input{margin-top:3px}.blind-option span{display:grid;gap:2px}.blind-option small{color:#64748b}.blind-notice{margin:12px 0;border-radius:10px;background:#fffbeb;color:#92400e;padding:10px 12px;font-size:13px}.session-list{display:grid;gap:8px;margin-top:14px;max-height:320px;overflow:auto}.session{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid #e2e8f0;background:#f8fafc;border-radius:12px;padding:12px}.session.selected{border-color:#0f172a;background:#f1f5f9}.session span,.item-card small,.scan-title small,.divergence small,.camera-actions small{color:#64748b}.scan-form{grid-template-columns:1fr auto;align-items:end}.scan-form label{display:grid;gap:6px}.camera-actions{display:flex;align-items:center;gap:10px;margin-top:10px}.camera-box{margin-top:10px;display:grid;gap:8px}.camera-box video{width:100%;max-height:300px;object-fit:cover;border-radius:14px;background:#0f172a}.camera-box span{font-size:12px;color:#64748b}.item-card{margin-top:14px;border:1px solid #cbd5e1;border-radius:14px;padding:14px;display:grid;grid-template-columns:1fr minmax(130px,180px) auto;gap:14px;align-items:end}.item-card h4{margin:6px 0}.badge,.status{display:inline-flex;border-radius:999px;background:#e2e8f0;padding:4px 8px;font-size:12px;font-weight:700}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}button{border:0;border-radius:10px;background:#0f172a;color:#fff;padding:10px 14px;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.secondary{background:#e2e8f0;color:#0f172a}.warning{background:#b45309}.danger{background:#b91c1c}.alert,.success{border-radius:12px;padding:12px 14px}.alert{background:#fef2f2;color:#991b1b}.success{background:#f0fdf4;color:#166534}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0}.empty{color:#64748b;text-align:center}.positive{color:#166534;font-weight:700}.negative{color:#b91c1c;font-weight:700}.divergence-list{display:grid;gap:8px}.divergence{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #e2e8f0;border-radius:10px}.divergence div{display:flex;flex-direction:column;gap:3px}@media(max-width:820px){.inventory-grid{grid-template-columns:1fr}.inventory-header{align-items:flex-start;flex-direction:column}.scan-form{grid-template-columns:1fr}.item-card{grid-template-columns:1fr}.actions button{flex:1 1 140px}.camera-actions{align-items:flex-start;flex-direction:column}}
   `]
 })
 export class InventarioMobileComponent implements OnInit, OnDestroy {
@@ -139,6 +154,7 @@ export class InventarioMobileComponent implements OnInit, OnDestroy {
   itemLocalizado?: InventarioItemLeitura;
   filialId = '';
   descricao = '';
+  contagemCega = false;
   codigoBarras = '';
   quantidadeContada: number | null = 1;
   loading = false;
@@ -161,6 +177,10 @@ export class InventarioMobileComponent implements OnInit, OnDestroy {
     return !!this.sessaoSelecionada && this.sessaoSelecionada.status === 'ABERTO';
   }
 
+  get ocultarConferencia(): boolean {
+    return !!this.sessaoSelecionada?.contagemCega && this.sessaoSelecionada.status === 'ABERTO';
+  }
+
   carregarSessoes(): void {
     this.executar(() => this.inventario.listar(undefined, undefined, 50), sessoes => {
       this.sessoes = sessoes;
@@ -173,10 +193,11 @@ export class InventarioMobileComponent implements OnInit, OnDestroy {
   criarSessao(): void {
     const filialId = this.filialId.trim();
     if (!filialId) return;
-    this.executar(() => this.inventario.criar(filialId, this.descricao), sessao => {
+    this.executar(() => this.inventario.criar(filialId, this.descricao, this.contagemCega), sessao => {
       this.sessoes = [sessao, ...this.sessoes];
       this.selecionar(sessao);
       this.descricao = '';
+      this.contagemCega = false;
       this.mensagem = 'Inventário aberto com sucesso.';
     });
   }
@@ -254,7 +275,7 @@ export class InventarioMobileComponent implements OnInit, OnDestroy {
   }
 
   carregarDivergencias(): void {
-    if (!this.sessaoSelecionada) return;
+    if (!this.sessaoSelecionada || this.ocultarConferencia) return;
     this.executar(() => this.inventario.listarDivergencias(this.sessaoSelecionada!.id, 200), itens => {
       this.divergencias = itens;
       if (itens.length === 0) this.mensagem = 'Nenhuma divergência encontrada.';
@@ -306,6 +327,7 @@ export class InventarioMobileComponent implements OnInit, OnDestroy {
     this.executar(acao, sessao => {
       this.sessaoSelecionada = sessao;
       this.sessoes = this.sessoes.map(s => s.id === sessao.id ? sessao : s);
+      this.divergencias = [];
       this.mensagem = mensagem;
       this.carregarContagens();
     });

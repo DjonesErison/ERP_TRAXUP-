@@ -20,8 +20,12 @@ export class InventarioService {
     return this.http.get<InventarioSessao>(`${this.baseUrl}/${id}`);
   }
 
-  criar(filialId: string, descricao?: string): Observable<InventarioSessao> {
-    return this.http.post<InventarioSessao>(this.baseUrl, { filialId, descricao: descricao?.trim() || null });
+  criar(filialId: string, descricao?: string, contagemCega = false): Observable<InventarioSessao> {
+    return this.http.post<InventarioSessao>(this.baseUrl, {
+      filialId,
+      descricao: descricao?.trim() || null,
+      contagemCega
+    });
   }
 
   localizarPorCodigoBarras(codigo: string): Observable<InventarioItemLeitura> {

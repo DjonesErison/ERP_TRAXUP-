@@ -6,6 +6,7 @@ export interface InventarioSessao {
   filialId: string;
   descricao?: string | null;
   status: InventarioStatus;
+  contagemCega: boolean;
   criadoPorId?: string | null;
   criadoEm: string;
   concluidoPorId?: string | null;

@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.inventario;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.estoque.EstoqueMovimentacaoApplicationService;
 import com.traxup.tplug.erp.estoque.EstoqueSaldo;
 import com.traxup.tplug.erp.estoque.EstoqueSaldoRepository;
 import com.traxup.tplug.erp.filial.FilialRepository;
@@ -34,6 +35,7 @@ class InventarioApplicationServiceTest {
     @Mock InventarioSessaoRepository sessaoRepository;
     @Mock InventarioContagemRepository contagemRepository;
     @Mock EstoqueSaldoRepository estoqueSaldoRepository;
+    @Mock EstoqueMovimentacaoApplicationService estoqueMovimentacaoService;
     @Mock FilialRepository filialRepository;
     @Mock ProdutoRepository produtoRepository;
     @Mock GradeProdutoRepository gradeProdutoRepository;
@@ -41,7 +43,7 @@ class InventarioApplicationServiceTest {
 
     private InventarioApplicationService service() {
         return new InventarioApplicationService(sessaoRepository, contagemRepository, estoqueSaldoRepository,
-                filialRepository, produtoRepository, gradeProdutoRepository, auditoria);
+                estoqueMovimentacaoService, filialRepository, produtoRepository, gradeProdutoRepository, auditoria);
     }
 
     @Test
@@ -99,7 +101,7 @@ class InventarioApplicationServiceTest {
     }
 
     @Test
-    void deveAplicarContagemAoEstoqueUmaUnicaVez() {
+    void deveAplicarContagemAoEstoqueUmaUnicaVezComMovimentacao() {
         UUID tenantId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
         UUID inventarioId = UUID.randomUUID();
@@ -121,13 +123,39 @@ class InventarioApplicationServiceTest {
 
         InventarioSessao ajustada = service().ajustarEstoque(tenantId, usuarioId, inventarioId);
 
-        assertEquals(new BigDecimal("7.0000"), saldo.getQuantidade());
         assertNotNull(ajustada.getAjustadoEm());
         assertEquals(usuarioId, ajustada.getAjustadoPorId());
-        verify(estoqueSaldoRepository).save(saldo);
+        verify(estoqueMovimentacaoService).movimentar(tenantId, filialId, "PRODUTO", produtoId,
+                "AJUSTE", new BigDecimal("7.0000"), "INVENTARIO:" + inventarioId, usuarioId);
 
         assertThrows(RegraNegocioException.class,
                 () -> service().ajustarEstoque(tenantId, usuarioId, inventarioId));
+    }
+
+    @Test
+    void naoDeveGerarMovimentacaoQuandoSaldoJaConfereComContagem() {
+        UUID tenantId = UUID.randomUUID();
+        UUID filialId = UUID.randomUUID();
+        UUID inventarioId = UUID.randomUUID();
+        UUID produtoId = UUID.randomUUID();
+        UUID usuarioId = UUID.randomUUID();
+        InventarioSessao sessao = new InventarioSessao(tenantId, filialId, null, usuarioId);
+        sessao.concluir(usuarioId);
+        InventarioContagem contagem = new InventarioContagem(tenantId, inventarioId, "PRODUTO", produtoId,
+                new BigDecimal("7.0000"), new BigDecimal("7.0000"), usuarioId);
+        EstoqueSaldo saldo = new EstoqueSaldo(tenantId, filialId, "PRODUTO", produtoId);
+        saldo.definirQuantidade(new BigDecimal("7.0000"));
+
+        when(sessaoRepository.buscarParaAtualizar(inventarioId, tenantId)).thenReturn(Optional.of(sessao));
+        when(contagemRepository.findAllByTenantIdAndInventarioIdOrderByTipoItemAscItemIdAsc(tenantId, inventarioId))
+                .thenReturn(List.of(contagem));
+        when(estoqueSaldoRepository.buscarParaAtualizar(tenantId, filialId, "PRODUTO", produtoId))
+                .thenReturn(Optional.of(saldo));
+        when(sessaoRepository.save(any(InventarioSessao.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service().ajustarEstoque(tenantId, usuarioId, inventarioId);
+
+        verifyNoInteractions(estoqueMovimentacaoService);
     }
 
     @Test
@@ -139,7 +167,7 @@ class InventarioApplicationServiceTest {
 
         assertThrows(RegraNegocioException.class,
                 () -> service().ajustarEstoque(tenantId, null, inventarioId));
-        verifyNoInteractions(contagemRepository, estoqueSaldoRepository);
+        verifyNoInteractions(contagemRepository, estoqueSaldoRepository, estoqueMovimentacaoService);
     }
 
     @Test

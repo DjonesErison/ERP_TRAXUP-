@@ -59,7 +59,7 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 - `V53` — seleção de opções do Produto Combo nos itens do pedido de venda.
 - `V54` — snapshots de produto, quantidade e valor adicional das opções escolhidas para refletir corretamente preço e estoque da venda.
 - `V55` — vigência opcional do Produto Combo, com limites inclusivos, validação de intervalo e vínculo tenant-safe ao produto.
-- `V56` — permissão RBAC para consulta de clientes inativos no CRM de retorno.
+- `V56` — índice de vendas faturadas para CRM de retorno e permissão RBAC de consulta de clientes inativos.
 
 ## Regras para novas migrations
 

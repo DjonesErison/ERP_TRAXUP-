@@ -52,6 +52,12 @@ public class PedidoVendaController {
                 consultaRecenteService.listar(tenantContext.tenantId(), pagina, tamanho, filialId, clienteId, numero, status, inicio, fim));
     }
 
+    @GetMapping("/por-numero/{numero}")
+    @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
+    public PedidoVendaResponse buscarPorNumero(@PathVariable String numero) {
+        return PedidoVendaResponse.from(service.buscarPorNumero(tenantContext.tenantId(), numero));
+    }
+
     @GetMapping("/{pedidoId}")
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
     public PedidoVendaResponse buscar(@PathVariable UUID pedidoId) {

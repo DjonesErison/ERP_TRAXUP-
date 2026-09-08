@@ -42,8 +42,15 @@ public class ConciliacaoController {
 
     @GetMapping("/contas/{contaId}/resumo")
     @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
-    public ConciliacaoResumoResponse resumo(@PathVariable UUID contaId) {
-        return ConciliacaoResumoResponse.from(service.resumir(tenantContext.tenantId(), contaId));
+    public ConciliacaoResumoResponse resumo(
+            @PathVariable UUID contaId,
+            @RequestParam(required = false) String origem,
+            @RequestParam(required = false) String natureza,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
+        return ConciliacaoResumoResponse.from(service.resumir(
+                tenantContext.tenantId(), contaId, origem, natureza, status, inicio, fim));
     }
 
     @GetMapping("/lancamentos/{lancamentoId}/sugestoes")

@@ -60,6 +60,22 @@ A interface mobile pode resolver produtos e grades ativos pelo código de barras
 
 Essa consulta não cria contagem nem altera estoque; ela somente resolve o item para que o fluxo mobile possa reutilizar o endpoint de contagem existente.
 
+## Bloco 5 — Experiência Angular/mobile
+
+O frontend operacional em `tplug-erp/frontend` passa a oferecer uma experiência responsiva para inventário, mantendo a TRAXUP Central fora desse runtime.
+
+- cliente HTTP dedicado para sessões, leitura por código de barras, contagens, divergências, conclusão, cancelamento e ajuste;
+- modelos TypeScript alinhados aos contratos do backend;
+- abertura e seleção de sessões por filial;
+- leitura/digitação de código de barras e resolução de produto/grade;
+- registro e recontagem de quantidade física;
+- visualização de contagens e divergências enriquecidas;
+- conclusão e cancelamento da sessão conforme o estado;
+- ajuste de estoque exibido somente para sessão concluída ainda não ajustada;
+- layout responsivo para operação em celular, sem acoplamento a API específica de câmera ou fabricante de coletor.
+
+O tenant continua vindo exclusivamente do JWT e do interceptor de autenticação existente. A interface não envia `tenantId` como escopo de negócio nem cria cabeçalhos paralelos.
+
 ## Segurança e auditoria
 
 - tenant vem exclusivamente do contexto autenticado;
@@ -77,7 +93,7 @@ Essa consulta não cria contagem nem altera estoque; ela somente resolve o item 
 
 ## Próximos blocos
 
-- experiência Angular/mobile para leitura e contagem rápida;
-- suporte operacional a contagem cega, somente se essa regra for formalmente adotada.
+- suporte operacional a contagem cega, somente se essa regra for formalmente adotada;
+- evolução futura da captura por câmera/BarcodeDetector como camada opcional sobre o mesmo fluxo de API.
 
 A TRAXUP Central permanece separada e sem alteração de runtime.

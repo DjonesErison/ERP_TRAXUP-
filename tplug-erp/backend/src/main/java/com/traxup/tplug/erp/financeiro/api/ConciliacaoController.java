@@ -34,9 +34,10 @@ public class ConciliacaoController {
             @RequestParam(required = false) String origem,
             @RequestParam(required = false) String natureza,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String tipo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
-        return service.listar(tenantContext.tenantId(), contaId, origem, natureza, status, inicio, fim).stream()
+        return service.listar(tenantContext.tenantId(), contaId, origem, natureza, status, tipo, inicio, fim).stream()
                 .map(ConciliacaoLancamentoResponse::from).toList();
     }
 
@@ -47,10 +48,11 @@ public class ConciliacaoController {
             @RequestParam(required = false) String origem,
             @RequestParam(required = false) String natureza,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String tipo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
         return ConciliacaoResumoResponse.from(service.resumir(
-                tenantContext.tenantId(), contaId, origem, natureza, status, inicio, fim));
+                tenantContext.tenantId(), contaId, origem, natureza, status, tipo, inicio, fim));
     }
 
     @GetMapping("/lancamentos/{lancamentoId}/sugestoes")

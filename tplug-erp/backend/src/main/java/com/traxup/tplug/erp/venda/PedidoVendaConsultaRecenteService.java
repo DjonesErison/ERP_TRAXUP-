@@ -35,7 +35,7 @@ public class PedidoVendaConsultaRecenteService {
         }
 
         String statusNormalizado = normalizarStatus(status);
-        return repository.buscarRecentesFiltrados(
+        return repository.buscarRecentesFiltradosPaginado(
                 tenantId,
                 filialId,
                 clienteId,

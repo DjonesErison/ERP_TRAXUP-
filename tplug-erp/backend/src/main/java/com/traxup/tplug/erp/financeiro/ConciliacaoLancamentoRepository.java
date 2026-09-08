@@ -14,6 +14,11 @@ import java.util.UUID;
 public interface ConciliacaoLancamentoRepository extends JpaRepository<ConciliacaoLancamento, UUID> {
     List<ConciliacaoLancamento> findAllByTenantIdAndContaFinanceiraIdOrderByOcorridoEmDescIdAsc(UUID tenantId, UUID contaFinanceiraId);
 
+    default List<ConciliacaoLancamento> filtrar(UUID tenantId, UUID contaId, String origem, String natureza,
+                                                String status, Instant inicio, Instant fim) {
+        return filtrar(tenantId, contaId, origem, natureza, status, null, inicio, fim);
+    }
+
     @Query("SELECT lancamento FROM ConciliacaoLancamento lancamento " +
             "WHERE lancamento.tenantId = :tenantId " +
             "AND lancamento.contaFinanceiraId = :contaId " +
@@ -55,6 +60,11 @@ public interface ConciliacaoLancamentoRepository extends JpaRepository<Conciliac
             """, nativeQuery = true)
     ConciliacaoResumoProjection resumir(@Param("tenantId") UUID tenantId,
                                          @Param("contaId") UUID contaId);
+
+    default ConciliacaoResumoProjection resumirFiltrado(UUID tenantId, UUID contaId, String origem,
+                                                         String natureza, String status, Instant inicio, Instant fim) {
+        return resumirFiltrado(tenantId, contaId, origem, natureza, status, null, inicio, fim);
+    }
 
     @Query(value = """
             SELECT

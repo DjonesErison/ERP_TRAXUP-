@@ -43,17 +43,22 @@ public class ConciliacaoApplicationService {
     }
 
     public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId) {
-        return listar(tenantId, contaId, null, null, null, null, null, null, LIMITE_PADRAO_LISTAGEM);
+        return listar(tenantId, contaId, null, null, null, null, null, null);
     }
 
     public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId, String origem, String natureza,
                                               String status, Instant inicio, Instant fim) {
-        return listar(tenantId, contaId, origem, natureza, status, null, inicio, fim, LIMITE_PADRAO_LISTAGEM);
+        return listar(tenantId, contaId, origem, natureza, status, null, inicio, fim);
     }
 
     public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId, String origem, String natureza,
                                               String status, String tipo, Instant inicio, Instant fim) {
-        return listar(tenantId, contaId, origem, natureza, status, tipo, inicio, fim, LIMITE_PADRAO_LISTAGEM);
+        contaFinanceiraService.buscar(tenantId, contaId);
+        validarPeriodo(inicio, fim);
+        return repository.filtrar(tenantId, contaId, opcionalUpper(origem),
+                opcionalPermitido(natureza, NATUREZAS, "Natureza"),
+                opcionalPermitido(status, STATUS, "Status"),
+                opcionalPermitido(tipo, TIPOS, "Tipo"), inicio, fim);
     }
 
     public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId, String origem, String natureza,

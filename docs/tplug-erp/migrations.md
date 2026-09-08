@@ -63,11 +63,13 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 - `V57` — agenda tenant-safe de follow-up de clientes e permissão RBAC de edição do CRM de retorno.
 - `V58` — histórico append-only de interações CRM com FKs tenant-safe e índices operacionais.
 - `V59` — sessões e contagens de inventário por filial, divergências, FKs tenant-safe e permissões RBAC do módulo.
+- `V60` — ajuste explícito e idempotente de estoque por inventário concluído.
+- `V61` — modo opcional de contagem cega por sessão de inventário, com default `false` para compatibilidade histórica.
 
 ## Regras para novas migrations
 
-- Não editar migrations já aplicadas (`V1`–`V59`).
-- A próxima migration deve usar `V60`.
+- Não editar migrations já aplicadas (`V1`–`V61`).
+- A próxima migration deve usar `V62`.
 - Migrations devem executar do zero em banco limpo no CI.
 - Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema e do catálogo RBAC versionado.
 - Toda constraint multi-tenant nova deve ser analisada também no nível do banco, não apenas na aplicação.

@@ -31,6 +31,29 @@ public interface ConciliacaoLancamentoRepository extends JpaRepository<Conciliac
                                         @Param("inicio") Instant inicio,
                                         @Param("fim") Instant fim);
 
+    @Query(value = """
+            SELECT
+                COUNT(*) AS totalLancamentos,
+                COALESCE(SUM(valor), 0) AS valorTotal,
+                COUNT(*) FILTER (WHERE status = 'PENDENTE') AS pendentes,
+                COALESCE(SUM(valor) FILTER (WHERE status = 'PENDENTE'), 0) AS valorPendente,
+                COUNT(*) FILTER (WHERE status = 'CONCILIADO') AS conciliados,
+                COALESCE(SUM(valor) FILTER (WHERE status = 'CONCILIADO'), 0) AS valorConciliado,
+                COUNT(*) FILTER (WHERE natureza = 'TAXA') AS taxas,
+                COALESCE(SUM(valor) FILTER (WHERE natureza = 'TAXA'), 0) AS valorTaxas,
+                COUNT(*) FILTER (WHERE natureza = 'ANTECIPACAO') AS antecipacoes,
+                COALESCE(SUM(valor) FILTER (WHERE natureza = 'ANTECIPACAO'), 0) AS valorAntecipacoes,
+                COUNT(*) FILTER (WHERE natureza = 'ESTORNO') AS estornos,
+                COALESCE(SUM(valor) FILTER (WHERE natureza = 'ESTORNO'), 0) AS valorEstornos,
+                COUNT(*) FILTER (WHERE natureza = 'CHARGEBACK') AS chargebacks,
+                COALESCE(SUM(valor) FILTER (WHERE natureza = 'CHARGEBACK'), 0) AS valorChargebacks
+            FROM conciliacao_lancamentos
+            WHERE tenant_id = :tenantId
+              AND conta_financeira_id = :contaId
+            """, nativeQuery = true)
+    ConciliacaoResumoProjection resumir(@Param("tenantId") UUID tenantId,
+                                         @Param("contaId") UUID contaId);
+
     Optional<ConciliacaoLancamento> findByIdAndTenantId(UUID id, UUID tenantId);
     Optional<ConciliacaoLancamento> findByTenantIdAndContaFinanceiraIdAndOrigemAndReferenciaExterna(
             UUID tenantId, UUID contaFinanceiraId, String origem, String referenciaExterna);

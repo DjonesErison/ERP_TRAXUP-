@@ -46,12 +46,13 @@ public class PedidoVendaController {
                                                      @RequestParam(required = false) UUID filialId,
                                                      @RequestParam(required = false) UUID clienteId,
                                                      @RequestParam(required = false) String numero,
+                                                     @RequestParam(required = false) UUID formaPagamentoId,
                                                      @RequestParam(required = false) String status,
                                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
                                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
         UUID tenantId = tenantContext.tenantId();
         var paginaPedidos = consultaRecenteService.listar(
-                tenantId, pagina, tamanho, filialId, clienteId, numero, status, inicio, fim);
+                tenantId, pagina, tamanho, filialId, clienteId, numero, formaPagamentoId, status, inicio, fim);
         var pedidoIds = paginaPedidos.getContent().stream().map(com.traxup.tplug.erp.venda.PedidoVenda::getId).toList();
         var totais = pedidoIds.isEmpty() ? Map.<UUID, java.math.BigDecimal>of()
                 : detalheConsultaService.totalLiquidoPorPedidos(tenantId, pedidoIds);

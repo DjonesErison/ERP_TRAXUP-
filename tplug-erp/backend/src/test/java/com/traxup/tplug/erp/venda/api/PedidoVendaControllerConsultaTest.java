@@ -64,14 +64,16 @@ class PedidoVendaControllerConsultaTest {
         UUID tenantId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
+        UUID formaPagamentoId = UUID.randomUUID();
         PageRequest pageRequest = PageRequest.of(0, 20);
         when(tenantContext.tenantId()).thenReturn(tenantId);
-        when(consultaRecenteService.listar(tenantId, 0, 20, filialId, clienteId, "PV-123", "FATURADO", null, null))
-                .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
+        when(consultaRecenteService.listar(tenantId, 0, 20, filialId, clienteId, "PV-123", formaPagamentoId,
+                "FATURADO", null, null)).thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
 
-        controller.listarRecentes(0, 20, filialId, clienteId, "PV-123", "FATURADO", null, null);
+        controller.listarRecentes(0, 20, filialId, clienteId, "PV-123", formaPagamentoId, "FATURADO", null, null);
 
-        verify(consultaRecenteService).listar(tenantId, 0, 20, filialId, clienteId, "PV-123", "FATURADO", null, null);
+        verify(consultaRecenteService).listar(tenantId, 0, 20, filialId, clienteId, "PV-123", formaPagamentoId,
+                "FATURADO", null, null);
         verifyNoInteractions(service, detalheConsultaService);
     }
 
@@ -84,7 +86,7 @@ class PedidoVendaControllerConsultaTest {
         when(pedido.getNumero()).thenReturn("PV-500");
         when(pedido.getStatus()).thenReturn("FATURADO");
         when(tenantContext.tenantId()).thenReturn(tenantId);
-        when(consultaRecenteService.listar(tenantId, 0, 20, null, null, null, null, null, null))
+        when(consultaRecenteService.listar(tenantId, 0, 20, null, null, null, null, null, null, null))
                 .thenReturn(new PageImpl<>(List.of(pedido), PageRequest.of(0, 20), 1));
         when(detalheConsultaService.totalLiquidoPorPedidos(tenantId, List.of(pedidoId)))
                 .thenReturn(Map.of(pedidoId, new BigDecimal("42.5000")));
@@ -105,7 +107,7 @@ class PedidoVendaControllerConsultaTest {
         Instant fim = Instant.parse("2026-09-08T12:45:00Z");
         PageRequest pageRequest = PageRequest.of(2, 15);
         when(tenantContext.tenantId()).thenReturn(tenantId);
-        when(consultaRecenteService.listar(tenantId, 2, 15, null, null, null, null, inicio, fim))
+        when(consultaRecenteService.listar(tenantId, 2, 15, null, null, null, null, null, inicio, fim))
                 .thenReturn(new PageImpl<>(List.of(), pageRequest, 41));
 
         mockMvc.perform(get("/api/v1/vendas/pedidos/recentes")
@@ -119,22 +121,25 @@ class PedidoVendaControllerConsultaTest {
                 .andExpect(jsonPath("$.totalRegistros").value(41))
                 .andExpect(jsonPath("$.totalPaginas").value(3));
 
-        verify(consultaRecenteService).listar(tenantId, 2, 15, null, null, null, null, inicio, fim);
+        verify(consultaRecenteService).listar(tenantId, 2, 15, null, null, null, null, null, inicio, fim);
         verifyNoInteractions(service, detalheConsultaService);
     }
 
     @Test
-    void deveEncaminharNumeroPelaCamadaHttp() throws Exception {
+    void deveEncaminharNumeroEFormaPagamentoPelaCamadaHttp() throws Exception {
         UUID tenantId = UUID.randomUUID();
+        UUID formaPagamentoId = UUID.randomUUID();
         PageRequest pageRequest = PageRequest.of(0, 20);
         when(tenantContext.tenantId()).thenReturn(tenantId);
-        when(consultaRecenteService.listar(tenantId, 0, 20, null, null, "PV-123", null, null, null))
+        when(consultaRecenteService.listar(tenantId, 0, 20, null, null, "PV-123", formaPagamentoId, null, null, null))
                 .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
 
-        mockMvc.perform(get("/api/v1/vendas/pedidos/recentes").param("numero", "PV-123"))
+        mockMvc.perform(get("/api/v1/vendas/pedidos/recentes")
+                        .param("numero", "PV-123")
+                        .param("formaPagamentoId", formaPagamentoId.toString()))
                 .andExpect(status().isOk());
 
-        verify(consultaRecenteService).listar(tenantId, 0, 20, null, null, "PV-123", null, null, null);
+        verify(consultaRecenteService).listar(tenantId, 0, 20, null, null, "PV-123", formaPagamentoId, null, null, null);
         verifyNoInteractions(service, detalheConsultaService);
     }
 

@@ -40,7 +40,7 @@ class PedidoVendaItemVigenciaComboTest {
         Produto produto = mock(Produto.class);
 
         when(pedido.getStatus()).thenReturn("RASCUNHO");
-        when(pedidoRepository.findByIdAndTenantId(pedidoId, tenant)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.buscarParaAtualizar(pedidoId, tenant)).thenReturn(Optional.of(pedido));
         when(produtoRepository.findByIdAndTenantId(produtoId, tenant)).thenReturn(Optional.of(produto));
         when(produto.isAtivo()).thenReturn(true);
         when(vigenciaService.vigenteEm(eq(tenant), eq(produtoId), any(Instant.class))).thenReturn(false);
@@ -50,6 +50,8 @@ class PedidoVendaItemVigenciaComboTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Produto combo esta fora da vigencia para novas vendas");
 
+        verify(pedidoRepository).buscarParaAtualizar(pedidoId, tenant);
+        verify(pedidoRepository, never()).findByIdAndTenantId(pedidoId, tenant);
         verify(itemRepository, never()).save(any());
         verify(auditoria, never()).registrar(
                 any(), any(), any(), any(), any(), any(), any(), any());

@@ -41,6 +41,7 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
               and (:filialId is null or p.filialId = :filialId)
               and (:clienteId is null or p.clienteId = :clienteId)
               and (:numero is null or lower(p.numero) = lower(:numero))
+              and (:formaPagamentoId is null or p.formaPagamentoId = :formaPagamentoId)
               and (:status is null or p.status = :status)
               and (cast(:inicio as instant) is null or p.criadoEm >= :inicio)
               and (cast(:fim as instant) is null or p.criadoEm <= :fim)
@@ -52,6 +53,7 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
               and (:filialId is null or p.filialId = :filialId)
               and (:clienteId is null or p.clienteId = :clienteId)
               and (:numero is null or lower(p.numero) = lower(:numero))
+              and (:formaPagamentoId is null or p.formaPagamentoId = :formaPagamentoId)
               and (:status is null or p.status = :status)
               and (cast(:inicio as instant) is null or p.criadoEm >= :inicio)
               and (cast(:fim as instant) is null or p.criadoEm <= :fim)
@@ -60,6 +62,7 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
                                                        @Param("filialId") UUID filialId,
                                                        @Param("clienteId") UUID clienteId,
                                                        @Param("numero") String numero,
+                                                       @Param("formaPagamentoId") UUID formaPagamentoId,
                                                        @Param("status") String status,
                                                        @Param("inicio") Instant inicio,
                                                        @Param("fim") Instant fim,

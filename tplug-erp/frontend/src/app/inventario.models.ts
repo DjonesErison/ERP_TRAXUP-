@@ -27,17 +27,15 @@ export interface InventarioContagem {
   id: string;
   tipoItem: InventarioTipoItem;
   itemId: string;
-  quantidadeSistema: number | null;
+  quantidadeSistema: number;
   quantidadeContada: number;
-  divergencia: number | null;
+  divergencia: number;
   contadoPorId?: string | null;
   contadoEm: string;
   atualizadoEm: string;
 }
 
-export interface InventarioDivergencia extends Omit<InventarioContagem, 'quantidadeSistema' | 'divergencia'> {
-  quantidadeSistema: number;
-  divergencia: number;
+export interface InventarioDivergencia extends InventarioContagem {
   codigoItem: string;
   descricaoItem: string;
 }

@@ -66,6 +66,7 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
                                                        Pageable pageable);
 
     Optional<PedidoVenda> findByIdAndTenantId(UUID id, UUID tenantId);
+    Optional<PedidoVenda> findByTenantIdAndNumeroIgnoreCase(UUID tenantId, String numero);
     boolean existsByTenantIdAndNumeroIgnoreCase(UUID tenantId, String numero);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

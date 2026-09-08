@@ -10,11 +10,13 @@ CREATE TABLE produto_combo_grupos (
     CONSTRAINT ck_produto_combo_grupo_minimo CHECK (minimo_escolhas >= 0),
     CONSTRAINT ck_produto_combo_grupo_maximo CHECK (maximo_escolhas >= 1),
     CONSTRAINT ck_produto_combo_grupo_intervalo CHECK (minimo_escolhas <= maximo_escolhas),
-    CONSTRAINT uk_produto_combo_grupo_nome UNIQUE (tenant_id, combo_produto_id, nome),
     CONSTRAINT uk_produto_combo_grupos_id_tenant UNIQUE (id, tenant_id),
     CONSTRAINT fk_produto_combo_grupo_produto_tenant
         FOREIGN KEY (combo_produto_id, tenant_id) REFERENCES produtos(id, tenant_id)
 );
+
+CREATE UNIQUE INDEX uk_produto_combo_grupo_nome_ci
+    ON produto_combo_grupos (tenant_id, combo_produto_id, lower(nome));
 
 CREATE TABLE produto_combo_grupo_opcoes (
     id UUID PRIMARY KEY,

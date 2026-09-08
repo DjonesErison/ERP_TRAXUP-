@@ -49,5 +49,9 @@ public class PedidoVendaDetalheConsultaService {
     }
 
     public record Detalhe(PedidoVenda pedido, List<PedidoVendaItem> itens,
-                          List<PedidoVendaItemComboOpcao> comboOpcoes) {}
+                          List<PedidoVendaItemComboOpcao> comboOpcoes) {
+        public Detalhe(PedidoVenda pedido, List<PedidoVendaItem> itens) {
+            this(pedido, itens, List.of());
+        }
+    }
 }

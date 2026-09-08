@@ -3,6 +3,7 @@ package com.traxup.tplug.erp.produto.combo.api;
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.produto.combo.ProdutoComboApplicationService;
+import com.traxup.tplug.erp.produto.combo.ProdutoComboDisponibilidadeService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -21,13 +23,16 @@ import java.util.UUID;
 @RequestMapping("/api/v1/produtos/{produtoId}/combo")
 public class ProdutoComboController {
     private final ProdutoComboApplicationService service;
+    private final ProdutoComboDisponibilidadeService disponibilidadeService;
     private final AuditoriaApplicationService auditoria;
     private final TenantContext tenantContext;
 
     public ProdutoComboController(ProdutoComboApplicationService service,
+                                  ProdutoComboDisponibilidadeService disponibilidadeService,
                                   AuditoriaApplicationService auditoria,
                                   TenantContext tenantContext) {
         this.service = service;
+        this.disponibilidadeService = disponibilidadeService;
         this.auditoria = auditoria;
         this.tenantContext = tenantContext;
     }
@@ -38,6 +43,14 @@ public class ProdutoComboController {
         return service.listar(tenantContext.tenantId(), produtoId).stream()
                 .map(ProdutoComboComponenteResponse::from)
                 .toList();
+    }
+
+    @GetMapping("/disponibilidade")
+    @PreAuthorize("hasAuthority('PRODUTO_LER')")
+    public ProdutoComboDisponibilidadeResponse disponibilidade(@PathVariable UUID produtoId,
+                                                               @RequestParam UUID filialId) {
+        var quantidade = disponibilidadeService.calcular(tenantContext.tenantId(), filialId, produtoId);
+        return new ProdutoComboDisponibilidadeResponse(produtoId, filialId, quantidade);
     }
 
     @PutMapping

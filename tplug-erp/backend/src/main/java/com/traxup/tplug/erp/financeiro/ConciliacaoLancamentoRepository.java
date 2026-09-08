@@ -50,9 +50,19 @@ public interface ConciliacaoLancamentoRepository extends JpaRepository<Conciliac
             FROM conciliacao_lancamentos
             WHERE tenant_id = :tenantId
               AND conta_financeira_id = :contaId
+              AND (CAST(:origem AS varchar) IS NULL OR origem = :origem)
+              AND (CAST(:natureza AS varchar) IS NULL OR natureza = :natureza)
+              AND (CAST(:status AS varchar) IS NULL OR status = :status)
+              AND (CAST(:inicio AS timestamptz) IS NULL OR ocorrido_em >= :inicio)
+              AND (CAST(:fim AS timestamptz) IS NULL OR ocorrido_em <= :fim)
             """, nativeQuery = true)
     ConciliacaoResumoProjection resumir(@Param("tenantId") UUID tenantId,
-                                         @Param("contaId") UUID contaId);
+                                         @Param("contaId") UUID contaId,
+                                         @Param("origem") String origem,
+                                         @Param("natureza") String natureza,
+                                         @Param("status") String status,
+                                         @Param("inicio") Instant inicio,
+                                         @Param("fim") Instant fim);
 
     Optional<ConciliacaoLancamento> findByIdAndTenantId(UUID id, UUID tenantId);
     Optional<ConciliacaoLancamento> findByTenantIdAndContaFinanceiraIdAndOrigemAndReferenciaExterna(

@@ -12,5 +12,7 @@ public interface ProdutoRepository extends JpaRepository<Produto, UUID> {
 
     Optional<Produto> findByIdAndTenantId(UUID id, UUID tenantId);
 
+    List<Produto> findAllByTenantIdAndCodigoBarraAndAtivoTrue(UUID tenantId, String codigoBarra);
+
     boolean existsByTenantIdAndCodigoIgnoreCase(UUID tenantId, String codigo);
 }

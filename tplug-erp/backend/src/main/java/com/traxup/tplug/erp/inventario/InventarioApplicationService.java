@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.inventario;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.estoque.EstoqueMovimentacaoApplicationService;
 import com.traxup.tplug.erp.estoque.EstoqueSaldo;
 import com.traxup.tplug.erp.estoque.EstoqueSaldoRepository;
 import com.traxup.tplug.erp.filial.FilialRepository;
@@ -28,6 +29,7 @@ public class InventarioApplicationService {
     private final InventarioSessaoRepository sessaoRepository;
     private final InventarioContagemRepository contagemRepository;
     private final EstoqueSaldoRepository estoqueSaldoRepository;
+    private final EstoqueMovimentacaoApplicationService estoqueMovimentacaoService;
     private final FilialRepository filialRepository;
     private final ProdutoRepository produtoRepository;
     private final GradeProdutoRepository gradeProdutoRepository;
@@ -36,6 +38,7 @@ public class InventarioApplicationService {
     public InventarioApplicationService(InventarioSessaoRepository sessaoRepository,
                                         InventarioContagemRepository contagemRepository,
                                         EstoqueSaldoRepository estoqueSaldoRepository,
+                                        EstoqueMovimentacaoApplicationService estoqueMovimentacaoService,
                                         FilialRepository filialRepository,
                                         ProdutoRepository produtoRepository,
                                         GradeProdutoRepository gradeProdutoRepository,
@@ -43,6 +46,7 @@ public class InventarioApplicationService {
         this.sessaoRepository = sessaoRepository;
         this.contagemRepository = contagemRepository;
         this.estoqueSaldoRepository = estoqueSaldoRepository;
+        this.estoqueMovimentacaoService = estoqueMovimentacaoService;
         this.filialRepository = filialRepository;
         this.produtoRepository = produtoRepository;
         this.gradeProdutoRepository = gradeProdutoRepository;
@@ -142,9 +146,18 @@ public class InventarioApplicationService {
                     .buscarParaAtualizar(tenantId, sessao.getFilialId(), contagem.getTipoItem(), contagem.getItemId())
                     .orElseGet(() -> new EstoqueSaldo(tenantId, sessao.getFilialId(), contagem.getTipoItem(), contagem.getItemId()));
             BigDecimal anterior = saldo.getQuantidade();
-            saldo.definirQuantidade(contagem.getQuantidadeContada());
-            estoqueSaldoRepository.save(saldo);
-            if (anterior.compareTo(contagem.getQuantidadeContada()) != 0) divergentes++;
+            if (anterior.compareTo(contagem.getQuantidadeContada()) != 0) {
+                estoqueMovimentacaoService.movimentar(
+                        tenantId,
+                        sessao.getFilialId(),
+                        contagem.getTipoItem(),
+                        contagem.getItemId(),
+                        "AJUSTE",
+                        contagem.getQuantidadeContada(),
+                        "INVENTARIO:" + inventarioId,
+                        usuarioId);
+                divergentes++;
+            }
         }
 
         sessao.marcarAjustado(usuarioId);

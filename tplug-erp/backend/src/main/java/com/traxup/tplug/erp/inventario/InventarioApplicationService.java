@@ -72,6 +72,13 @@ public class InventarioApplicationService {
                 tenantId, inventarioId, PageRequest.of(0, tamanho));
     }
 
+    public List<InventarioContagem> listarDivergencias(UUID tenantId, UUID inventarioId, Integer limite) {
+        int tamanho = validarLimite(limite);
+        buscar(tenantId, inventarioId);
+        return contagemRepository.findAllByTenantIdAndInventarioIdAndDivergenciaNotOrderByTipoItemAscItemIdAsc(
+                tenantId, inventarioId, BigDecimal.ZERO, PageRequest.of(0, tamanho));
+    }
+
     @Transactional
     public InventarioSessao criar(UUID tenantId, UUID usuarioId, UUID filialId, String descricao) {
         validarFilial(tenantId, filialId, true);

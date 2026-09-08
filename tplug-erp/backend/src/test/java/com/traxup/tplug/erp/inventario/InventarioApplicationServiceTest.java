@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -72,6 +73,25 @@ class InventarioApplicationServiceTest {
         assertEquals(new BigDecimal("7.0000"), contagem.getQuantidadeContada());
         assertEquals(new BigDecimal("-3.0000"), contagem.getDivergencia());
         verify(contagemRepository).save(any(InventarioContagem.class));
+    }
+
+    @Test
+    void deveListarSomenteDivergenciasDaSessao() {
+        UUID tenantId = UUID.randomUUID();
+        UUID inventarioId = UUID.randomUUID();
+        InventarioSessao sessao = new InventarioSessao(tenantId, UUID.randomUUID(), null, null);
+        InventarioContagem divergente = new InventarioContagem(tenantId, inventarioId, "PRODUTO", UUID.randomUUID(),
+                new BigDecimal("10.0000"), new BigDecimal("8.0000"), null);
+
+        when(sessaoRepository.findByIdAndTenantId(inventarioId, tenantId)).thenReturn(Optional.of(sessao));
+        when(contagemRepository.findAllByTenantIdAndInventarioIdAndDivergenciaNotOrderByTipoItemAscItemIdAsc(
+                tenantId, inventarioId, BigDecimal.ZERO, PageRequest.of(0, 50)))
+                .thenReturn(List.of(divergente));
+
+        List<InventarioContagem> resultado = service().listarDivergencias(tenantId, inventarioId, 50);
+
+        assertEquals(1, resultado.size());
+        assertEquals(new BigDecimal("-2.0000"), resultado.getFirst().getDivergencia());
     }
 
     @Test

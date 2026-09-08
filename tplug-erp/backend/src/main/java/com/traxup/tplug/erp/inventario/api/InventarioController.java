@@ -53,6 +53,15 @@ public class InventarioController {
                 .stream().map(InventarioContagemResponse::from).toList();
     }
 
+    @GetMapping("/{inventarioId}/divergencias")
+    @PreAuthorize("hasAuthority('INVENTARIO_LER')")
+    public List<InventarioContagemResponse> listarDivergencias(
+            @PathVariable UUID inventarioId,
+            @RequestParam(required = false, defaultValue = "100") Integer limite) {
+        return service.listarDivergencias(tenantContext.tenantId(), inventarioId, limite)
+                .stream().map(InventarioContagemResponse::from).toList();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('INVENTARIO_EDITAR')")

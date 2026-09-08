@@ -63,6 +63,7 @@ public class ProdutoComboApplicationService {
         }).toList();
 
         comboRepository.deleteAllByTenantIdAndComboProdutoId(tenantId, comboProdutoId);
+        comboRepository.flush();
         return comboRepository.saveAll(novos).stream()
                 .sorted(java.util.Comparator.comparing(ProdutoComboComponente::getComponenteProdutoId))
                 .toList();

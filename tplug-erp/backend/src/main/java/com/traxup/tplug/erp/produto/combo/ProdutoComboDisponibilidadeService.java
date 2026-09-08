@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -16,18 +17,24 @@ public class ProdutoComboDisponibilidadeService {
     private final ProdutoComboApplicationService comboService;
     private final EstoqueSaldoRepository estoqueSaldoRepository;
     private final FilialRepository filialRepository;
+    private final ProdutoComboVigenciaApplicationService vigenciaService;
 
     public ProdutoComboDisponibilidadeService(ProdutoComboApplicationService comboService,
                                                EstoqueSaldoRepository estoqueSaldoRepository,
-                                               FilialRepository filialRepository) {
+                                               FilialRepository filialRepository,
+                                               ProdutoComboVigenciaApplicationService vigenciaService) {
         this.comboService = comboService;
         this.estoqueSaldoRepository = estoqueSaldoRepository;
         this.filialRepository = filialRepository;
+        this.vigenciaService = vigenciaService;
     }
 
     public BigDecimal calcular(UUID tenantId, UUID filialId, UUID comboProdutoId) {
         if (!filialRepository.existsByIdAndTenantId(filialId, tenantId)) {
             throw new RecursoNaoEncontradoException("Filial nao encontrada para o tenant informado");
+        }
+        if (!vigenciaService.vigenteEm(tenantId, comboProdutoId, Instant.now())) {
+            return BigDecimal.ZERO;
         }
 
         var componentes = comboService.listar(tenantId, comboProdutoId);

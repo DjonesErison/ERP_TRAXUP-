@@ -7,12 +7,14 @@ import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -22,8 +24,9 @@ class ProdutoComboDisponibilidadeServiceTest {
     private final ProdutoComboApplicationService comboService = mock(ProdutoComboApplicationService.class);
     private final EstoqueSaldoRepository estoqueRepository = mock(EstoqueSaldoRepository.class);
     private final FilialRepository filialRepository = mock(FilialRepository.class);
+    private final ProdutoComboVigenciaApplicationService vigenciaService = mock(ProdutoComboVigenciaApplicationService.class);
     private final ProdutoComboDisponibilidadeService service = new ProdutoComboDisponibilidadeService(
-            comboService, estoqueRepository, filialRepository);
+            comboService, estoqueRepository, filialRepository, vigenciaService);
 
     @Test
     void deveCalcularPeloComponenteLimitante() {
@@ -33,6 +36,8 @@ class ProdutoComboDisponibilidadeServiceTest {
         UUID produtoA = UUID.randomUUID();
         UUID produtoB = UUID.randomUUID();
         when(filialRepository.existsByIdAndTenantId(filial, tenant)).thenReturn(true);
+        when(vigenciaService.vigenteEm(org.mockito.ArgumentMatchers.eq(tenant), org.mockito.ArgumentMatchers.eq(combo), any(Instant.class)))
+                .thenReturn(true);
         when(comboService.listar(tenant, combo)).thenReturn(List.of(
                 new ProdutoComboComponente(tenant, combo, produtoA, new BigDecimal("2")),
                 new ProdutoComboComponente(tenant, combo, produtoB, new BigDecimal("3"))));
@@ -55,12 +60,31 @@ class ProdutoComboDisponibilidadeServiceTest {
         UUID combo = UUID.randomUUID();
         UUID componente = UUID.randomUUID();
         when(filialRepository.existsByIdAndTenantId(filial, tenant)).thenReturn(true);
+        when(vigenciaService.vigenteEm(org.mockito.ArgumentMatchers.eq(tenant), org.mockito.ArgumentMatchers.eq(combo), any(Instant.class)))
+                .thenReturn(true);
         when(comboService.listar(tenant, combo)).thenReturn(List.of(
                 new ProdutoComboComponente(tenant, combo, componente, BigDecimal.ONE)));
         when(estoqueRepository.findByTenantIdAndFilialIdAndTipoItemAndItemId(tenant, filial, "PRODUTO", componente))
                 .thenReturn(Optional.empty());
 
         assertThat(service.calcular(tenant, filial, combo)).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void deveRetornarZeroForaDaVigenciaSemConsultarComboOuEstoque() {
+        UUID tenant = UUID.randomUUID();
+        UUID filial = UUID.randomUUID();
+        UUID combo = UUID.randomUUID();
+        when(filialRepository.existsByIdAndTenantId(filial, tenant)).thenReturn(true);
+        when(vigenciaService.vigenteEm(org.mockito.ArgumentMatchers.eq(tenant), org.mockito.ArgumentMatchers.eq(combo), any(Instant.class)))
+                .thenReturn(false);
+
+        assertThat(service.calcular(tenant, filial, combo)).isEqualByComparingTo("0");
+
+        verify(comboService, never()).listar(tenant, combo);
+        verify(estoqueRepository, never()).findByTenantIdAndFilialIdAndTipoItemAndItemId(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
@@ -74,6 +98,8 @@ class ProdutoComboDisponibilidadeServiceTest {
                 .isInstanceOf(RecursoNaoEncontradoException.class)
                 .hasMessage("Filial nao encontrada para o tenant informado");
 
+        verify(vigenciaService, never()).vigenteEm(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
         verify(comboService, never()).listar(tenant, combo);
         verify(estoqueRepository, never()).findByTenantIdAndFilialIdAndTipoItemAndItemId(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),

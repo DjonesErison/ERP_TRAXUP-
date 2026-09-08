@@ -4,6 +4,7 @@ import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.produto.combo.ProdutoComboApplicationService;
 import com.traxup.tplug.erp.produto.combo.ProdutoComboDisponibilidadeService;
+import com.traxup.tplug.erp.produto.combo.ProdutoComboVigenciaApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,15 +25,18 @@ import java.util.UUID;
 public class ProdutoComboController {
     private final ProdutoComboApplicationService service;
     private final ProdutoComboDisponibilidadeService disponibilidadeService;
+    private final ProdutoComboVigenciaApplicationService vigenciaService;
     private final AuditoriaApplicationService auditoria;
     private final TenantContext tenantContext;
 
     public ProdutoComboController(ProdutoComboApplicationService service,
                                   ProdutoComboDisponibilidadeService disponibilidadeService,
+                                  ProdutoComboVigenciaApplicationService vigenciaService,
                                   AuditoriaApplicationService auditoria,
                                   TenantContext tenantContext) {
         this.service = service;
         this.disponibilidadeService = disponibilidadeService;
+        this.vigenciaService = vigenciaService;
         this.auditoria = auditoria;
         this.tenantContext = tenantContext;
     }
@@ -53,6 +57,15 @@ public class ProdutoComboController {
         return new ProdutoComboDisponibilidadeResponse(produtoId, filialId, quantidade);
     }
 
+    @GetMapping("/vigencia")
+    @PreAuthorize("hasAuthority('PRODUTO_LER')")
+    public ResponseEntity<ProdutoComboVigenciaResponse> buscarVigencia(@PathVariable UUID produtoId) {
+        return vigenciaService.buscar(tenantContext.tenantId(), produtoId)
+                .map(ProdutoComboVigenciaResponse::from)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
     @PutMapping
     @PreAuthorize("hasAuthority('PRODUTO_CRIAR')")
     public List<ProdutoComboComponenteResponse> configurar(@PathVariable UUID produtoId,
@@ -65,6 +78,29 @@ public class ProdutoComboController {
         auditoria.registrar(tenantId, tenantContext.usuarioIdOuNulo(), null, null,
                 "CONFIGURAR", "PRODUTO_COMBO", produtoId, "componentes=" + componentes.size());
         return componentes.stream().map(ProdutoComboComponenteResponse::from).toList();
+    }
+
+    @PutMapping("/vigencia")
+    @PreAuthorize("hasAuthority('PRODUTO_CRIAR')")
+    public ProdutoComboVigenciaResponse configurarVigencia(@PathVariable UUID produtoId,
+                                                            @RequestBody ConfigurarProdutoComboVigenciaRequest request) {
+        UUID tenantId = tenantContext.tenantId();
+        var vigencia = vigenciaService.configurar(
+                tenantId, produtoId, request.vigenciaInicio(), request.vigenciaFim());
+        auditoria.registrar(tenantId, tenantContext.usuarioIdOuNulo(), null, null,
+                "CONFIGURAR_VIGENCIA", "PRODUTO_COMBO", produtoId,
+                "inicio=" + request.vigenciaInicio() + ";fim=" + request.vigenciaFim());
+        return ProdutoComboVigenciaResponse.from(vigencia);
+    }
+
+    @DeleteMapping("/vigencia")
+    @PreAuthorize("hasAuthority('PRODUTO_CRIAR')")
+    public ResponseEntity<Void> removerVigencia(@PathVariable UUID produtoId) {
+        UUID tenantId = tenantContext.tenantId();
+        vigenciaService.remover(tenantId, produtoId);
+        auditoria.registrar(tenantId, tenantContext.usuarioIdOuNulo(), null, null,
+                "REMOVER_VIGENCIA", "PRODUTO_COMBO", produtoId, null);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping

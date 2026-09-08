@@ -75,6 +75,14 @@ public class PedidoVendaApplicationService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido de venda nao encontrado para o tenant informado"));
     }
 
+    public PedidoVenda buscarPorNumero(UUID tenantId, String numero) {
+        if (numero == null || numero.isBlank()) {
+            throw new IllegalArgumentException("Numero do pedido de venda e obrigatorio");
+        }
+        return repository.findByTenantIdAndNumeroIgnoreCase(tenantId, numero.trim())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido de venda nao encontrado para o tenant informado"));
+    }
+
     public List<PedidoVendaItem> listarItens(UUID tenantId, UUID pedidoId) {
         buscar(tenantId, pedidoId);
         return itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId);

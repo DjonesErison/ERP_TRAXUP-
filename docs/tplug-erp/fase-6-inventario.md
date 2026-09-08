@@ -60,6 +60,8 @@ A contagem cega foi formalmente adotada como opção por sessão:
 - criação registra em auditoria se a sessão foi aberta em modo cego;
 - o modo convencional permanece retrocompatível com `contagemCega=false`.
 
+No Angular/mobile, o operador escolhe a contagem cega na abertura da sessão. Enquanto ela permanece aberta, a interface identifica o modo cego, não exibe colunas de saldo/divergência e não oferece a ação de consultar divergências. Após a conclusão, a conferência volta a ser liberada. A captura por câmera e o leitor físico permanecem disponíveis no mesmo fluxo.
+
 ## Segurança e auditoria
 
 - tenant vem exclusivamente do contexto autenticado;

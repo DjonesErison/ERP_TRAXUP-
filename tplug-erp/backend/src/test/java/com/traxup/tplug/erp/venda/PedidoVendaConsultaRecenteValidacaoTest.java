@@ -70,7 +70,7 @@ class PedidoVendaConsultaRecenteValidacaoTest {
         Instant inicio = Instant.parse("2026-09-08T10:00:00Z");
         Instant fim = Instant.parse("2026-09-08T12:00:00Z");
         PageRequest pagina = PageRequest.of(2, 37);
-        when(repository.buscarRecentesFiltrados(
+        when(repository.buscarRecentesFiltradosPaginado(
                 tenantId, filialId, clienteId, "FATURADO", inicio, fim, pagina))
                 .thenReturn(new PageImpl<>(List.of(), pagina, 0));
 
@@ -78,7 +78,7 @@ class PedidoVendaConsultaRecenteValidacaoTest {
 
         assertEquals(2, resultado.getNumber());
         assertEquals(37, resultado.getSize());
-        verify(repository).buscarRecentesFiltrados(
+        verify(repository).buscarRecentesFiltradosPaginado(
                 tenantId, filialId, clienteId, "FATURADO", inicio, fim, pagina);
     }
 }

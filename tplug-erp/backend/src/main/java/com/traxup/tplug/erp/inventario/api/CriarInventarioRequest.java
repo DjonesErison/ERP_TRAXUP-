@@ -7,5 +7,6 @@ import java.util.UUID;
 
 public record CriarInventarioRequest(
         @NotNull UUID filialId,
-        @Size(max = 160) String descricao
+        @Size(max = 160) String descricao,
+        Boolean contagemCega
 ) {}

@@ -40,6 +40,12 @@ public class ConciliacaoController {
                 .map(ConciliacaoLancamentoResponse::from).toList();
     }
 
+    @GetMapping("/contas/{contaId}/resumo")
+    @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
+    public ConciliacaoResumoResponse resumo(@PathVariable UUID contaId) {
+        return ConciliacaoResumoResponse.from(service.resumir(tenantContext.tenantId(), contaId));
+    }
+
     @GetMapping("/lancamentos/{lancamentoId}/sugestoes")
     @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
     public List<ContaFinanceiraMovimentoResponse> sugestoes(@PathVariable UUID lancamentoId) {

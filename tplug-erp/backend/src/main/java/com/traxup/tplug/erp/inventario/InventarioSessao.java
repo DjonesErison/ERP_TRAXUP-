@@ -24,6 +24,8 @@ public class InventarioSessao {
     private String status;
     @Column(length = 160)
     private String descricao;
+    @Column(name = "contagem_cega", nullable = false)
+    private boolean contagemCega;
     @Column(name = "criado_por_id")
     private UUID criadoPorId;
     @Column(name = "concluido_por_id")
@@ -42,12 +44,17 @@ public class InventarioSessao {
     protected InventarioSessao() {}
 
     public InventarioSessao(UUID tenantId, UUID filialId, String descricao, UUID criadoPorId) {
+        this(tenantId, filialId, descricao, criadoPorId, false);
+    }
+
+    public InventarioSessao(UUID tenantId, UUID filialId, String descricao, UUID criadoPorId, boolean contagemCega) {
         this.id = UUID.randomUUID();
         this.tenantId = tenantId;
         this.filialId = filialId;
         this.status = "ABERTO";
         this.descricao = descricao;
         this.criadoPorId = criadoPorId;
+        this.contagemCega = contagemCega;
     }
 
     @PrePersist
@@ -82,11 +89,16 @@ public class InventarioSessao {
         ajustadoEm = Instant.now();
     }
 
+    public boolean deveOcultarSaldoDuranteContagem() {
+        return contagemCega && "ABERTO".equals(status);
+    }
+
     public UUID getId() { return id; }
     public UUID getTenantId() { return tenantId; }
     public UUID getFilialId() { return filialId; }
     public String getStatus() { return status; }
     public String getDescricao() { return descricao; }
+    public boolean isContagemCega() { return contagemCega; }
     public UUID getCriadoPorId() { return criadoPorId; }
     public UUID getConcluidoPorId() { return concluidoPorId; }
     public UUID getAjustadoPorId() { return ajustadoPorId; }

@@ -44,11 +44,12 @@ public class PedidoVendaController {
                                                      @RequestParam(defaultValue = "20") int tamanho,
                                                      @RequestParam(required = false) UUID filialId,
                                                      @RequestParam(required = false) UUID clienteId,
+                                                     @RequestParam(required = false) String numero,
                                                      @RequestParam(required = false) String status,
                                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
                                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
         return PedidoVendaPaginaResponse.from(
-                consultaRecenteService.listar(tenantContext.tenantId(), pagina, tamanho, filialId, clienteId, status, inicio, fim));
+                consultaRecenteService.listar(tenantContext.tenantId(), pagina, tamanho, filialId, clienteId, numero, status, inicio, fim));
     }
 
     @GetMapping("/{pedidoId}")

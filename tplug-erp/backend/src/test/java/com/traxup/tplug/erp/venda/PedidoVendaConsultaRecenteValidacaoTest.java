@@ -32,7 +32,7 @@ class PedidoVendaConsultaRecenteValidacaoTest {
     @Test
     void deveRejeitarPaginaNegativaSemConsultarRepositorio() {
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(UUID.randomUUID(), -1, 20, null, null, null, null, null));
+                () -> service.listar(UUID.randomUUID(), -1, 20, null, null, null, null, null, null));
         verifyNoInteractions(repository);
     }
 
@@ -40,16 +40,16 @@ class PedidoVendaConsultaRecenteValidacaoTest {
     void deveRejeitarTamanhoForaDaFaixaSemConsultarRepositorio() {
         UUID tenantId = UUID.randomUUID();
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(tenantId, 0, 0, null, null, null, null, null));
+                () -> service.listar(tenantId, 0, 0, null, null, null, null, null, null));
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(tenantId, 0, 101, null, null, null, null, null));
+                () -> service.listar(tenantId, 0, 101, null, null, null, null, null, null));
         verifyNoInteractions(repository);
     }
 
     @Test
     void deveRejeitarStatusInvalidoSemConsultarRepositorio() {
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(UUID.randomUUID(), 0, 20, null, null, "DESCONHECIDO", null, null));
+                () -> service.listar(UUID.randomUUID(), 0, 20, null, null, null, "DESCONHECIDO", null, null));
         verifyNoInteractions(repository);
     }
 
@@ -58,12 +58,12 @@ class PedidoVendaConsultaRecenteValidacaoTest {
         Instant inicio = Instant.parse("2026-09-08T13:00:00Z");
         Instant fim = Instant.parse("2026-09-08T12:00:00Z");
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(UUID.randomUUID(), 0, 20, null, null, null, inicio, fim));
+                () -> service.listar(UUID.randomUUID(), 0, 20, null, null, null, null, inicio, fim));
         verifyNoInteractions(repository);
     }
 
     @Test
-    void deveNormalizarStatusEEncaminharPaginaFiltrosETamanho() {
+    void deveNormalizarNumeroStatusEEncaminharPaginaFiltrosETamanho() {
         UUID tenantId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
@@ -71,14 +71,14 @@ class PedidoVendaConsultaRecenteValidacaoTest {
         Instant fim = Instant.parse("2026-09-08T12:00:00Z");
         PageRequest pagina = PageRequest.of(2, 37);
         when(repository.buscarRecentesFiltradosPaginado(
-                tenantId, filialId, clienteId, "FATURADO", inicio, fim, pagina))
+                tenantId, filialId, clienteId, "PV-123", "FATURADO", inicio, fim, pagina))
                 .thenReturn(new PageImpl<>(List.of(), pagina, 0));
 
-        var resultado = service.listar(tenantId, 2, 37, filialId, clienteId, "  faturado  ", inicio, fim);
+        var resultado = service.listar(tenantId, 2, 37, filialId, clienteId, "  PV-123  ", "  faturado  ", inicio, fim);
 
         assertEquals(2, resultado.getNumber());
         assertEquals(37, resultado.getSize());
         verify(repository).buscarRecentesFiltradosPaginado(
-                tenantId, filialId, clienteId, "FATURADO", inicio, fim, pagina);
+                tenantId, filialId, clienteId, "PV-123", "FATURADO", inicio, fim, pagina);
     }
 }

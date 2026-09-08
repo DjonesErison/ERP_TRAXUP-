@@ -20,6 +20,7 @@ public interface ConciliacaoLancamentoRepository extends JpaRepository<Conciliac
             "AND (:origem IS NULL OR lancamento.origem = :origem) " +
             "AND (:natureza IS NULL OR lancamento.natureza = :natureza) " +
             "AND (:status IS NULL OR lancamento.status = :status) " +
+            "AND (:tipo IS NULL OR lancamento.tipo = :tipo) " +
             "AND (:inicio IS NULL OR lancamento.ocorridoEm >= :inicio) " +
             "AND (:fim IS NULL OR lancamento.ocorridoEm <= :fim) " +
             "ORDER BY lancamento.ocorridoEm DESC, lancamento.id ASC")
@@ -28,6 +29,7 @@ public interface ConciliacaoLancamentoRepository extends JpaRepository<Conciliac
                                         @Param("origem") String origem,
                                         @Param("natureza") String natureza,
                                         @Param("status") String status,
+                                        @Param("tipo") String tipo,
                                         @Param("inicio") Instant inicio,
                                         @Param("fim") Instant fim);
 
@@ -76,6 +78,7 @@ public interface ConciliacaoLancamentoRepository extends JpaRepository<Conciliac
               AND (CAST(:origem AS varchar) IS NULL OR origem = :origem)
               AND (CAST(:natureza AS varchar) IS NULL OR natureza = :natureza)
               AND (CAST(:status AS varchar) IS NULL OR status = :status)
+              AND (CAST(:tipo AS varchar) IS NULL OR tipo = :tipo)
               AND (CAST(:inicio AS timestamptz) IS NULL OR ocorrido_em >= :inicio)
               AND (CAST(:fim AS timestamptz) IS NULL OR ocorrido_em <= :fim)
             """, nativeQuery = true)
@@ -84,6 +87,7 @@ public interface ConciliacaoLancamentoRepository extends JpaRepository<Conciliac
                                                  @Param("origem") String origem,
                                                  @Param("natureza") String natureza,
                                                  @Param("status") String status,
+                                                 @Param("tipo") String tipo,
                                                  @Param("inicio") Instant inicio,
                                                  @Param("fim") Instant fim);
 

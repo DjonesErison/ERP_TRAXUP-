@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
@@ -24,7 +25,7 @@ class PedidoVendaConsultaRecenteFiltroServiceTest {
     @Mock PedidoVendaRepository repository;
 
     @Test
-    void deveAplicarTenantFilialClienteStatusPeriodoELimite() {
+    void deveAplicarTenantFilialClienteStatusPeriodoEPaginacao() {
         UUID tenantId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
@@ -32,28 +33,28 @@ class PedidoVendaConsultaRecenteFiltroServiceTest {
         Instant fim = Instant.parse("2026-09-07T23:59:59Z");
         PedidoVenda pedido = org.mockito.Mockito.mock(PedidoVenda.class);
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        when(repository.buscarRecentesFiltrados(eq(tenantId), eq(filialId), eq(clienteId), eq("FATURADO"), eq(inicio), eq(fim), any(Pageable.class)))
-                .thenReturn(List.of(pedido));
+        when(repository.buscarRecentesFiltradosPaginado(eq(tenantId), eq(filialId), eq(clienteId), eq("FATURADO"), eq(inicio), eq(fim), any(Pageable.class)))
+                .thenAnswer(inv -> new PageImpl<>(List.of(pedido), inv.getArgument(6), 1));
 
         var service = new PedidoVendaConsultaRecenteService(repository);
-        var resultado = service.listar(tenantId, 25, filialId, clienteId, " faturado ", inicio, fim);
+        var resultado = service.listar(tenantId, 2, 25, filialId, clienteId, " faturado ", inicio, fim);
 
-        assertEquals(List.of(pedido), resultado);
-        verify(repository).buscarRecentesFiltrados(eq(tenantId), eq(filialId), eq(clienteId), eq("FATURADO"), eq(inicio), eq(fim), pageableCaptor.capture());
-        assertEquals(0, pageableCaptor.getValue().getPageNumber());
+        assertEquals(List.of(pedido), resultado.getContent());
+        verify(repository).buscarRecentesFiltradosPaginado(eq(tenantId), eq(filialId), eq(clienteId), eq("FATURADO"), eq(inicio), eq(fim), pageableCaptor.capture());
+        assertEquals(2, pageableCaptor.getValue().getPageNumber());
         assertEquals(25, pageableCaptor.getValue().getPageSize());
     }
 
     @Test
     void devePermitirFiltrosAusentes() {
         UUID tenantId = UUID.randomUUID();
-        when(repository.buscarRecentesFiltrados(eq(tenantId), eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
-                .thenReturn(List.of());
+        when(repository.buscarRecentesFiltradosPaginado(eq(tenantId), eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
+                .thenAnswer(inv -> new PageImpl<>(List.of(), inv.getArgument(6), 0));
 
         var service = new PedidoVendaConsultaRecenteService(repository);
-        service.listar(tenantId, 20, null, null, " ", null, null);
+        service.listar(tenantId, 0, 20, null, null, " ", null, null);
 
-        verify(repository).buscarRecentesFiltrados(eq(tenantId), eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class));
+        verify(repository).buscarRecentesFiltradosPaginado(eq(tenantId), eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class));
     }
 
     @Test
@@ -63,7 +64,7 @@ class PedidoVendaConsultaRecenteFiltroServiceTest {
         Instant fim = Instant.parse("2026-09-07T00:00:00Z");
 
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(UUID.randomUUID(), 20, null, null, null, inicio, fim));
+                () -> service.listar(UUID.randomUUID(), 0, 20, null, null, null, inicio, fim));
         verifyNoInteractions(repository);
     }
 
@@ -72,16 +73,16 @@ class PedidoVendaConsultaRecenteFiltroServiceTest {
         var service = new PedidoVendaConsultaRecenteService(repository);
 
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(UUID.randomUUID(), 20, null, null, "INEXISTENTE", null, null));
+                () -> service.listar(UUID.randomUUID(), 0, 20, null, null, "INEXISTENTE", null, null));
         verifyNoInteractions(repository);
     }
 
     @Test
-    void deveRejeitarLimiteForaDaFaixaSemConsultarRepositorio() {
+    void deveRejeitarTamanhoForaDaFaixaSemConsultarRepositorio() {
         var service = new PedidoVendaConsultaRecenteService(repository);
 
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(UUID.randomUUID(), 101, null, null, null, null, null));
+                () -> service.listar(UUID.randomUUID(), 0, 101, null, null, null, null, null));
         verifyNoInteractions(repository);
     }
 }

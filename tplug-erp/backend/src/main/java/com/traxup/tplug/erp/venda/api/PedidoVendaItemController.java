@@ -2,6 +2,7 @@ package com.traxup.tplug.erp.venda.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.venda.PedidoVendaItemApplicationService;
+import com.traxup.tplug.erp.venda.PedidoVendaItemComboSelecaoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -22,10 +24,14 @@ import java.util.UUID;
 public class PedidoVendaItemController {
 
     private final PedidoVendaItemApplicationService service;
+    private final PedidoVendaItemComboSelecaoService comboSelecaoService;
     private final TenantContext tenantContext;
 
-    public PedidoVendaItemController(PedidoVendaItemApplicationService service, TenantContext tenantContext) {
+    public PedidoVendaItemController(PedidoVendaItemApplicationService service,
+                                     PedidoVendaItemComboSelecaoService comboSelecaoService,
+                                     TenantContext tenantContext) {
         this.service = service;
+        this.comboSelecaoService = comboSelecaoService;
         this.tenantContext = tenantContext;
     }
 
@@ -63,5 +69,29 @@ public class PedidoVendaItemController {
                 pedidoId,
                 itemId,
                 request.descontoValor()));
+    }
+
+    @GetMapping("/{itemId}/combo-opcoes")
+    @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
+    public List<PedidoVendaItemComboOpcaoResponse> listarComboOpcoes(@PathVariable UUID pedidoId,
+                                                                     @PathVariable UUID itemId) {
+        return comboSelecaoService.listar(tenantContext.tenantId(), pedidoId, itemId).stream()
+                .map(PedidoVendaItemComboOpcaoResponse::from)
+                .toList();
+    }
+
+    @PutMapping("/{itemId}/combo-opcoes")
+    @PreAuthorize("hasAuthority('VENDA_PEDIDO_EDITAR')")
+    public List<PedidoVendaItemComboOpcaoResponse> configurarComboOpcoes(@PathVariable UUID pedidoId,
+                                                                         @PathVariable UUID itemId,
+                                                                         @Valid @RequestBody ConfigurarPedidoVendaItemComboRequest request) {
+        return comboSelecaoService.configurar(
+                        tenantContext.tenantId(),
+                        tenantContext.usuarioIdOuNulo(),
+                        pedidoId,
+                        itemId,
+                        request.opcaoIds()).stream()
+                .map(PedidoVendaItemComboOpcaoResponse::from)
+                .toList();
     }
 }

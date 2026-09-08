@@ -14,12 +14,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
 public class ConciliacaoApplicationService {
     private static final Duration JANELA_SUGESTAO = Duration.ofDays(3);
+    private static final Set<String> TIPOS = Set.of("ENTRADA", "SAIDA");
+    private static final Set<String> NATUREZAS = Set.of("NORMAL", "TAXA", "ANTECIPACAO", "ESTORNO", "CHARGEBACK");
+    private static final Set<String> STATUS = Set.of("PENDENTE", "CONCILIADO");
     private final ConciliacaoLancamentoRepository repository;
     private final ContaFinanceiraApplicationService contaFinanceiraService;
     private final ContaFinanceiraMovimentoRepository movimentoRepository;
@@ -48,8 +52,10 @@ public class ConciliacaoApplicationService {
                                               String status, String tipo, Instant inicio, Instant fim) {
         contaFinanceiraService.buscar(tenantId, contaId);
         validarPeriodo(inicio, fim);
-        return repository.filtrar(tenantId, contaId, opcionalUpper(origem), opcionalUpper(natureza),
-                opcionalUpper(status), opcionalUpper(tipo), inicio, fim);
+        return repository.filtrar(tenantId, contaId, opcionalUpper(origem),
+                opcionalPermitido(natureza, NATUREZAS, "Natureza"),
+                opcionalPermitido(status, STATUS, "Status"),
+                opcionalPermitido(tipo, TIPOS, "Tipo"), inicio, fim);
     }
 
     public ConciliacaoResumoProjection resumir(UUID tenantId, UUID contaId) {
@@ -66,8 +72,10 @@ public class ConciliacaoApplicationService {
                                                 String status, String tipo, Instant inicio, Instant fim) {
         contaFinanceiraService.buscar(tenantId, contaId);
         validarPeriodo(inicio, fim);
-        return repository.resumirFiltrado(tenantId, contaId, opcionalUpper(origem), opcionalUpper(natureza),
-                opcionalUpper(status), opcionalUpper(tipo), inicio, fim);
+        return repository.resumirFiltrado(tenantId, contaId, opcionalUpper(origem),
+                opcionalPermitido(natureza, NATUREZAS, "Natureza"),
+                opcionalPermitido(status, STATUS, "Status"),
+                opcionalPermitido(tipo, TIPOS, "Tipo"), inicio, fim);
     }
 
     public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId) {
@@ -185,7 +193,7 @@ public class ConciliacaoApplicationService {
 
     private String normalizarTipo(String tipo) {
         String valor = obrigatorio(tipo, "Tipo").toUpperCase(Locale.ROOT);
-        if (!("ENTRADA".equals(valor) || "SAIDA".equals(valor))) {
+        if (!TIPOS.contains(valor)) {
             throw new RegraNegocioException("Tipo deve ser ENTRADA ou SAIDA");
         }
         return valor;
@@ -195,6 +203,14 @@ public class ConciliacaoApplicationService {
         if (inicio != null && fim != null && inicio.isAfter(fim)) {
             throw new RegraNegocioException("Periodo inicial nao pode ser posterior ao periodo final");
         }
+    }
+
+    private String opcionalPermitido(String valor, Set<String> permitidos, String campo) {
+        String normalizado = opcionalUpper(valor);
+        if (normalizado != null && !permitidos.contains(normalizado)) {
+            throw new RegraNegocioException(campo + " de conciliacao invalido");
+        }
+        return normalizado;
     }
 
     private String opcionalUpper(String valor) {

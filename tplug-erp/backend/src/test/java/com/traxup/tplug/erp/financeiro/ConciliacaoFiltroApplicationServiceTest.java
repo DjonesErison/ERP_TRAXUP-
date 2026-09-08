@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -77,6 +78,45 @@ class ConciliacaoFiltroApplicationServiceTest {
         novoService().resumir(tenantId, contaId, null, null, null, " entrada ", null, null);
 
         verify(repository).resumirFiltrado(tenantId, contaId, null, null, null, "ENTRADA", null, null);
+    }
+
+    @Test
+    void deveRejeitarNaturezaInvalidaAntesDaConsulta() {
+        UUID tenantId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        ContaFinanceira conta = new ContaFinanceira(tenantId, UUID.randomUUID(), "Banco", "BANCO", UUID.randomUUID());
+        when(contaRepository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
+
+        assertThrows(RegraNegocioException.class, () -> novoService().listar(
+                tenantId, contaId, null, "desconhecida", null, null, null, null));
+
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void deveRejeitarStatusInvalidoAntesDaConsulta() {
+        UUID tenantId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        ContaFinanceira conta = new ContaFinanceira(tenantId, UUID.randomUUID(), "Banco", "BANCO", UUID.randomUUID());
+        when(contaRepository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
+
+        assertThrows(RegraNegocioException.class, () -> novoService().resumir(
+                tenantId, contaId, null, null, "cancelado", null, null, null));
+
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void deveRejeitarTipoInvalidoAntesDaConsulta() {
+        UUID tenantId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        ContaFinanceira conta = new ContaFinanceira(tenantId, UUID.randomUUID(), "Banco", "BANCO", UUID.randomUUID());
+        when(contaRepository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
+
+        assertThrows(RegraNegocioException.class, () -> novoService().listar(
+                tenantId, contaId, null, null, null, "credito", null, null));
+
+        verifyNoInteractions(repository);
     }
 
     @Test

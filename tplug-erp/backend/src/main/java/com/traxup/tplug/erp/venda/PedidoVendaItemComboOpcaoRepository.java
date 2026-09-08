@@ -7,5 +7,7 @@ import java.util.UUID;
 
 public interface PedidoVendaItemComboOpcaoRepository extends JpaRepository<PedidoVendaItemComboOpcao, UUID> {
     List<PedidoVendaItemComboOpcao> findAllByTenantIdAndPedidoVendaItemIdOrderByGrupoIdAscOpcaoIdAsc(UUID tenantId, UUID pedidoVendaItemId);
+    List<PedidoVendaItemComboOpcao> findAllByTenantIdAndPedidoVendaItemIdInOrderByPedidoVendaItemIdAscGrupoIdAscOpcaoIdAsc(
+            UUID tenantId, List<UUID> pedidoVendaItemIds);
     long deleteByTenantIdAndPedidoVendaItemId(UUID tenantId, UUID pedidoVendaItemId);
 }

@@ -1,7 +1,9 @@
 package com.traxup.tplug.erp.pessoa;
 
 import com.traxup.tplug.erp.crm.ClienteInativoProjection;
+import com.traxup.tplug.erp.crm.ClienteRfmProjection;
 import com.traxup.tplug.erp.venda.PedidoVenda;
+import com.traxup.tplug.erp.venda.PedidoVendaItem;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -48,6 +50,32 @@ public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
                                                            @Param("filialId") UUID filialId,
                                                            @Param("limiteInatividade") Instant limiteInatividade,
                                                            Pageable pageable);
+
+    @Query("""
+            select p.id as clienteId,
+                   p.nomeRazaoSocial as nomeRazaoSocial,
+                   p.nomeFantasia as nomeFantasia,
+                   max(v.criadoEm) as ultimaCompraEm,
+                   count(distinct v.id) as quantidadeCompras,
+                   sum(i.totalItem) as valorTotal
+            from Pessoa p, PedidoVenda v, PedidoVendaItem i
+            where p.id = v.clienteId
+              and i.pedidoVendaId = v.id
+              and p.tenant.id = :tenantId
+              and v.tenantId = :tenantId
+              and i.tenantId = :tenantId
+              and p.cliente = true
+              and p.ativo = true
+              and v.status = 'FATURADO'
+              and (:filialId is null or v.filialId = :filialId)
+              and (:desde is null or v.criadoEm >= :desde)
+            group by p.id, p.nomeRazaoSocial, p.nomeFantasia
+            order by sum(i.totalItem) desc, max(v.criadoEm) desc, count(distinct v.id) desc, p.nomeRazaoSocial asc
+            """)
+    List<ClienteRfmProjection> buscarMetricasRfm(@Param("tenantId") UUID tenantId,
+                                                  @Param("filialId") UUID filialId,
+                                                  @Param("desde") Instant desde,
+                                                  Pageable pageable);
 
     boolean existsByTenantIdAndCpfCnpj(UUID tenantId, String cpfCnpj);
 }

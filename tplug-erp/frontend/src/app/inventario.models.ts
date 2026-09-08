@@ -6,6 +6,7 @@ export interface InventarioSessao {
   filialId: string;
   descricao?: string | null;
   status: InventarioStatus;
+  contagemCega: boolean;
   criadoPorId?: string | null;
   criadoEm: string;
   concluidoPorId?: string | null;
@@ -26,15 +27,17 @@ export interface InventarioContagem {
   id: string;
   tipoItem: InventarioTipoItem;
   itemId: string;
-  quantidadeSistema: number;
+  quantidadeSistema: number | null;
   quantidadeContada: number;
-  divergencia: number;
+  divergencia: number | null;
   contadoPorId?: string | null;
   contadoEm: string;
   atualizadoEm: string;
 }
 
-export interface InventarioDivergencia extends InventarioContagem {
+export interface InventarioDivergencia extends Omit<InventarioContagem, 'quantidadeSistema' | 'divergencia'> {
+  quantidadeSistema: number;
+  divergencia: number;
   codigoItem: string;
   descricaoItem: string;
 }

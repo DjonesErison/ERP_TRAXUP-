@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -22,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,31 +62,39 @@ class PedidoVendaControllerConsultaTest {
         UUID tenantId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
+        PageRequest pageRequest = PageRequest.of(0, 20);
         when(tenantContext.tenantId()).thenReturn(tenantId);
-        when(consultaRecenteService.listar(tenantId, 20, filialId, clienteId, "FATURADO", null, null))
-                .thenReturn(List.of());
+        when(consultaRecenteService.listar(tenantId, 0, 20, filialId, clienteId, "FATURADO", null, null))
+                .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
 
-        controller.listarRecentes(20, filialId, clienteId, "FATURADO", null, null);
+        controller.listarRecentes(0, 20, filialId, clienteId, "FATURADO", null, null);
 
-        verify(consultaRecenteService).listar(tenantId, 20, filialId, clienteId, "FATURADO", null, null);
+        verify(consultaRecenteService).listar(tenantId, 0, 20, filialId, clienteId, "FATURADO", null, null);
         verifyNoInteractions(service, detalheConsultaService);
     }
 
     @Test
-    void deveConverterPeriodoIsoPelaCamadaHttpEEncaminharComTenantDoContexto() throws Exception {
+    void deveConverterPeriodoIsoEPaginacaoPelaCamadaHttp() throws Exception {
         UUID tenantId = UUID.randomUUID();
         Instant inicio = Instant.parse("2026-09-08T10:15:30Z");
         Instant fim = Instant.parse("2026-09-08T12:45:00Z");
+        PageRequest pageRequest = PageRequest.of(2, 15);
         when(tenantContext.tenantId()).thenReturn(tenantId);
-        when(consultaRecenteService.listar(tenantId, 20, null, null, null, inicio, fim))
-                .thenReturn(List.of());
+        when(consultaRecenteService.listar(tenantId, 2, 15, null, null, null, inicio, fim))
+                .thenReturn(new PageImpl<>(List.of(), pageRequest, 41));
 
         mockMvc.perform(get("/api/v1/vendas/pedidos/recentes")
+                        .param("pagina", "2")
+                        .param("tamanho", "15")
                         .param("inicio", "2026-09-08T10:15:30Z")
                         .param("fim", "2026-09-08T12:45:00Z"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pagina").value(2))
+                .andExpect(jsonPath("$.tamanho").value(15))
+                .andExpect(jsonPath("$.totalRegistros").value(41))
+                .andExpect(jsonPath("$.totalPaginas").value(3));
 
-        verify(consultaRecenteService).listar(tenantId, 20, null, null, null, inicio, fim);
+        verify(consultaRecenteService).listar(tenantId, 2, 15, null, null, null, inicio, fim);
         verifyNoInteractions(service, detalheConsultaService);
     }
 

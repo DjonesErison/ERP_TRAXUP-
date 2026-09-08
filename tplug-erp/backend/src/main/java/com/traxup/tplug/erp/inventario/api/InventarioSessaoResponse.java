@@ -12,12 +12,15 @@ public record InventarioSessaoResponse(
         String descricao,
         UUID criadoPorId,
         UUID concluidoPorId,
+        UUID ajustadoPorId,
         Instant criadoEm,
         Instant atualizadoEm,
-        Instant concluidoEm
+        Instant concluidoEm,
+        Instant ajustadoEm
 ) {
     public static InventarioSessaoResponse from(InventarioSessao i) {
         return new InventarioSessaoResponse(i.getId(), i.getFilialId(), i.getStatus(), i.getDescricao(),
-                i.getCriadoPorId(), i.getConcluidoPorId(), i.getCriadoEm(), i.getAtualizadoEm(), i.getConcluidoEm());
+                i.getCriadoPorId(), i.getConcluidoPorId(), i.getAjustadoPorId(), i.getCriadoEm(),
+                i.getAtualizadoEm(), i.getConcluidoEm(), i.getAjustadoEm());
     }
 }

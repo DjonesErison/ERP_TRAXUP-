@@ -33,14 +33,14 @@ class PedidoVendaConsultaRecenteFiltroServiceTest {
         Instant fim = Instant.parse("2026-09-07T23:59:59Z");
         PedidoVenda pedido = org.mockito.Mockito.mock(PedidoVenda.class);
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        when(repository.buscarRecentesFiltrados(eq(tenantId), eq(filialId), eq(clienteId), eq("FATURADO"), eq(inicio), eq(fim), any(Pageable.class)))
+        when(repository.buscarRecentesFiltradosPaginado(eq(tenantId), eq(filialId), eq(clienteId), eq("FATURADO"), eq(inicio), eq(fim), any(Pageable.class)))
                 .thenAnswer(inv -> new PageImpl<>(List.of(pedido), inv.getArgument(6), 1));
 
         var service = new PedidoVendaConsultaRecenteService(repository);
         var resultado = service.listar(tenantId, 2, 25, filialId, clienteId, " faturado ", inicio, fim);
 
         assertEquals(List.of(pedido), resultado.getContent());
-        verify(repository).buscarRecentesFiltrados(eq(tenantId), eq(filialId), eq(clienteId), eq("FATURADO"), eq(inicio), eq(fim), pageableCaptor.capture());
+        verify(repository).buscarRecentesFiltradosPaginado(eq(tenantId), eq(filialId), eq(clienteId), eq("FATURADO"), eq(inicio), eq(fim), pageableCaptor.capture());
         assertEquals(2, pageableCaptor.getValue().getPageNumber());
         assertEquals(25, pageableCaptor.getValue().getPageSize());
     }
@@ -48,13 +48,13 @@ class PedidoVendaConsultaRecenteFiltroServiceTest {
     @Test
     void devePermitirFiltrosAusentes() {
         UUID tenantId = UUID.randomUUID();
-        when(repository.buscarRecentesFiltrados(eq(tenantId), eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
+        when(repository.buscarRecentesFiltradosPaginado(eq(tenantId), eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
                 .thenAnswer(inv -> new PageImpl<>(List.of(), inv.getArgument(6), 0));
 
         var service = new PedidoVendaConsultaRecenteService(repository);
         service.listar(tenantId, 0, 20, null, null, " ", null, null);
 
-        verify(repository).buscarRecentesFiltrados(eq(tenantId), eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class));
+        verify(repository).buscarRecentesFiltradosPaginado(eq(tenantId), eq(null), eq(null), eq(null), eq(null), eq(null), any(Pageable.class));
     }
 
     @Test

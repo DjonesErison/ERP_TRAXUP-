@@ -3,6 +3,8 @@ package com.traxup.tplug.erp.inventario.api;
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.inventario.InventarioApplicationService;
 import com.traxup.tplug.erp.inventario.InventarioDivergenciaApplicationService;
+import com.traxup.tplug.erp.inventario.InventarioSessao;
+import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -54,8 +56,11 @@ public class InventarioController {
     public List<InventarioContagemResponse> listarContagens(
             @PathVariable UUID inventarioId,
             @RequestParam(required = false, defaultValue = "100") Integer limite) {
-        return service.listarContagens(tenantContext.tenantId(), inventarioId, limite)
-                .stream().map(InventarioContagemResponse::from).toList();
+        UUID tenantId = tenantContext.tenantId();
+        InventarioSessao sessao = service.buscar(tenantId, inventarioId);
+        boolean ocultar = sessao.deveOcultarSaldoDuranteContagem();
+        return service.listarContagens(tenantId, inventarioId, limite)
+                .stream().map(c -> InventarioContagemResponse.from(c, ocultar)).toList();
     }
 
     @GetMapping("/{inventarioId}/divergencias")
@@ -63,7 +68,12 @@ public class InventarioController {
     public List<InventarioDivergenciaResponse> listarDivergencias(
             @PathVariable UUID inventarioId,
             @RequestParam(required = false, defaultValue = "100") Integer limite) {
-        return divergenciaService.listar(tenantContext.tenantId(), inventarioId, limite)
+        UUID tenantId = tenantContext.tenantId();
+        InventarioSessao sessao = service.buscar(tenantId, inventarioId);
+        if (sessao.deveOcultarSaldoDuranteContagem()) {
+            throw new RegraNegocioException("Divergencias ficam ocultas enquanto a contagem cega estiver ABERTA");
+        }
+        return divergenciaService.listar(tenantId, inventarioId, limite)
                 .stream().map(item -> InventarioDivergenciaResponse.from(
                         item.contagem(), item.codigoItem(), item.descricaoItem())).toList();
     }
@@ -73,7 +83,8 @@ public class InventarioController {
     @PreAuthorize("hasAuthority('INVENTARIO_EDITAR')")
     public InventarioSessaoResponse criar(@Valid @RequestBody CriarInventarioRequest request) {
         return InventarioSessaoResponse.from(service.criar(
-                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), request.filialId(), request.descricao()));
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), request.filialId(), request.descricao(),
+                Boolean.TRUE.equals(request.contagemCega())));
     }
 
     @PostMapping("/{inventarioId}/contagens")
@@ -81,9 +92,12 @@ public class InventarioController {
     public InventarioContagemResponse registrarContagem(
             @PathVariable UUID inventarioId,
             @Valid @RequestBody RegistrarInventarioContagemRequest request) {
-        return InventarioContagemResponse.from(service.registrarContagem(
-                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), inventarioId,
-                request.tipoItem(), request.itemId(), request.quantidadeContada()));
+        UUID tenantId = tenantContext.tenantId();
+        var contagem = service.registrarContagem(
+                tenantId, tenantContext.usuarioIdOuNulo(), inventarioId,
+                request.tipoItem(), request.itemId(), request.quantidadeContada());
+        return InventarioContagemResponse.from(
+                contagem, service.buscar(tenantId, inventarioId).deveOcultarSaldoDuranteContagem());
     }
 
     @PostMapping("/{inventarioId}/concluir")

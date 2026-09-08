@@ -151,8 +151,8 @@ public class PedidoVendaApplicationService {
         for (PedidoVendaItem item : itens) {
             String tipoItem = item.getGradeId() == null ? "PRODUTO" : "GRADE";
             UUID itemEstoqueId = item.getGradeId() == null ? item.getProdutoId() : item.getGradeId();
-            estoqueMovimentacaoService.movimentar(tenantId, pedido.getFilialId(), tipoItem, itemEstoqueId,
-                    "SAIDA", item.getQuantidade(), "FATURAMENTO_PEDIDO_VENDA:" + pedido.getId(), usuarioId);
+            estoqueMovimentacaoService.movimentarSaidaVenda(tenantId, pedido.getFilialId(), tipoItem, itemEstoqueId,
+                    item.getQuantidade(), "FATURAMENTO_PEDIDO_VENDA:" + pedido.getId(), usuarioId);
         }
 
         if (pedido.getClienteId() != null) {

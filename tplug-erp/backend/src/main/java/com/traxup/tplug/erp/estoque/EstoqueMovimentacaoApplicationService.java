@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.estoque;
 
 import com.traxup.tplug.erp.filial.FilialRepository;
+import com.traxup.tplug.erp.produto.combo.ProdutoComboComponenteRepository;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +20,16 @@ public class EstoqueMovimentacaoApplicationService {
     private final EstoqueSaldoRepository saldoRepository;
     private final EstoqueMovimentacaoRepository movimentacaoRepository;
     private final FilialRepository filialRepository;
+    private final ProdutoComboComponenteRepository comboRepository;
 
     public EstoqueMovimentacaoApplicationService(EstoqueSaldoRepository saldoRepository,
                                                   EstoqueMovimentacaoRepository movimentacaoRepository,
-                                                  FilialRepository filialRepository) {
+                                                  FilialRepository filialRepository,
+                                                  ProdutoComboComponenteRepository comboRepository) {
         this.saldoRepository = saldoRepository;
         this.movimentacaoRepository = movimentacaoRepository;
         this.filialRepository = filialRepository;
+        this.comboRepository = comboRepository;
     }
 
     @Transactional
@@ -54,6 +58,32 @@ public class EstoqueMovimentacaoApplicationService {
         saldoRepository.save(saldo);
         return movimentacaoRepository.save(new EstoqueMovimentacao(
                 tenantId, filialId, item, itemId, movimento, quantidade, anterior, posterior, motivo, usuarioId));
+    }
+
+    @Transactional
+    public void movimentarSaidaVenda(UUID tenantId, UUID filialId, String tipoItem, UUID itemId,
+                                     BigDecimal quantidade, String motivo, UUID usuarioId) {
+        String item = tipoItem.toUpperCase();
+        if (!"PRODUTO".equals(item)) {
+            movimentar(tenantId, filialId, item, itemId, "SAIDA", quantidade, motivo, usuarioId);
+            return;
+        }
+
+        var componentes = comboRepository
+                .findAllByTenantIdAndComboProdutoIdOrderByComponenteProdutoIdAsc(tenantId, itemId);
+        if (componentes.isEmpty()) {
+            movimentar(tenantId, filialId, item, itemId, "SAIDA", quantidade, motivo, usuarioId);
+            return;
+        }
+
+        if (quantidade == null || quantidade.signum() <= 0) {
+            throw new IllegalArgumentException("Quantidade deve ser maior que zero");
+        }
+        for (var componente : componentes) {
+            BigDecimal quantidadeComponente = quantidade.multiply(componente.getQuantidade());
+            movimentar(tenantId, filialId, "PRODUTO", componente.getComponenteProdutoId(), "SAIDA",
+                    quantidadeComponente, motivo + ":COMBO:" + itemId, usuarioId);
+        }
     }
 
     @Transactional(readOnly = true)

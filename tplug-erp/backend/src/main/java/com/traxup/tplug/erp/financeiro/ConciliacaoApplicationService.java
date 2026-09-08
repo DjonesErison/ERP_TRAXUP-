@@ -24,6 +24,8 @@ public class ConciliacaoApplicationService {
     private static final Duration JANELA_SUGESTAO = Duration.ofDays(3);
     private static final int LIMITE_PADRAO_LISTAGEM = 100;
     private static final int LIMITE_MAXIMO_LISTAGEM = 500;
+    private static final int LIMITE_PADRAO_SUGESTOES = 20;
+    private static final int LIMITE_MAXIMO_SUGESTOES = 100;
     private static final Set<String> TIPOS = Set.of("ENTRADA", "SAIDA");
     private static final Set<String> NATUREZAS = Set.of("NORMAL", "TAXA", "ANTECIPACAO", "ESTORNO", "CHARGEBACK");
     private static final Set<String> STATUS = Set.of("PENDENTE", "CONCILIADO");
@@ -93,15 +95,22 @@ public class ConciliacaoApplicationService {
     }
 
     public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId) {
-        ConciliacaoLancamento lancamento = buscarLancamento(tenantId, lancamentoId);
-        if (!"PENDENTE".equals(lancamento.getStatus())) {
-            throw new RecursoConflitanteException("Somente lancamento PENDENTE pode receber sugestoes de conciliacao");
-        }
+        ConciliacaoLancamento lancamento = validarLancamentoParaSugestao(tenantId, lancamentoId);
         Instant inicio = lancamento.getOcorridoEm().minus(JANELA_SUGESTAO);
         Instant fim = lancamento.getOcorridoEm().plus(JANELA_SUGESTAO);
         return movimentoRepository.findCandidatosDisponiveis(
                 tenantId, lancamento.getContaFinanceiraId(), lancamento.getFilialId(), lancamento.getTipo(),
                 lancamento.getValor(), inicio, fim);
+    }
+
+    public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId, Integer limite) {
+        ConciliacaoLancamento lancamento = validarLancamentoParaSugestao(tenantId, lancamentoId);
+        int limiteValidado = validarLimiteSugestoes(limite);
+        Instant inicio = lancamento.getOcorridoEm().minus(JANELA_SUGESTAO);
+        Instant fim = lancamento.getOcorridoEm().plus(JANELA_SUGESTAO);
+        return movimentoRepository.findCandidatosDisponiveis(
+                tenantId, lancamento.getContaFinanceiraId(), lancamento.getFilialId(), lancamento.getTipo(),
+                lancamento.getValor(), inicio, fim, PageRequest.of(0, limiteValidado));
     }
 
     @Transactional
@@ -192,6 +201,14 @@ public class ConciliacaoApplicationService {
         return lancamento;
     }
 
+    private ConciliacaoLancamento validarLancamentoParaSugestao(UUID tenantId, UUID lancamentoId) {
+        ConciliacaoLancamento lancamento = buscarLancamento(tenantId, lancamentoId);
+        if (!"PENDENTE".equals(lancamento.getStatus())) {
+            throw new RecursoConflitanteException("Somente lancamento PENDENTE pode receber sugestoes de conciliacao");
+        }
+        return lancamento;
+    }
+
     private ConciliacaoLancamento buscarLancamento(UUID tenantId, UUID lancamentoId) {
         return repository.findByIdAndTenantId(lancamentoId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Lancamento de conciliacao nao encontrado para o tenant informado"));
@@ -223,6 +240,14 @@ public class ConciliacaoApplicationService {
         int valor = limite == null ? LIMITE_PADRAO_LISTAGEM : limite;
         if (valor < 1 || valor > LIMITE_MAXIMO_LISTAGEM) {
             throw new RegraNegocioException("Limite da conciliacao deve estar entre 1 e 500");
+        }
+        return valor;
+    }
+
+    private int validarLimiteSugestoes(Integer limite) {
+        int valor = limite == null ? LIMITE_PADRAO_SUGESTOES : limite;
+        if (valor < 1 || valor > LIMITE_MAXIMO_SUGESTOES) {
+            throw new RegraNegocioException("Limite de sugestoes deve estar entre 1 e 100");
         }
         return valor;
     }

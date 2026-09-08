@@ -54,11 +54,15 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 - `V48` — integridade tenant-safe das contas financeiras e movimentos de tesouraria, vinculando usuário ao tenant e movimento à conta da filial correta.
 - `V49` — integridade tenant-safe do usuário nos títulos de contas a receber e contas a pagar, preservando registros históricos sem usuário.
 - `V50` — integridade da conta financeira com a filial nos lançamentos de conciliação, inclusive enquanto pendentes.
+- `V51` — Produto Combo fixo, com componentes e quantidades tenant-scoped.
+- `V52` — grupos de escolha e opções configuráveis do Produto Combo.
+- `V53` — seleção de opções do Produto Combo nos itens do pedido de venda.
+- `V54` — snapshots de produto, quantidade e valor adicional das opções escolhidas para refletir corretamente preço e estoque da venda.
 
 ## Regras para novas migrations
 
-- Não editar migrations já aplicadas (`V1`–`V50`).
-- A próxima alteração de schema deve usar `V51`.
+- Não editar migrations já aplicadas (`V1`–`V54`).
+- A próxima alteração de schema deve usar `V55`.
 - Migrations devem executar do zero em banco limpo no CI.
 - Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema.
 - Toda constraint multi-tenant nova deve ser analisada também no nível do banco, não apenas na aplicação.

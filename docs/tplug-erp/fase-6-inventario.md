@@ -25,6 +25,27 @@ Cada contagem aceita `PRODUTO` ou `GRADE`, valida o item dentro do tenant e regi
 
 A sessão é bloqueada pessimisticamente durante contagens e transições de estado, serializando atualizações concorrentes do mesmo inventário. Existe somente uma contagem por sessão + tipo + item; uma nova leitura do mesmo item atualiza a contagem anterior.
 
+## Bloco 2 — Ajuste explícito e rastreável de estoque
+
+O ajuste de estoque foi separado da conclusão da contagem.
+
+- `POST /api/v1/inventarios/{inventarioId}/ajustar-estoque` exige `INVENTARIO_AJUSTAR`;
+- somente inventário `CONCLUIDO` pode ser ajustado;
+- o ajuste é idempotente por sessão e não pode ser reaplicado;
+- cada diferença real gera movimentação padrão de estoque `AJUSTE` com motivo `INVENTARIO:{inventarioId}`;
+- itens cujo saldo atual já coincide com a quantidade contada não geram movimentação sem efeito;
+- sessão registra usuário e instante do ajuste e mantém auditoria `AJUSTAR_ESTOQUE`.
+
+## Bloco 3 — Conferência de divergências
+
+Implementada consulta dedicada para a conferência operacional:
+
+- `GET /api/v1/inventarios/{inventarioId}/divergencias` — retorna somente contagens cuja divergência é diferente de zero;
+- aceita `limite` com padrão 100 e máximo 500;
+- valida a existência da sessão dentro do tenant antes da consulta;
+- reutiliza `INVENTARIO_LER` e o índice parcial de divergências já criado na V59;
+- não altera saldo, estado, auditoria ou movimentações.
+
 ## Segurança e auditoria
 
 - tenant vem exclusivamente do contexto autenticado;
@@ -32,18 +53,18 @@ A sessão é bloqueada pessimisticamente durante contagens e transições de est
 - produtos e grades são validados dentro do tenant;
 - `INVENTARIO_LER` protege consultas;
 - `INVENTARIO_EDITAR` protege criação, contagem, conclusão e cancelamento;
-- mutações geram auditoria `CRIAR`, `CONTAR`, `CONCLUIR` e `CANCELAR`;
+- `INVENTARIO_AJUSTAR` protege o ajuste de estoque;
+- mutações geram auditoria `CRIAR`, `CONTAR`, `CONCLUIR`, `CANCELAR` e `AJUSTAR_ESTOQUE`;
 - as FKs de sessão, filial e usuário incluem `tenant_id` onde aplicável.
 
-## Regra importante desta etapa
+## Regra operacional
 
-**Concluir um inventário não altera o saldo de estoque.** A contagem e a divergência ficam registradas para conferência. O ajuste físico/contábil do estoque será um bloco separado, com movimentação explícita e auditável, evitando que uma simples conclusão de contagem altere estoque automaticamente.
+**Concluir um inventário não altera o saldo de estoque.** A conclusão fecha a contagem para conferência. O estoque só é alterado por uma chamada explícita ao endpoint de ajuste, que registra movimentações auditáveis.
 
 ## Próximos blocos
 
-- consulta otimizada de divergências e conferência;
-- aplicação controlada de ajustes por inventário concluído;
 - leitura por código de barras na interface mobile usando os cadastros existentes;
+- enriquecimento da conferência com descrição/código do item, sem duplicar dados no inventário;
 - suporte operacional a contagem cega, somente se essa regra for formalmente adotada.
 
 A TRAXUP Central permanece separada e sem alteração de runtime.

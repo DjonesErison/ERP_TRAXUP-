@@ -50,19 +50,42 @@ public interface ConciliacaoLancamentoRepository extends JpaRepository<Conciliac
             FROM conciliacao_lancamentos
             WHERE tenant_id = :tenantId
               AND conta_financeira_id = :contaId
+            """, nativeQuery = true)
+    ConciliacaoResumoProjection resumir(@Param("tenantId") UUID tenantId,
+                                         @Param("contaId") UUID contaId);
+
+    @Query(value = """
+            SELECT
+                COUNT(*) AS "totalLancamentos",
+                COALESCE(SUM(valor), 0) AS "valorTotal",
+                COUNT(*) FILTER (WHERE status = 'PENDENTE') AS "pendentes",
+                COALESCE(SUM(valor) FILTER (WHERE status = 'PENDENTE'), 0) AS "valorPendente",
+                COUNT(*) FILTER (WHERE status = 'CONCILIADO') AS "conciliados",
+                COALESCE(SUM(valor) FILTER (WHERE status = 'CONCILIADO'), 0) AS "valorConciliado",
+                COUNT(*) FILTER (WHERE natureza = 'TAXA') AS "taxas",
+                COALESCE(SUM(valor) FILTER (WHERE natureza = 'TAXA'), 0) AS "valorTaxas",
+                COUNT(*) FILTER (WHERE natureza = 'ANTECIPACAO') AS "antecipacoes",
+                COALESCE(SUM(valor) FILTER (WHERE natureza = 'ANTECIPACAO'), 0) AS "valorAntecipacoes",
+                COUNT(*) FILTER (WHERE natureza = 'ESTORNO') AS "estornos",
+                COALESCE(SUM(valor) FILTER (WHERE natureza = 'ESTORNO'), 0) AS "valorEstornos",
+                COUNT(*) FILTER (WHERE natureza = 'CHARGEBACK') AS "chargebacks",
+                COALESCE(SUM(valor) FILTER (WHERE natureza = 'CHARGEBACK'), 0) AS "valorChargebacks"
+            FROM conciliacao_lancamentos
+            WHERE tenant_id = :tenantId
+              AND conta_financeira_id = :contaId
               AND (CAST(:origem AS varchar) IS NULL OR origem = :origem)
               AND (CAST(:natureza AS varchar) IS NULL OR natureza = :natureza)
               AND (CAST(:status AS varchar) IS NULL OR status = :status)
               AND (CAST(:inicio AS timestamptz) IS NULL OR ocorrido_em >= :inicio)
               AND (CAST(:fim AS timestamptz) IS NULL OR ocorrido_em <= :fim)
             """, nativeQuery = true)
-    ConciliacaoResumoProjection resumir(@Param("tenantId") UUID tenantId,
-                                         @Param("contaId") UUID contaId,
-                                         @Param("origem") String origem,
-                                         @Param("natureza") String natureza,
-                                         @Param("status") String status,
-                                         @Param("inicio") Instant inicio,
-                                         @Param("fim") Instant fim);
+    ConciliacaoResumoProjection resumirFiltrado(@Param("tenantId") UUID tenantId,
+                                                 @Param("contaId") UUID contaId,
+                                                 @Param("origem") String origem,
+                                                 @Param("natureza") String natureza,
+                                                 @Param("status") String status,
+                                                 @Param("inicio") Instant inicio,
+                                                 @Param("fim") Instant fim);
 
     Optional<ConciliacaoLancamento> findByIdAndTenantId(UUID id, UUID tenantId);
     Optional<ConciliacaoLancamento> findByTenantIdAndContaFinanceiraIdAndOrigemAndReferenciaExterna(

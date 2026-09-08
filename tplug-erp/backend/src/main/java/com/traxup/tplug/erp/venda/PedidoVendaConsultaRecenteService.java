@@ -23,7 +23,7 @@ public class PedidoVendaConsultaRecenteService {
     }
 
     public Page<PedidoVenda> listar(UUID tenantId, int pagina, int tamanho, UUID filialId, UUID clienteId, String numero,
-                                   String status, Instant inicio, Instant fim) {
+                                   UUID formaPagamentoId, String status, Instant inicio, Instant fim) {
         if (pagina < 0) {
             throw new IllegalArgumentException("Pagina de vendas recentes deve ser maior ou igual a zero");
         }
@@ -41,6 +41,7 @@ public class PedidoVendaConsultaRecenteService {
                 filialId,
                 clienteId,
                 numeroNormalizado,
+                formaPagamentoId,
                 statusNormalizado,
                 inicio,
                 fim,

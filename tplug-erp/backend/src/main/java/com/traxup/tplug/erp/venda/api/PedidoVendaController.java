@@ -40,14 +40,15 @@ public class PedidoVendaController {
 
     @GetMapping("/recentes")
     @PreAuthorize("hasAuthority('VENDA_PEDIDO_LER')")
-    public List<PedidoVendaResponse> listarRecentes(@RequestParam(defaultValue = "20") int limite,
-                                                    @RequestParam(required = false) UUID filialId,
-                                                    @RequestParam(required = false) UUID clienteId,
-                                                    @RequestParam(required = false) String status,
-                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
-                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
-        return consultaRecenteService.listar(tenantContext.tenantId(), limite, filialId, clienteId, status, inicio, fim)
-                .stream().map(PedidoVendaResponse::from).toList();
+    public PedidoVendaPaginaResponse listarRecentes(@RequestParam(defaultValue = "0") int pagina,
+                                                     @RequestParam(defaultValue = "20") int tamanho,
+                                                     @RequestParam(required = false) UUID filialId,
+                                                     @RequestParam(required = false) UUID clienteId,
+                                                     @RequestParam(required = false) String status,
+                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
+                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
+        return PedidoVendaPaginaResponse.from(
+                consultaRecenteService.listar(tenantContext.tenantId(), pagina, tamanho, filialId, clienteId, status, inicio, fim));
     }
 
     @GetMapping("/{pedidoId}")

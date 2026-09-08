@@ -1,8 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InventarioContagem, InventarioDivergencia, InventarioItemLeitura, InventarioSessao } from './inventario.models';
 import { InventarioService } from './inventario.service';
+
+type BarcodeDetectorLike = {
+  detect(source: CanvasImageSource): Promise<Array<{ rawValue?: string }>>;
+};
+
+type BarcodeDetectorConstructor = new () => BarcodeDetectorLike;
 
 @Component({
   selector: 'app-inventario-mobile',
@@ -55,6 +61,17 @@ import { InventarioService } from './inventario.service';
             </label>
             <button type="submit" [disabled]="!podeContar || !codigoBarras.trim() || loading">Localizar</button>
           </form>
+
+          <div class="camera-actions" *ngIf="podeContar">
+            <button type="button" class="secondary" *ngIf="cameraSuportada && !cameraAtiva" (click)="iniciarCamera()" [disabled]="loading">Usar câmera</button>
+            <button type="button" class="secondary" *ngIf="cameraAtiva" (click)="pararCamera()">Fechar câmera</button>
+            <small *ngIf="!cameraSuportada">Leitura por câmera indisponível neste navegador. Digite ou use um leitor físico.</small>
+          </div>
+
+          <div class="camera-box" *ngIf="cameraAtiva">
+            <video #cameraVideo autoplay playsinline muted></video>
+            <span>Aponte a câmera para o código de barras. A imagem é processada localmente no navegador.</span>
+          </div>
 
           <div class="item-card" *ngIf="itemLocalizado">
             <div>
@@ -109,10 +126,12 @@ import { InventarioService } from './inventario.service';
     </section>
   `,
   styles: [`
-    .inventory-shell{display:grid;gap:18px;margin-top:28px}.inventory-header,.scan-title,.table-title{display:flex;align-items:center;justify-content:space-between;gap:16px}.inventory-header h2{margin:4px 0 6px}.inventory-header p{margin:0;color:#64748b}.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#475569}.inventory-grid{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.4fr);gap:18px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.04)}.form-row,.scan-form{display:grid;gap:10px}.form-row input,.scan-form input,.item-card input{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:11px 12px;font:inherit}.session-list{display:grid;gap:8px;margin-top:14px;max-height:320px;overflow:auto}.session{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid #e2e8f0;background:#f8fafc;border-radius:12px;padding:12px}.session.selected{border-color:#0f172a;background:#f1f5f9}.session span,.item-card small,.scan-title small,.divergence small{color:#64748b}.scan-form{grid-template-columns:1fr auto;align-items:end}.scan-form label{display:grid;gap:6px}.item-card{margin-top:14px;border:1px solid #cbd5e1;border-radius:14px;padding:14px;display:grid;grid-template-columns:1fr minmax(130px,180px) auto;gap:14px;align-items:end}.item-card h4{margin:6px 0}.badge,.status{display:inline-flex;border-radius:999px;background:#e2e8f0;padding:4px 8px;font-size:12px;font-weight:700}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}button{border:0;border-radius:10px;background:#0f172a;color:#fff;padding:10px 14px;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.secondary{background:#e2e8f0;color:#0f172a}.warning{background:#b45309}.danger{background:#b91c1c}.alert,.success{border-radius:12px;padding:12px 14px}.alert{background:#fef2f2;color:#991b1b}.success{background:#f0fdf4;color:#166534}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0}.empty{color:#64748b;text-align:center}.positive{color:#166534;font-weight:700}.negative{color:#b91c1c;font-weight:700}.divergence-list{display:grid;gap:8px}.divergence{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #e2e8f0;border-radius:10px}.divergence div{display:flex;flex-direction:column;gap:3px}@media(max-width:820px){.inventory-grid{grid-template-columns:1fr}.inventory-header{align-items:flex-start;flex-direction:column}.scan-form{grid-template-columns:1fr}.item-card{grid-template-columns:1fr}.actions button{flex:1 1 140px}}
+    .inventory-shell{display:grid;gap:18px;margin-top:28px}.inventory-header,.scan-title,.table-title{display:flex;align-items:center;justify-content:space-between;gap:16px}.inventory-header h2{margin:4px 0 6px}.inventory-header p{margin:0;color:#64748b}.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#475569}.inventory-grid{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.4fr);gap:18px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.04)}.form-row,.scan-form{display:grid;gap:10px}.form-row input,.scan-form input,.item-card input{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:11px 12px;font:inherit}.session-list{display:grid;gap:8px;margin-top:14px;max-height:320px;overflow:auto}.session{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid #e2e8f0;background:#f8fafc;border-radius:12px;padding:12px}.session.selected{border-color:#0f172a;background:#f1f5f9}.session span,.item-card small,.scan-title small,.divergence small,.camera-actions small{color:#64748b}.scan-form{grid-template-columns:1fr auto;align-items:end}.scan-form label{display:grid;gap:6px}.camera-actions{display:flex;align-items:center;gap:10px;margin-top:10px}.camera-box{margin-top:10px;display:grid;gap:8px}.camera-box video{width:100%;max-height:300px;object-fit:cover;border-radius:14px;background:#0f172a}.camera-box span{font-size:12px;color:#64748b}.item-card{margin-top:14px;border:1px solid #cbd5e1;border-radius:14px;padding:14px;display:grid;grid-template-columns:1fr minmax(130px,180px) auto;gap:14px;align-items:end}.item-card h4{margin:6px 0}.badge,.status{display:inline-flex;border-radius:999px;background:#e2e8f0;padding:4px 8px;font-size:12px;font-weight:700}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}button{border:0;border-radius:10px;background:#0f172a;color:#fff;padding:10px 14px;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.secondary{background:#e2e8f0;color:#0f172a}.warning{background:#b45309}.danger{background:#b91c1c}.alert,.success{border-radius:12px;padding:12px 14px}.alert{background:#fef2f2;color:#991b1b}.success{background:#f0fdf4;color:#166534}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0}.empty{color:#64748b;text-align:center}.positive{color:#166534;font-weight:700}.negative{color:#b91c1c;font-weight:700}.divergence-list{display:grid;gap:8px}.divergence{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #e2e8f0;border-radius:10px}.divergence div{display:flex;flex-direction:column;gap:3px}@media(max-width:820px){.inventory-grid{grid-template-columns:1fr}.inventory-header{align-items:flex-start;flex-direction:column}.scan-form{grid-template-columns:1fr}.item-card{grid-template-columns:1fr}.actions button{flex:1 1 140px}.camera-actions{align-items:flex-start;flex-direction:column}}
   `]
 })
-export class InventarioMobileComponent implements OnInit {
+export class InventarioMobileComponent implements OnInit, OnDestroy {
+  @ViewChild('cameraVideo') cameraVideo?: ElementRef<HTMLVideoElement>;
+
   sessoes: InventarioSessao[] = [];
   sessaoSelecionada?: InventarioSessao;
   contagens: InventarioContagem[] = [];
@@ -125,10 +144,18 @@ export class InventarioMobileComponent implements OnInit {
   loading = false;
   erro = '';
   mensagem = '';
+  cameraAtiva = false;
+  readonly cameraSuportada = this.temSuporteCamera();
+
+  private cameraStream?: MediaStream;
+  private detector?: BarcodeDetectorLike;
+  private detectorTimer?: number;
 
   constructor(private readonly inventario: InventarioService) {}
 
   ngOnInit(): void { this.carregarSessoes(); }
+
+  ngOnDestroy(): void { this.pararCamera(); }
 
   get podeContar(): boolean {
     return !!this.sessaoSelecionada && this.sessaoSelecionada.status === 'ABERTO';
@@ -155,6 +182,7 @@ export class InventarioMobileComponent implements OnInit {
   }
 
   selecionar(sessao: InventarioSessao): void {
+    this.pararCamera();
     this.sessaoSelecionada = sessao;
     this.itemLocalizado = undefined;
     this.divergencias = [];
@@ -168,6 +196,43 @@ export class InventarioMobileComponent implements OnInit {
       this.quantidadeContada = 1;
       this.mensagem = '';
     });
+  }
+
+  async iniciarCamera(): Promise<void> {
+    if (!this.podeContar || !this.cameraSuportada || this.cameraAtiva) return;
+    this.erro = '';
+    try {
+      const Detector = this.barcodeDetectorConstructor();
+      if (!Detector) return;
+      this.detector = new Detector();
+      this.cameraStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' } }
+      });
+      this.cameraAtiva = true;
+      window.setTimeout(() => {
+        const video = this.cameraVideo?.nativeElement;
+        if (!video || !this.cameraStream) return;
+        video.srcObject = this.cameraStream;
+        void video.play().then(() => this.agendarDeteccao());
+      });
+    } catch {
+      this.pararCamera();
+      this.erro = 'Não foi possível acessar a câmera. Autorize o navegador ou continue com a leitura manual.';
+    }
+  }
+
+  pararCamera(): void {
+    if (this.detectorTimer !== undefined) {
+      window.clearTimeout(this.detectorTimer);
+      this.detectorTimer = undefined;
+    }
+    this.cameraStream?.getTracks().forEach(track => track.stop());
+    this.cameraStream = undefined;
+    this.detector = undefined;
+    this.cameraAtiva = false;
+    const video = this.cameraVideo?.nativeElement;
+    if (video) video.srcObject = null;
   }
 
   registrarContagem(): void {
@@ -196,9 +261,45 @@ export class InventarioMobileComponent implements OnInit {
     });
   }
 
-  concluir(): void { this.mudarEstado(() => this.inventario.concluir(this.sessaoSelecionada!.id), 'Inventário concluído para conferência.'); }
-  cancelar(): void { this.mudarEstado(() => this.inventario.cancelar(this.sessaoSelecionada!.id), 'Inventário cancelado.'); }
+  concluir(): void { this.pararCamera(); this.mudarEstado(() => this.inventario.concluir(this.sessaoSelecionada!.id), 'Inventário concluído para conferência.'); }
+  cancelar(): void { this.pararCamera(); this.mudarEstado(() => this.inventario.cancelar(this.sessaoSelecionada!.id), 'Inventário cancelado.'); }
   ajustarEstoque(): void { this.mudarEstado(() => this.inventario.ajustarEstoque(this.sessaoSelecionada!.id), 'Ajuste de estoque aplicado e auditado.'); }
+
+  private agendarDeteccao(): void {
+    if (!this.cameraAtiva || !this.detector) return;
+    this.detectorTimer = window.setTimeout(() => void this.detectarCodigo(), 300);
+  }
+
+  private async detectarCodigo(): Promise<void> {
+    const video = this.cameraVideo?.nativeElement;
+    if (!this.cameraAtiva || !this.detector || !video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      this.agendarDeteccao();
+      return;
+    }
+    try {
+      const codigos = await this.detector.detect(video);
+      const codigo = codigos.find(item => item.rawValue?.trim())?.rawValue?.trim();
+      if (codigo) {
+        this.codigoBarras = codigo;
+        this.pararCamera();
+        this.localizarItem();
+        return;
+      }
+    } catch {
+      // Falhas transitórias de detecção não encerram a câmera; a leitura manual continua disponível.
+    }
+    this.agendarDeteccao();
+  }
+
+  private temSuporteCamera(): boolean {
+    return typeof navigator !== 'undefined'
+      && !!navigator.mediaDevices?.getUserMedia
+      && !!this.barcodeDetectorConstructor();
+  }
+
+  private barcodeDetectorConstructor(): BarcodeDetectorConstructor | undefined {
+    return (globalThis as typeof globalThis & { BarcodeDetector?: BarcodeDetectorConstructor }).BarcodeDetector;
+  }
 
   private mudarEstado(acao: () => import('rxjs').Observable<InventarioSessao>, mensagem: string): void {
     if (!this.sessaoSelecionada) return;

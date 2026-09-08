@@ -72,9 +72,23 @@ O frontend operacional em `tplug-erp/frontend` passa a oferecer uma experiência
 - visualização de contagens e divergências enriquecidas;
 - conclusão e cancelamento da sessão conforme o estado;
 - ajuste de estoque exibido somente para sessão concluída ainda não ajustada;
-- layout responsivo para operação em celular, sem acoplamento a API específica de câmera ou fabricante de coletor.
+- layout responsivo para operação em celular, sem acoplamento a fabricante de coletor.
 
 O tenant continua vindo exclusivamente do JWT e do interceptor de autenticação existente. A interface não envia `tenantId` como escopo de negócio nem cria cabeçalhos paralelos.
+
+## Bloco 6 — Captura opcional por câmera
+
+A leitura por câmera foi adicionada como camada opcional sobre o mesmo fluxo de código de barras:
+
+- usa `navigator.mediaDevices.getUserMedia` apenas quando o navegador oferece suporte;
+- usa `BarcodeDetector` por detecção de capacidade, sem dependência obrigatória do recurso;
+- solicita preferencialmente a câmera traseira em dispositivos móveis;
+- ao detectar um código, encerra a câmera e reutiliza o endpoint tenant-safe de resolução já existente;
+- navegadores sem suporte continuam funcionando com digitação ou leitor físico;
+- a imagem da câmera é processada localmente no navegador e não é enviada ao backend;
+- tracks da câmera são encerradas ao fechar a captura, trocar a sessão, concluir/cancelar o inventário ou destruir o componente.
+
+Esse bloco não altera RBAC, regras de inventário, auditoria nem contratos do backend.
 
 ## Segurança e auditoria
 
@@ -93,7 +107,6 @@ O tenant continua vindo exclusivamente do JWT e do interceptor de autenticação
 
 ## Próximos blocos
 
-- suporte operacional a contagem cega, somente se essa regra for formalmente adotada;
-- evolução futura da captura por câmera/BarcodeDetector como camada opcional sobre o mesmo fluxo de API.
+- suporte operacional a contagem cega, somente se essa regra for formalmente adotada.
 
 A TRAXUP Central permanece separada e sem alteração de runtime.

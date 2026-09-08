@@ -16,14 +16,23 @@ Endpoints:
 - `POST /api/v1/inventarios/{inventarioId}/concluir` — conclui sessão com ao menos uma contagem;
 - `POST /api/v1/inventarios/{inventarioId}/cancelar` — cancela sessão aberta.
 
-Cada contagem aceita `PRODUTO` ou `GRADE`, valida o item dentro do tenant e registra:
+Cada contagem aceita `PRODUTO` ou `GRADE`, valida o item dentro do tenant e registra quantidade do sistema, quantidade física, divergência, usuário e instante da contagem. A sessão é bloqueada pessimisticamente durante contagens e transições de estado, serializando atualizações concorrentes.
 
-- quantidade atual do sistema no momento da contagem/recontagem;
-- quantidade física informada;
-- divergência = quantidade contada - quantidade do sistema;
-- usuário e instante da contagem.
+## Bloco 2 — Ajuste controlado de estoque
 
-A sessão é bloqueada pessimisticamente durante contagens e transições de estado, serializando atualizações concorrentes do mesmo inventário. Existe somente uma contagem por sessão + tipo + item; uma nova leitura do mesmo item atualiza a contagem anterior.
+Inventários concluídos podem aplicar o ajuste explicitamente por permissão própria. O ajuste é idempotente, registra rastreabilidade na sessão e também gera movimentações padrão de estoque do tipo `AJUSTE`, com referência `INVENTARIO:{id}`. Itens que já estiverem conciliados não geram movimentação sem efeito.
+
+## Bloco 3 — Leitura por código de barras
+
+A interface mobile pode resolver produtos e grades ativos pelo código de barras cadastrado:
+
+- `GET /api/v1/inventarios/itens/por-codigo-barras?codigo=...`;
+- protegido por `INVENTARIO_LER`;
+- consulta sempre restrita ao tenant autenticado;
+- retorna `tipoItem`, `itemId`, código, descrição e código de barras;
+- quando o mesmo código estiver cadastrado em produto e grade, a grade é priorizada por representar o item de estoque mais específico.
+
+Essa consulta não cria contagem nem altera estoque; ela somente resolve o item para que o fluxo mobile possa reutilizar o endpoint de contagem existente.
 
 ## Segurança e auditoria
 
@@ -32,18 +41,13 @@ A sessão é bloqueada pessimisticamente durante contagens e transições de est
 - produtos e grades são validados dentro do tenant;
 - `INVENTARIO_LER` protege consultas;
 - `INVENTARIO_EDITAR` protege criação, contagem, conclusão e cancelamento;
-- mutações geram auditoria `CRIAR`, `CONTAR`, `CONCLUIR` e `CANCELAR`;
-- as FKs de sessão, filial e usuário incluem `tenant_id` onde aplicável.
-
-## Regra importante desta etapa
-
-**Concluir um inventário não altera o saldo de estoque.** A contagem e a divergência ficam registradas para conferência. O ajuste físico/contábil do estoque será um bloco separado, com movimentação explícita e auditável, evitando que uma simples conclusão de contagem altere estoque automaticamente.
+- `INVENTARIO_AJUSTAR` protege aplicação de ajuste físico;
+- mutações permanecem auditáveis e FKs tenant-scoped preservam isolamento no banco.
 
 ## Próximos blocos
 
 - consulta otimizada de divergências e conferência;
-- aplicação controlada de ajustes por inventário concluído;
-- leitura por código de barras na interface mobile usando os cadastros existentes;
+- experiência Angular/mobile para leitura e contagem rápida;
 - suporte operacional a contagem cega, somente se essa regra for formalmente adotada.
 
 A TRAXUP Central permanece separada e sem alteração de runtime.

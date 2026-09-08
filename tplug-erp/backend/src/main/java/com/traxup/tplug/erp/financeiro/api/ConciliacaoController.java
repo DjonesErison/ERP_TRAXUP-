@@ -36,8 +36,9 @@ public class ConciliacaoController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
-        return service.listar(tenantContext.tenantId(), contaId, origem, natureza, status, tipo, inicio, fim).stream()
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim,
+            @RequestParam(required = false, defaultValue = "100") Integer limite) {
+        return service.listar(tenantContext.tenantId(), contaId, origem, natureza, status, tipo, inicio, fim, limite).stream()
                 .map(ConciliacaoLancamentoResponse::from).toList();
     }
 

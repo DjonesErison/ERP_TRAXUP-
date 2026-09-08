@@ -3,10 +3,9 @@ package com.traxup.tplug.erp.venda;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.Instant;
 import java.util.List;
@@ -67,17 +66,15 @@ class PedidoVendaConsultaRecenteValidacaoTest {
         UUID clienteId = UUID.randomUUID();
         Instant inicio = Instant.parse("2026-09-08T10:00:00Z");
         Instant fim = Instant.parse("2026-09-08T12:00:00Z");
-        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        PageRequest pagina = PageRequest.of(0, 37);
         when(repository.buscarRecentesFiltrados(
-                tenantId, filialId, clienteId, "FATURADO", inicio, fim, org.mockito.ArgumentMatchers.any(Pageable.class)))
+                tenantId, filialId, clienteId, "FATURADO", inicio, fim, pagina))
                 .thenReturn(List.of());
 
         var resultado = service.listar(tenantId, 37, filialId, clienteId, "  faturado  ", inicio, fim);
 
         assertEquals(List.of(), resultado);
         verify(repository).buscarRecentesFiltrados(
-                tenantId, filialId, clienteId, "FATURADO", inicio, fim, pageableCaptor.capture());
-        assertEquals(0, pageableCaptor.getValue().getPageNumber());
-        assertEquals(37, pageableCaptor.getValue().getPageSize());
+                tenantId, filialId, clienteId, "FATURADO", inicio, fim, pagina);
     }
 }

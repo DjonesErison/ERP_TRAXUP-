@@ -18,19 +18,35 @@ A resposta informa cliente, nome/razao social, nome fantasia, email, telefone, d
 
 Somente vendas `FATURADO` entram no calculo; rascunhos, vendas abertas e canceladas nao caracterizam visita concluida. Clientes inativos no cadastro ou que nao estejam marcados como cliente nao sao retornados.
 
+## Bloco 2 — Agenda de follow-up
+
+A agenda transforma a identificacao de clientes em uma acao operacional acompanhavel, sem disparar mensagens por canais externos.
+
+Endpoints:
+
+- `GET /api/v1/crm/followups` — lista follow-ups com filtros opcionais por filial, cliente e status; padrao `PENDENTE` e limite 100, maximo 500;
+- `GET /api/v1/crm/followups/{followUpId}` — consulta um follow-up do tenant;
+- `POST /api/v1/crm/followups` — cria follow-up para cliente ativo e filial do mesmo tenant;
+- `POST /api/v1/crm/followups/{followUpId}/concluir` — conclui follow-up pendente;
+- `POST /api/v1/crm/followups/{followUpId}/cancelar` — cancela follow-up pendente.
+
+Estados permitidos: `PENDENTE`, `CONCLUIDO` e `CANCELADO`. Conclusao e cancelamento usam bloqueio pessimista para serializar transicoes concorrentes. O registro guarda assunto, observacao opcional, data agendada e usuarios de criacao/finalizacao.
+
+A auditoria registra apenas identificadores e operacoes (`CRIAR`, `CONCLUIR`, `CANCELAR`); o texto livre da observacao nao e copiado para a trilha de auditoria.
+
 ## Seguranca
 
 - tenant vem exclusivamente do contexto autenticado;
-- filtro de filial e validado por `tenant + filial`;
-- acesso protegido por `CRM_CLIENTE_RETORNO_LER`;
-- a permissao e adicionada ao perfil `ADMIN` existente pela migration `V56`;
-- endpoint e somente leitura e nao gera auditoria de mutacao.
+- filial e cliente sao validados dentro do tenant;
+- leitura protegida por `CRM_CLIENTE_RETORNO_LER`;
+- mutacoes protegidas por `CRM_CLIENTE_RETORNO_EDITAR`;
+- as permissoes sao versionadas pelas migrations `V56` e `V57` e concedidas ao perfil `ADMIN` existente;
+- FKs da agenda incluem `tenant_id` para filial, cliente e usuarios.
 
 ## Proximos blocos
 
-- registrar contatos/campanhas de retorno sem armazenar conteudo sensivel desnecessario;
-- agenda de follow-up por cliente;
 - segmentacoes por frequencia, recencia e valor quando a base comercial exigir;
-- notificacoes/campanhas somente apos definir canal e consentimento LGPD aplicavel.
+- historico estruturado de interacoes sem armazenar conteudo sensivel desnecessario;
+- notificacoes/campanhas somente apos definir canal, consentimento e regras LGPD aplicaveis.
 
 A TRAXUP Central permanece separada e sem alteracao de runtime.

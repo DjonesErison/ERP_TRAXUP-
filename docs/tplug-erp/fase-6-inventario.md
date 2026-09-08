@@ -46,6 +46,19 @@ Implementada consulta dedicada para a conferência operacional:
 - reutiliza `INVENTARIO_LER` e o índice parcial de divergências já criado na V59;
 - não altera saldo, estado, auditoria ou movimentações.
 
+## Bloco 4 — Leitura por código de barras
+
+A interface mobile pode resolver produtos e grades ativos pelo código de barras cadastrado:
+
+- `GET /api/v1/inventarios/itens/por-codigo-barras?codigo=...`;
+- protegido por `INVENTARIO_LER`;
+- consulta sempre restrita ao tenant autenticado;
+- retorna `tipoItem`, `itemId`, código, descrição e código de barras;
+- grade é priorizada quando existe uma única grade ativa para o código, por representar o item de estoque mais específico;
+- duplicidades dentro de grades ou dentro de produtos são rejeitadas como ambíguas, evitando seleção arbitrária.
+
+Essa consulta não cria contagem nem altera estoque; ela somente resolve o item para que o fluxo mobile possa reutilizar o endpoint de contagem existente.
+
 ## Segurança e auditoria
 
 - tenant vem exclusivamente do contexto autenticado;
@@ -63,8 +76,8 @@ Implementada consulta dedicada para a conferência operacional:
 
 ## Próximos blocos
 
-- leitura por código de barras na interface mobile usando os cadastros existentes;
 - enriquecimento da conferência com descrição/código do item, sem duplicar dados no inventário;
+- experiência Angular/mobile para leitura e contagem rápida;
 - suporte operacional a contagem cega, somente se essa regra for formalmente adotada.
 
 A TRAXUP Central permanece separada e sem alteração de runtime.

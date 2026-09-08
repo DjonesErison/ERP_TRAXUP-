@@ -12,5 +12,7 @@ public interface GradeProdutoRepository extends JpaRepository<GradeProduto, UUID
 
     Optional<GradeProduto> findByIdAndTenantId(UUID id, UUID tenantId);
 
+    List<GradeProduto> findAllByTenantIdAndCodigoBarraAndAtivoTrue(UUID tenantId, String codigoBarra);
+
     boolean existsByTenantIdAndCodigoGradeIgnoreCase(UUID tenantId, String codigoGrade);
 }

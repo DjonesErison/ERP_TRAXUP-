@@ -14,11 +14,17 @@ import java.util.UUID;
 public class ProdutoComboVigenciaApplicationService {
     private final ProdutoComboVigenciaRepository repository;
     private final ProdutoRepository produtoRepository;
+    private final ProdutoComboComponenteRepository componenteRepository;
+    private final ProdutoComboGrupoRepository grupoRepository;
 
     public ProdutoComboVigenciaApplicationService(ProdutoComboVigenciaRepository repository,
-                                                   ProdutoRepository produtoRepository) {
+                                                   ProdutoRepository produtoRepository,
+                                                   ProdutoComboComponenteRepository componenteRepository,
+                                                   ProdutoComboGrupoRepository grupoRepository) {
         this.repository = repository;
         this.produtoRepository = produtoRepository;
+        this.componenteRepository = componenteRepository;
+        this.grupoRepository = grupoRepository;
     }
 
     public Optional<ProdutoComboVigencia> buscar(UUID tenantId, UUID comboProdutoId) {
@@ -36,6 +42,10 @@ public class ProdutoComboVigenciaApplicationService {
     public ProdutoComboVigencia configurar(UUID tenantId, UUID comboProdutoId,
                                            Instant vigenciaInicio, Instant vigenciaFim) {
         validarProduto(tenantId, comboProdutoId);
+        if (!componenteRepository.existsByTenantIdAndComboProdutoId(tenantId, comboProdutoId)
+                && !grupoRepository.existsByTenantIdAndComboProdutoId(tenantId, comboProdutoId)) {
+            throw new IllegalArgumentException("Vigencia so pode ser configurada para produto combo");
+        }
         ProdutoComboVigencia vigencia = repository.findByTenantIdAndComboProdutoId(tenantId, comboProdutoId)
                 .orElseGet(() -> new ProdutoComboVigencia(tenantId, comboProdutoId, vigenciaInicio, vigenciaFim));
         vigencia.definir(vigenciaInicio, vigenciaFim);

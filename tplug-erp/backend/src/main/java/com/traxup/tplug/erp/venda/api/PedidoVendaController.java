@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -48,8 +49,13 @@ public class PedidoVendaController {
                                                      @RequestParam(required = false) String status,
                                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant inicio,
                                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fim) {
-        return PedidoVendaPaginaResponse.from(
-                consultaRecenteService.listar(tenantContext.tenantId(), pagina, tamanho, filialId, clienteId, numero, status, inicio, fim));
+        UUID tenantId = tenantContext.tenantId();
+        var paginaPedidos = consultaRecenteService.listar(
+                tenantId, pagina, tamanho, filialId, clienteId, numero, status, inicio, fim);
+        var pedidoIds = paginaPedidos.getContent().stream().map(com.traxup.tplug.erp.venda.PedidoVenda::getId).toList();
+        var totais = pedidoIds.isEmpty() ? Map.<UUID, java.math.BigDecimal>of()
+                : detalheConsultaService.totalLiquidoPorPedidos(tenantId, pedidoIds);
+        return PedidoVendaPaginaResponse.from(paginaPedidos, totais);
     }
 
     @GetMapping("/por-numero/{numero}")

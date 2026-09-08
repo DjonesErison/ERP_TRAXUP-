@@ -21,9 +21,9 @@ public class ConciliacaoReferenciaApplicationService {
     }
 
     public ConciliacaoLancamento buscar(UUID tenantId, UUID contaId, String origem, String referenciaExterna) {
-        contaFinanceiraService.buscar(tenantId, contaId);
         String origemNormalizada = obrigatorio(origem, "Origem").toUpperCase(Locale.ROOT);
         String referenciaNormalizada = obrigatorio(referenciaExterna, "Referencia externa");
+        contaFinanceiraService.buscar(tenantId, contaId);
         return repository.findByTenantIdAndContaFinanceiraIdAndOrigemAndReferenciaExterna(
                         tenantId, contaId, origemNormalizada, referenciaNormalizada)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(

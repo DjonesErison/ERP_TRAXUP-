@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.financeiro;
 
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -37,6 +38,26 @@ public interface ConciliacaoLancamentoRepository extends JpaRepository<Conciliac
                                         @Param("tipo") String tipo,
                                         @Param("inicio") Instant inicio,
                                         @Param("fim") Instant fim);
+
+    @Query("SELECT lancamento FROM ConciliacaoLancamento lancamento " +
+            "WHERE lancamento.tenantId = :tenantId " +
+            "AND lancamento.contaFinanceiraId = :contaId " +
+            "AND (:origem IS NULL OR lancamento.origem = :origem) " +
+            "AND (:natureza IS NULL OR lancamento.natureza = :natureza) " +
+            "AND (:status IS NULL OR lancamento.status = :status) " +
+            "AND (:tipo IS NULL OR lancamento.tipo = :tipo) " +
+            "AND (:inicio IS NULL OR lancamento.ocorridoEm >= :inicio) " +
+            "AND (:fim IS NULL OR lancamento.ocorridoEm <= :fim) " +
+            "ORDER BY lancamento.ocorridoEm DESC, lancamento.id ASC")
+    List<ConciliacaoLancamento> filtrar(@Param("tenantId") UUID tenantId,
+                                        @Param("contaId") UUID contaId,
+                                        @Param("origem") String origem,
+                                        @Param("natureza") String natureza,
+                                        @Param("status") String status,
+                                        @Param("tipo") String tipo,
+                                        @Param("inicio") Instant inicio,
+                                        @Param("fim") Instant fim,
+                                        Pageable pageable);
 
     @Query(value = """
             SELECT

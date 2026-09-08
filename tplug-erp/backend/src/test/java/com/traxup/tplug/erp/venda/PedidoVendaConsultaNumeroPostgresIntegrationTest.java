@@ -33,7 +33,7 @@ class PedidoVendaConsultaNumeroPostgresIntegrationTest {
         inserirPedido(UUID.randomUUID(), b, "PV-123", instante.plusSeconds(2));
 
         var resultado = repository.buscarRecentesFiltradosPaginado(
-                a.tenantId(), null, null, "pv-123", null, null, null, PageRequest.of(0, 20));
+                a.tenantId(), null, null, "pv-123", null, null, null, null, PageRequest.of(0, 20));
 
         assertEquals(1, resultado.getTotalElements());
         assertEquals(esperado, resultado.getContent().getFirst().getId());

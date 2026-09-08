@@ -36,15 +36,20 @@ public class ConciliacaoApplicationService {
     }
 
     public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId) {
-        return listar(tenantId, contaId, null, null, null, null, null);
+        return listar(tenantId, contaId, null, null, null, null, null, null);
     }
 
     public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId, String origem, String natureza,
                                               String status, Instant inicio, Instant fim) {
+        return listar(tenantId, contaId, origem, natureza, status, null, inicio, fim);
+    }
+
+    public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId, String origem, String natureza,
+                                              String status, String tipo, Instant inicio, Instant fim) {
         contaFinanceiraService.buscar(tenantId, contaId);
         validarPeriodo(inicio, fim);
         return repository.filtrar(tenantId, contaId, opcionalUpper(origem), opcionalUpper(natureza),
-                opcionalUpper(status), inicio, fim);
+                opcionalUpper(status), opcionalUpper(tipo), inicio, fim);
     }
 
     public ConciliacaoResumoProjection resumir(UUID tenantId, UUID contaId) {
@@ -54,10 +59,15 @@ public class ConciliacaoApplicationService {
 
     public ConciliacaoResumoProjection resumir(UUID tenantId, UUID contaId, String origem, String natureza,
                                                 String status, Instant inicio, Instant fim) {
+        return resumir(tenantId, contaId, origem, natureza, status, null, inicio, fim);
+    }
+
+    public ConciliacaoResumoProjection resumir(UUID tenantId, UUID contaId, String origem, String natureza,
+                                                String status, String tipo, Instant inicio, Instant fim) {
         contaFinanceiraService.buscar(tenantId, contaId);
         validarPeriodo(inicio, fim);
         return repository.resumirFiltrado(tenantId, contaId, opcionalUpper(origem), opcionalUpper(natureza),
-                opcionalUpper(status), inicio, fim);
+                opcionalUpper(status), opcionalUpper(tipo), inicio, fim);
     }
 
     public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId) {

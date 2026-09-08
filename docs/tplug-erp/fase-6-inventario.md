@@ -44,6 +44,7 @@ Implementada consulta dedicada para a conferência operacional:
 - aceita `limite` com padrão 100 e máximo 500;
 - valida a existência da sessão dentro do tenant antes da consulta;
 - reutiliza `INVENTARIO_LER` e o índice parcial de divergências já criado na V59;
+- retorna também código e descrição atuais do produto/grade, resolvidos por `tenant + itemId`, sem duplicar dados cadastrais na tabela de inventário;
 - não altera saldo, estado, auditoria ou movimentações.
 
 ## Bloco 4 — Leitura por código de barras
@@ -76,7 +77,6 @@ Essa consulta não cria contagem nem altera estoque; ela somente resolve o item 
 
 ## Próximos blocos
 
-- enriquecimento da conferência com descrição/código do item, sem duplicar dados no inventário;
 - experiência Angular/mobile para leitura e contagem rápida;
 - suporte operacional a contagem cega, somente se essa regra for formalmente adotada.
 

@@ -2,6 +2,7 @@ package com.traxup.tplug.erp.inventario.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.inventario.InventarioApplicationService;
+import com.traxup.tplug.erp.inventario.InventarioDivergenciaApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,10 +22,14 @@ import java.util.UUID;
 @RequestMapping("/api/v1/inventarios")
 public class InventarioController {
     private final InventarioApplicationService service;
+    private final InventarioDivergenciaApplicationService divergenciaService;
     private final TenantContext tenantContext;
 
-    public InventarioController(InventarioApplicationService service, TenantContext tenantContext) {
+    public InventarioController(InventarioApplicationService service,
+                                InventarioDivergenciaApplicationService divergenciaService,
+                                TenantContext tenantContext) {
         this.service = service;
+        this.divergenciaService = divergenciaService;
         this.tenantContext = tenantContext;
     }
 
@@ -55,11 +60,12 @@ public class InventarioController {
 
     @GetMapping("/{inventarioId}/divergencias")
     @PreAuthorize("hasAuthority('INVENTARIO_LER')")
-    public List<InventarioContagemResponse> listarDivergencias(
+    public List<InventarioDivergenciaResponse> listarDivergencias(
             @PathVariable UUID inventarioId,
             @RequestParam(required = false, defaultValue = "100") Integer limite) {
-        return service.listarDivergencias(tenantContext.tenantId(), inventarioId, limite)
-                .stream().map(InventarioContagemResponse::from).toList();
+        return divergenciaService.listar(tenantContext.tenantId(), inventarioId, limite)
+                .stream().map(item -> InventarioDivergenciaResponse.from(
+                        item.contagem(), item.codigoItem(), item.descricaoItem())).toList();
     }
 
     @PostMapping

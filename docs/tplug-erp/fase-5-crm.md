@@ -8,15 +8,9 @@ Implementado endpoint de leitura para identificar clientes ativos que ja possuem
 
 `GET /api/v1/crm/clientes/inativos`
 
-Parametros:
+Parametros: `filialId` opcional; `diasInatividade` padrao 30 (1..3650); `limite` padrao 100 (1..500).
 
-- `filialId` opcional, sempre validada dentro do tenant autenticado;
-- `diasInatividade` opcional, padrao 30, permitido de 1 a 3650 dias;
-- `limite` opcional, padrao 100, permitido de 1 a 500 registros.
-
-A resposta informa cliente, nome/razao social, nome fantasia, email, telefone, data da ultima compra e quantidade de compras faturadas consideradas. A ordenacao prioriza quem esta ha mais tempo sem comprar.
-
-Somente vendas `FATURADO` entram no calculo; rascunhos, vendas abertas e canceladas nao caracterizam visita concluida. Clientes inativos no cadastro ou que nao estejam marcados como cliente nao sao retornados.
+A resposta informa cliente, contato, data da ultima compra e quantidade de compras faturadas. Somente vendas `FATURADO` entram no calculo.
 
 ## Bloco 2 — Agenda de follow-up
 
@@ -24,15 +18,27 @@ A agenda transforma a identificacao de clientes em uma acao operacional acompanh
 
 Endpoints:
 
-- `GET /api/v1/crm/followups` — lista follow-ups com filtros opcionais por filial, cliente e status; padrao `PENDENTE` e limite 100, maximo 500;
-- `GET /api/v1/crm/followups/{followUpId}` — consulta um follow-up do tenant;
-- `POST /api/v1/crm/followups` — cria follow-up para cliente ativo e filial do mesmo tenant;
-- `POST /api/v1/crm/followups/{followUpId}/concluir` — conclui follow-up pendente;
-- `POST /api/v1/crm/followups/{followUpId}/cancelar` — cancela follow-up pendente.
+- `GET /api/v1/crm/followups`;
+- `GET /api/v1/crm/followups/{followUpId}`;
+- `POST /api/v1/crm/followups`;
+- `POST /api/v1/crm/followups/{followUpId}/concluir`;
+- `POST /api/v1/crm/followups/{followUpId}/cancelar`.
 
-Estados permitidos: `PENDENTE`, `CONCLUIDO` e `CANCELADO`. Conclusao e cancelamento usam bloqueio pessimista para serializar transicoes concorrentes. O registro guarda assunto, observacao opcional, data agendada e usuarios de criacao/finalizacao.
+Estados: `PENDENTE`, `CONCLUIDO`, `CANCELADO`. Transicoes usam bloqueio pessimista e mutacoes sao auditadas sem copiar observacoes livres.
 
-A auditoria registra apenas identificadores e operacoes (`CRIAR`, `CONCLUIR`, `CANCELAR`); o texto livre da observacao nao e copiado para a trilha de auditoria.
+## Bloco 3 — Metricas RFV
+
+`GET /api/v1/crm/clientes/rfv`
+
+Entrega uma base objetiva para segmentacao comercial usando somente vendas `FATURADO`:
+
+- recencia: ultima compra e dias desde a ultima compra;
+- frequencia: quantidade de pedidos faturados distintos;
+- valor: soma liquida dos itens faturados e ticket medio.
+
+Filtros opcionais: `filialId`, `inicio`, `fim` e `limite` (padrao 100, maximo 500). Periodos invertidos sao rejeitados antes de consultar os repositorios e a filial, quando informada, deve pertencer ao tenant autenticado.
+
+A ordenacao prioriza maior valor comprado, depois compra mais recente. O endpoint reutiliza `CRM_CLIENTE_RETORNO_LER`, nao persiste classificacoes arbitrarias e nao cria migration nova.
 
 ## Seguranca
 
@@ -40,13 +46,13 @@ A auditoria registra apenas identificadores e operacoes (`CRIAR`, `CONCLUIR`, `C
 - filial e cliente sao validados dentro do tenant;
 - leitura protegida por `CRM_CLIENTE_RETORNO_LER`;
 - mutacoes protegidas por `CRM_CLIENTE_RETORNO_EDITAR`;
-- as permissoes sao versionadas pelas migrations `V56` e `V57` e concedidas ao perfil `ADMIN` existente;
+- permissoes versionadas pelas migrations `V56` e `V57`;
 - FKs da agenda incluem `tenant_id` para filial, cliente e usuarios.
 
 ## Proximos blocos
 
-- segmentacoes por frequencia, recencia e valor quando a base comercial exigir;
-- historico estruturado de interacoes sem armazenar conteudo sensivel desnecessario;
+- classificacao comercial configuravel sobre as metricas RFV, sem thresholds inventados no backend;
+- historico estruturado de interacoes;
 - notificacoes/campanhas somente apos definir canal, consentimento e regras LGPD aplicaveis.
 
 A TRAXUP Central permanece separada e sem alteracao de runtime.

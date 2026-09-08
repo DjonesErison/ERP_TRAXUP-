@@ -15,8 +15,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.Mockito.mock;
@@ -71,6 +73,29 @@ class PedidoVendaControllerConsultaTest {
 
         verify(consultaRecenteService).listar(tenantId, 0, 20, filialId, clienteId, "PV-123", "FATURADO", null, null);
         verifyNoInteractions(service, detalheConsultaService);
+    }
+
+    @Test
+    void deveRetornarTotalLiquidoComUmaAgregacaoPorPagina() throws Exception {
+        UUID tenantId = UUID.randomUUID();
+        UUID pedidoId = UUID.randomUUID();
+        PedidoVenda pedido = mock(PedidoVenda.class);
+        when(pedido.getId()).thenReturn(pedidoId);
+        when(pedido.getNumero()).thenReturn("PV-500");
+        when(pedido.getStatus()).thenReturn("FATURADO");
+        when(tenantContext.tenantId()).thenReturn(tenantId);
+        when(consultaRecenteService.listar(tenantId, 0, 20, null, null, null, null, null, null))
+                .thenReturn(new PageImpl<>(List.of(pedido), PageRequest.of(0, 20), 1));
+        when(detalheConsultaService.totalLiquidoPorPedidos(tenantId, List.of(pedidoId)))
+                .thenReturn(Map.of(pedidoId, new BigDecimal("42.5000")));
+
+        mockMvc.perform(get("/api/v1/vendas/pedidos/recentes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.conteudo[0].id").value(pedidoId.toString()))
+                .andExpect(jsonPath("$.conteudo[0].numero").value("PV-500"))
+                .andExpect(jsonPath("$.conteudo[0].totalLiquido").value(42.5));
+
+        verify(detalheConsultaService).totalLiquidoPorPedidos(tenantId, List.of(pedidoId));
     }
 
     @Test

@@ -11,6 +11,7 @@ CREATE TABLE produto_combo_grupos (
     CONSTRAINT ck_produto_combo_grupo_maximo CHECK (maximo_escolhas >= 1),
     CONSTRAINT ck_produto_combo_grupo_intervalo CHECK (minimo_escolhas <= maximo_escolhas),
     CONSTRAINT uk_produto_combo_grupo_nome UNIQUE (tenant_id, combo_produto_id, nome),
+    CONSTRAINT uk_produto_combo_grupos_id_tenant UNIQUE (id, tenant_id),
     CONSTRAINT fk_produto_combo_grupo_produto_tenant
         FOREIGN KEY (combo_produto_id, tenant_id) REFERENCES produtos(id, tenant_id)
 );
@@ -32,9 +33,6 @@ CREATE TABLE produto_combo_grupo_opcoes (
     CONSTRAINT fk_produto_combo_opcao_produto_tenant
         FOREIGN KEY (produto_id, tenant_id) REFERENCES produtos(id, tenant_id)
 );
-
-ALTER TABLE produto_combo_grupos
-    ADD CONSTRAINT uk_produto_combo_grupos_id_tenant UNIQUE (id, tenant_id);
 
 CREATE INDEX idx_produto_combo_grupos_tenant_combo
     ON produto_combo_grupos (tenant_id, combo_produto_id);

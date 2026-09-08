@@ -3,6 +3,7 @@ package com.traxup.tplug.erp.venda;
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.produto.Produto;
 import com.traxup.tplug.erp.produto.ProdutoRepository;
+import com.traxup.tplug.erp.produto.combo.ProdutoComboVigenciaApplicationService;
 import com.traxup.tplug.erp.produto.grade.GradeProduto;
 import com.traxup.tplug.erp.produto.grade.GradeProdutoRepository;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,17 +23,20 @@ public class PedidoVendaItemApplicationService {
     private final PedidoVendaItemRepository itemRepository;
     private final ProdutoRepository produtoRepository;
     private final GradeProdutoRepository gradeProdutoRepository;
+    private final ProdutoComboVigenciaApplicationService comboVigenciaService;
     private final AuditoriaApplicationService auditoria;
 
     public PedidoVendaItemApplicationService(PedidoVendaRepository pedidoRepository,
                                               PedidoVendaItemRepository itemRepository,
                                               ProdutoRepository produtoRepository,
                                               GradeProdutoRepository gradeProdutoRepository,
+                                              ProdutoComboVigenciaApplicationService comboVigenciaService,
                                               AuditoriaApplicationService auditoria) {
         this.pedidoRepository = pedidoRepository;
         this.itemRepository = itemRepository;
         this.produtoRepository = produtoRepository;
         this.gradeProdutoRepository = gradeProdutoRepository;
+        this.comboVigenciaService = comboVigenciaService;
         this.auditoria = auditoria;
     }
 
@@ -55,6 +60,9 @@ public class PedidoVendaItemApplicationService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Produto nao encontrado para o tenant informado"));
         if (!produto.isAtivo()) {
             throw new IllegalArgumentException("Produto informado esta inativo");
+        }
+        if (!comboVigenciaService.vigenteEm(tenantId, produtoId, Instant.now())) {
+            throw new IllegalArgumentException("Produto combo esta fora da vigencia para novas vendas");
         }
 
         if (gradeId != null) {

@@ -58,8 +58,10 @@ public class ConciliacaoController {
 
     @GetMapping("/lancamentos/{lancamentoId}/sugestoes")
     @PreAuthorize("hasAuthority('FINANCEIRO_CONCILIACAO_LER')")
-    public List<ContaFinanceiraMovimentoResponse> sugestoes(@PathVariable UUID lancamentoId) {
-        return service.sugerirMovimentos(tenantContext.tenantId(), lancamentoId).stream()
+    public List<ContaFinanceiraMovimentoResponse> sugestoes(
+            @PathVariable UUID lancamentoId,
+            @RequestParam(required = false, defaultValue = "20") Integer limite) {
+        return service.sugerirMovimentos(tenantContext.tenantId(), lancamentoId, limite).stream()
                 .map(ContaFinanceiraMovimentoResponse::from).toList();
     }
 

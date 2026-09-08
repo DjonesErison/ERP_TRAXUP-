@@ -59,13 +59,14 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 - `V53` — seleção de opções do Produto Combo nos itens do pedido de venda.
 - `V54` — snapshots de produto, quantidade e valor adicional das opções escolhidas para refletir corretamente preço e estoque da venda.
 - `V55` — vigência opcional do Produto Combo, com limites inclusivos, validação de intervalo e vínculo tenant-safe ao produto.
+- `V56` — índice de vendas faturadas para CRM de retorno e permissão RBAC de consulta de clientes inativos.
 
 ## Regras para novas migrations
 
-- Não editar migrations já aplicadas (`V1`–`V55`).
-- A próxima alteração de schema deve usar `V56`.
+- Não editar migrations já aplicadas (`V1`–`V56`).
+- A próxima migration deve usar `V57`.
 - Migrations devem executar do zero em banco limpo no CI.
-- Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema.
+- Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema e do catálogo RBAC versionado.
 - Toda constraint multi-tenant nova deve ser analisada também no nível do banco, não apenas na aplicação.
 - FKs que representam domínio tenant-scoped devem preferir chaves compostas que incluam `tenant_id` e, quando a regra exigir, `filial_id`.
 

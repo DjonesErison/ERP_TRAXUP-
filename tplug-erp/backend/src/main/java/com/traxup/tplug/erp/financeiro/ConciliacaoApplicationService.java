@@ -95,14 +95,16 @@ public class ConciliacaoApplicationService {
     }
 
     public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId) {
-        return sugerirMovimentos(tenantId, lancamentoId, LIMITE_PADRAO_SUGESTOES);
+        ConciliacaoLancamento lancamento = validarLancamentoParaSugestao(tenantId, lancamentoId);
+        Instant inicio = lancamento.getOcorridoEm().minus(JANELA_SUGESTAO);
+        Instant fim = lancamento.getOcorridoEm().plus(JANELA_SUGESTAO);
+        return movimentoRepository.findCandidatosDisponiveis(
+                tenantId, lancamento.getContaFinanceiraId(), lancamento.getFilialId(), lancamento.getTipo(),
+                lancamento.getValor(), inicio, fim);
     }
 
     public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId, Integer limite) {
-        ConciliacaoLancamento lancamento = buscarLancamento(tenantId, lancamentoId);
-        if (!"PENDENTE".equals(lancamento.getStatus())) {
-            throw new RecursoConflitanteException("Somente lancamento PENDENTE pode receber sugestoes de conciliacao");
-        }
+        ConciliacaoLancamento lancamento = validarLancamentoParaSugestao(tenantId, lancamentoId);
         int limiteValidado = validarLimiteSugestoes(limite);
         Instant inicio = lancamento.getOcorridoEm().minus(JANELA_SUGESTAO);
         Instant fim = lancamento.getOcorridoEm().plus(JANELA_SUGESTAO);
@@ -196,6 +198,14 @@ public class ConciliacaoApplicationService {
         repository.save(lancamento);
         auditoria.registrar(tenantId, usuarioId, null, lancamento.getFilialId(),
                 "CONCILIAR", "CONCILIACAO_FINANCEIRA", lancamento.getId(), "movimentoId=" + movimentoId);
+        return lancamento;
+    }
+
+    private ConciliacaoLancamento validarLancamentoParaSugestao(UUID tenantId, UUID lancamentoId) {
+        ConciliacaoLancamento lancamento = buscarLancamento(tenantId, lancamentoId);
+        if (!"PENDENTE".equals(lancamento.getStatus())) {
+            throw new RecursoConflitanteException("Somente lancamento PENDENTE pode receber sugestoes de conciliacao");
+        }
         return lancamento;
     }
 

@@ -48,7 +48,7 @@ public class PedidoVendaItemApplicationService {
     @Transactional
     public PedidoVendaItem adicionar(UUID tenantId, UUID usuarioId, UUID pedidoId, UUID produtoId, UUID gradeId,
                                      BigDecimal quantidade, BigDecimal precoUnitario) {
-        PedidoVenda pedido = buscarPedido(tenantId, pedidoId, true);
+        PedidoVenda pedido = buscarPedidoParaMutacao(tenantId, pedidoId);
         if (quantidade == null || quantidade.signum() <= 0) {
             throw new IllegalArgumentException("Quantidade deve ser maior que zero");
         }
@@ -87,7 +87,7 @@ public class PedidoVendaItemApplicationService {
 
     @Transactional
     public PedidoVendaItem aplicarDesconto(UUID tenantId, UUID usuarioId, UUID pedidoId, UUID itemId, BigDecimal descontoValor) {
-        PedidoVenda pedido = buscarPedido(tenantId, pedidoId, true);
+        PedidoVenda pedido = buscarPedidoParaMutacao(tenantId, pedidoId);
         PedidoVendaItem item = itemRepository.findByIdAndTenantIdAndPedidoVendaId(itemId, tenantId, pedidoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Item do pedido de venda nao encontrado para o tenant informado"));
         item.aplicarDesconto(descontoValor);
@@ -101,9 +101,20 @@ public class PedidoVendaItemApplicationService {
     private PedidoVenda buscarPedido(UUID tenantId, UUID pedidoId, boolean exigirRascunho) {
         PedidoVenda pedido = pedidoRepository.findByIdAndTenantId(pedidoId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido de venda nao encontrado para o tenant informado"));
+        validarRascunhoSeNecessario(pedido, exigirRascunho);
+        return pedido;
+    }
+
+    private PedidoVenda buscarPedidoParaMutacao(UUID tenantId, UUID pedidoId) {
+        PedidoVenda pedido = pedidoRepository.buscarParaAtualizar(pedidoId, tenantId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido de venda nao encontrado para o tenant informado"));
+        validarRascunhoSeNecessario(pedido, true);
+        return pedido;
+    }
+
+    private void validarRascunhoSeNecessario(PedidoVenda pedido, boolean exigirRascunho) {
         if (exigirRascunho && !"RASCUNHO".equals(pedido.getStatus())) {
             throw new IllegalArgumentException("Itens so podem ser alterados enquanto o pedido estiver em RASCUNHO");
         }
-        return pedido;
     }
 }

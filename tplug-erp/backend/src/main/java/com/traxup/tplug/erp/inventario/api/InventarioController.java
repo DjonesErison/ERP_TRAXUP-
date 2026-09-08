@@ -78,6 +78,13 @@ public class InventarioController {
                 tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), inventarioId));
     }
 
+    @PostMapping("/{inventarioId}/ajustar-estoque")
+    @PreAuthorize("hasAuthority('INVENTARIO_AJUSTAR')")
+    public InventarioSessaoResponse ajustarEstoque(@PathVariable UUID inventarioId) {
+        return InventarioSessaoResponse.from(service.ajustarEstoque(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), inventarioId));
+    }
+
     @PostMapping("/{inventarioId}/cancelar")
     @PreAuthorize("hasAuthority('INVENTARIO_EDITAR')")
     public InventarioSessaoResponse cancelar(@PathVariable UUID inventarioId) {

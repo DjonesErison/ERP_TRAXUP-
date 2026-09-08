@@ -40,6 +40,7 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
             where p.tenantId = :tenantId
               and (:filialId is null or p.filialId = :filialId)
               and (:clienteId is null or p.clienteId = :clienteId)
+              and (:numero is null or lower(p.numero) = lower(:numero))
               and (:status is null or p.status = :status)
               and (cast(:inicio as instant) is null or p.criadoEm >= :inicio)
               and (cast(:fim as instant) is null or p.criadoEm <= :fim)
@@ -50,6 +51,7 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
             where p.tenantId = :tenantId
               and (:filialId is null or p.filialId = :filialId)
               and (:clienteId is null or p.clienteId = :clienteId)
+              and (:numero is null or lower(p.numero) = lower(:numero))
               and (:status is null or p.status = :status)
               and (cast(:inicio as instant) is null or p.criadoEm >= :inicio)
               and (cast(:fim as instant) is null or p.criadoEm <= :fim)
@@ -57,6 +59,7 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
     Page<PedidoVenda> buscarRecentesFiltradosPaginado(@Param("tenantId") UUID tenantId,
                                                        @Param("filialId") UUID filialId,
                                                        @Param("clienteId") UUID clienteId,
+                                                       @Param("numero") String numero,
                                                        @Param("status") String status,
                                                        @Param("inicio") Instant inicio,
                                                        @Param("fim") Instant fim,

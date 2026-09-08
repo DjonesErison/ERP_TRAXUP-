@@ -9,11 +9,11 @@ import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -41,7 +41,7 @@ public class PedidoVendaItemComboSelecaoService {
     }
 
     public List<PedidoVendaItemComboOpcao> listar(UUID tenantId, UUID pedidoId, UUID itemId) {
-        buscarItem(tenantId, pedidoId, itemId, false);
+        buscarItem(tenantId, pedidoId, itemId);
         return selecaoRepository.findAllByTenantIdAndPedidoVendaItemIdOrderByGrupoIdAscOpcaoIdAsc(tenantId, itemId);
     }
 
@@ -49,7 +49,7 @@ public class PedidoVendaItemComboSelecaoService {
     public List<PedidoVendaItemComboOpcao> configurar(UUID tenantId, UUID usuarioId, UUID pedidoId, UUID itemId,
                                                        List<UUID> opcaoIds) {
         PedidoVenda pedido = buscarPedido(tenantId, pedidoId, true);
-        PedidoVendaItem item = buscarItem(tenantId, pedidoId, itemId, false);
+        PedidoVendaItem item = buscarItem(tenantId, pedidoId, itemId);
         List<ProdutoComboGrupo> grupos = grupoRepository
                 .findAllByTenantIdAndComboProdutoIdOrderByNomeAsc(tenantId, item.getProdutoId());
 
@@ -63,6 +63,7 @@ public class PedidoVendaItemComboSelecaoService {
 
         Map<UUID, Integer> quantidadePorGrupo = new HashMap<>();
         Map<UUID, ProdutoComboGrupoOpcao> opcaoPorId = new HashMap<>();
+        BigDecimal adicionalUnitario = BigDecimal.ZERO;
         for (UUID opcaoId : ids) {
             ProdutoComboGrupoOpcao opcao = opcaoRepository.findByIdAndTenantId(opcaoId, tenantId)
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Opcao do combo nao encontrada para o tenant informado"));
@@ -71,6 +72,7 @@ public class PedidoVendaItemComboSelecaoService {
             }
             opcaoPorId.put(opcaoId, opcao);
             quantidadePorGrupo.merge(opcao.getGrupoId(), 1, Integer::sum);
+            adicionalUnitario = adicionalUnitario.add(opcao.getValorAdicional());
         }
 
         for (ProdutoComboGrupo grupo : grupos) {
@@ -84,12 +86,16 @@ public class PedidoVendaItemComboSelecaoService {
         selecaoRepository.flush();
         for (UUID opcaoId : ids) {
             ProdutoComboGrupoOpcao opcao = opcaoPorId.get(opcaoId);
-            selecaoRepository.save(new PedidoVendaItemComboOpcao(tenantId, itemId, opcao.getGrupoId(), opcaoId));
+            selecaoRepository.save(new PedidoVendaItemComboOpcao(
+                    tenantId, itemId, opcao.getGrupoId(), opcaoId,
+                    opcao.getProdutoId(), opcao.getQuantidade(), opcao.getValorAdicional()));
         }
+        item.definirAdicionalComboUnitario(adicionalUnitario);
+        itemRepository.save(item);
 
         auditoria.registrar(tenantId, usuarioId, null, pedido.getFilialId(),
                 "ALTERAR", "PEDIDO_VENDA_ITEM_COMBO", itemId,
-                "pedidoId=" + pedidoId + ";opcoes=" + ids.size());
+                "pedidoId=" + pedidoId + ";opcoes=" + ids.size() + ";adicionalUnitario=" + adicionalUnitario);
         return listar(tenantId, pedidoId, itemId);
     }
 
@@ -102,7 +108,7 @@ public class PedidoVendaItemComboSelecaoService {
         return pedido;
     }
 
-    private PedidoVendaItem buscarItem(UUID tenantId, UUID pedidoId, UUID itemId, boolean ignorado) {
+    private PedidoVendaItem buscarItem(UUID tenantId, UUID pedidoId, UUID itemId) {
         return itemRepository.findByIdAndTenantIdAndPedidoVendaId(itemId, tenantId, pedidoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Item do pedido de venda nao encontrado para o tenant informado"));
     }

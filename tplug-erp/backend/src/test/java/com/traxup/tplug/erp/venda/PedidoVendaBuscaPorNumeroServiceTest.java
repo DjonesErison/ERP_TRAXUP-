@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 class PedidoVendaBuscaPorNumeroServiceTest {
     @Mock PedidoVendaRepository repository;
     @Mock PedidoVendaItemRepository itemRepository;
+    @Mock PedidoVendaItemComboOpcaoRepository itemComboOpcaoRepository;
     @Mock FilialRepository filialRepository;
     @Mock PessoaRepository pessoaRepository;
     @Mock EstoqueMovimentacaoApplicationService estoqueMovimentacaoService;
@@ -41,7 +42,7 @@ class PedidoVendaBuscaPorNumeroServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new PedidoVendaApplicationService(repository, itemRepository, filialRepository,
+        service = new PedidoVendaApplicationService(repository, itemRepository, itemComboOpcaoRepository, filialRepository,
                 pessoaRepository, estoqueMovimentacaoService, contaReceberService,
                 formaPagamentoRepository, condicaoPagamentoRepository, parcelaRepository, auditoria);
     }

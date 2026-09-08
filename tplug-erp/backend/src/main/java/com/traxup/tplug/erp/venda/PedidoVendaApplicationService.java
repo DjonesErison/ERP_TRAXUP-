@@ -30,6 +30,7 @@ public class PedidoVendaApplicationService {
 
     private final PedidoVendaRepository repository;
     private final PedidoVendaItemRepository itemRepository;
+    private final PedidoVendaItemComboOpcaoRepository comboOpcaoRepository;
     private final FilialRepository filialRepository;
     private final PessoaRepository pessoaRepository;
     private final EstoqueMovimentacaoApplicationService estoqueMovimentacaoService;
@@ -40,6 +41,7 @@ public class PedidoVendaApplicationService {
     private final AuditoriaApplicationService auditoria;
 
     public PedidoVendaApplicationService(PedidoVendaRepository repository, PedidoVendaItemRepository itemRepository,
+                                         PedidoVendaItemComboOpcaoRepository comboOpcaoRepository,
                                          FilialRepository filialRepository, PessoaRepository pessoaRepository,
                                          EstoqueMovimentacaoApplicationService estoqueMovimentacaoService,
                                          ContaReceberApplicationService contaReceberService,
@@ -49,6 +51,7 @@ public class PedidoVendaApplicationService {
                                          AuditoriaApplicationService auditoria) {
         this.repository = repository;
         this.itemRepository = itemRepository;
+        this.comboOpcaoRepository = comboOpcaoRepository;
         this.filialRepository = filialRepository;
         this.pessoaRepository = pessoaRepository;
         this.estoqueMovimentacaoService = estoqueMovimentacaoService;
@@ -153,6 +156,15 @@ public class PedidoVendaApplicationService {
             UUID itemEstoqueId = item.getGradeId() == null ? item.getProdutoId() : item.getGradeId();
             estoqueMovimentacaoService.movimentarSaidaVenda(tenantId, pedido.getFilialId(), tipoItem, itemEstoqueId,
                     item.getQuantidade(), "FATURAMENTO_PEDIDO_VENDA:" + pedido.getId(), usuarioId);
+
+            List<PedidoVendaItemComboOpcao> opcoes = comboOpcaoRepository
+                    .findAllByTenantIdAndPedidoVendaItemIdOrderByGrupoIdAscOpcaoIdAsc(tenantId, item.getId());
+            for (PedidoVendaItemComboOpcao opcao : opcoes) {
+                BigDecimal quantidadeOpcao = item.getQuantidade().multiply(opcao.getQuantidade());
+                estoqueMovimentacaoService.movimentarSaidaVenda(
+                        tenantId, pedido.getFilialId(), "PRODUTO", opcao.getProdutoId(), quantidadeOpcao,
+                        "FATURAMENTO_PEDIDO_VENDA:" + pedido.getId() + ":COMBO_OPCAO:" + opcao.getOpcaoId(), usuarioId);
+            }
         }
 
         if (pedido.getClienteId() != null) {

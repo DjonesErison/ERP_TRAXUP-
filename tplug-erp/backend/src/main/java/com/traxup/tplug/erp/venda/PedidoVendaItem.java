@@ -36,6 +36,9 @@ public class PedidoVendaItem {
     @Column(name = "preco_unitario", nullable = false, precision = 19, scale = 4)
     private BigDecimal precoUnitario;
 
+    @Column(name = "adicional_combo_unitario", nullable = false, precision = 19, scale = 4)
+    private BigDecimal adicionalComboUnitario;
+
     @Column(name = "desconto_valor", nullable = false, precision = 19, scale = 4)
     private BigDecimal descontoValor;
 
@@ -59,12 +62,13 @@ public class PedidoVendaItem {
         this.gradeId = gradeId;
         this.quantidade = quantidade;
         this.precoUnitario = precoUnitario;
+        this.adicionalComboUnitario = BigDecimal.ZERO;
         this.descontoValor = BigDecimal.ZERO;
         recalcularTotal();
     }
 
     public void aplicarDesconto(BigDecimal descontoValor) {
-        BigDecimal bruto = quantidade.multiply(precoUnitario);
+        BigDecimal bruto = quantidade.multiply(precoUnitario.add(adicionalComboUnitario));
         if (descontoValor == null || descontoValor.signum() < 0) {
             throw new IllegalArgumentException("Desconto nao pode ser negativo");
         }
@@ -75,10 +79,19 @@ public class PedidoVendaItem {
         recalcularTotal();
     }
 
+    public void definirAdicionalComboUnitario(BigDecimal adicionalComboUnitario) {
+        if (adicionalComboUnitario == null || adicionalComboUnitario.signum() < 0) {
+            throw new IllegalArgumentException("Adicional do combo nao pode ser negativo");
+        }
+        this.adicionalComboUnitario = adicionalComboUnitario;
+        recalcularTotal();
+    }
+
     @PrePersist
     void prePersist() {
         Instant agora = Instant.now();
         if (id == null) id = UUID.randomUUID();
+        if (adicionalComboUnitario == null) adicionalComboUnitario = BigDecimal.ZERO;
         if (descontoValor == null) descontoValor = BigDecimal.ZERO;
         recalcularTotal();
         criadoEm = agora;
@@ -87,14 +100,16 @@ public class PedidoVendaItem {
 
     @PreUpdate
     void preUpdate() {
+        if (adicionalComboUnitario == null) adicionalComboUnitario = BigDecimal.ZERO;
         if (descontoValor == null) descontoValor = BigDecimal.ZERO;
         recalcularTotal();
         atualizadoEm = Instant.now();
     }
 
     private void recalcularTotal() {
+        BigDecimal adicional = adicionalComboUnitario == null ? BigDecimal.ZERO : adicionalComboUnitario;
         BigDecimal desconto = descontoValor == null ? BigDecimal.ZERO : descontoValor;
-        totalItem = quantidade.multiply(precoUnitario).subtract(desconto);
+        totalItem = quantidade.multiply(precoUnitario.add(adicional)).subtract(desconto);
     }
 
     public UUID getId() { return id; }
@@ -104,6 +119,7 @@ public class PedidoVendaItem {
     public UUID getGradeId() { return gradeId; }
     public BigDecimal getQuantidade() { return quantidade; }
     public BigDecimal getPrecoUnitario() { return precoUnitario; }
+    public BigDecimal getAdicionalComboUnitario() { return adicionalComboUnitario; }
     public BigDecimal getDescontoValor() { return descontoValor; }
     public BigDecimal getTotalItem() { return totalItem; }
     public Instant getCriadoEm() { return criadoEm; }

@@ -81,10 +81,17 @@ public class InventarioApplicationService {
 
     @Transactional
     public InventarioSessao criar(UUID tenantId, UUID usuarioId, UUID filialId, String descricao) {
+        return criar(tenantId, usuarioId, filialId, descricao, false);
+    }
+
+    @Transactional
+    public InventarioSessao criar(UUID tenantId, UUID usuarioId, UUID filialId, String descricao, boolean contagemCega) {
         validarFilial(tenantId, filialId, true);
         String descricaoNormalizada = normalizarDescricao(descricao);
-        InventarioSessao sessao = sessaoRepository.save(new InventarioSessao(tenantId, filialId, descricaoNormalizada, usuarioId));
-        auditoria.registrar(tenantId, usuarioId, null, filialId, "CRIAR", "INVENTARIO_SESSAO", sessao.getId(), null);
+        InventarioSessao sessao = sessaoRepository.save(
+                new InventarioSessao(tenantId, filialId, descricaoNormalizada, usuarioId, contagemCega));
+        auditoria.registrar(tenantId, usuarioId, null, filialId, "CRIAR", "INVENTARIO_SESSAO", sessao.getId(),
+                "contagemCega=" + contagemCega);
         return sessao;
     }
 

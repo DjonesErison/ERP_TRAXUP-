@@ -16,97 +16,61 @@ Endpoints:
 - `POST /api/v1/inventarios/{inventarioId}/concluir` — conclui sessão com ao menos uma contagem;
 - `POST /api/v1/inventarios/{inventarioId}/cancelar` — cancela sessão aberta.
 
-Cada contagem aceita `PRODUTO` ou `GRADE`, valida o item dentro do tenant e registra:
-
-- quantidade atual do sistema no momento da contagem/recontagem;
-- quantidade física informada;
-- divergência = quantidade contada - quantidade do sistema;
-- usuário e instante da contagem.
-
-A sessão é bloqueada pessimisticamente durante contagens e transições de estado, serializando atualizações concorrentes do mesmo inventário. Existe somente uma contagem por sessão + tipo + item; uma nova leitura do mesmo item atualiza a contagem anterior.
+Cada contagem aceita `PRODUTO` ou `GRADE`, valida o item dentro do tenant e registra quantidade do sistema, quantidade física, divergência, usuário e instante da contagem.
 
 ## Bloco 2 — Ajuste explícito e rastreável de estoque
 
-O ajuste de estoque foi separado da conclusão da contagem.
-
 - `POST /api/v1/inventarios/{inventarioId}/ajustar-estoque` exige `INVENTARIO_AJUSTAR`;
 - somente inventário `CONCLUIDO` pode ser ajustado;
-- o ajuste é idempotente por sessão e não pode ser reaplicado;
-- cada diferença real gera movimentação padrão de estoque `AJUSTE` com motivo `INVENTARIO:{inventarioId}`;
-- itens cujo saldo atual já coincide com a quantidade contada não geram movimentação sem efeito;
-- sessão registra usuário e instante do ajuste e mantém auditoria `AJUSTAR_ESTOQUE`.
+- o ajuste é idempotente por sessão;
+- diferenças reais geram movimentação `AJUSTE` com origem `INVENTARIO:{inventarioId}`;
+- conclusão, por si só, não altera estoque.
 
 ## Bloco 3 — Conferência de divergências
 
-Implementada consulta dedicada para a conferência operacional:
-
-- `GET /api/v1/inventarios/{inventarioId}/divergencias` — retorna somente contagens cuja divergência é diferente de zero;
-- aceita `limite` com padrão 100 e máximo 500;
-- valida a existência da sessão dentro do tenant antes da consulta;
-- reutiliza `INVENTARIO_LER` e o índice parcial de divergências já criado na V59;
-- retorna também código e descrição atuais do produto/grade, resolvidos por `tenant + itemId`, sem duplicar dados cadastrais na tabela de inventário;
-- não altera saldo, estado, auditoria ou movimentações.
+- `GET /api/v1/inventarios/{inventarioId}/divergencias` retorna somente divergências;
+- aceita limite defensivo;
+- resolve código e descrição atuais por tenant sem duplicar cadastro na sessão.
 
 ## Bloco 4 — Leitura por código de barras
 
-A interface mobile pode resolver produtos e grades ativos pelo código de barras cadastrado:
-
 - `GET /api/v1/inventarios/itens/por-codigo-barras?codigo=...`;
 - protegido por `INVENTARIO_LER`;
-- consulta sempre restrita ao tenant autenticado;
-- retorna `tipoItem`, `itemId`, código, descrição e código de barras;
-- grade é priorizada quando existe uma única grade ativa para o código, por representar o item de estoque mais específico;
-- duplicidades dentro de grades ou dentro de produtos são rejeitadas como ambíguas, evitando seleção arbitrária.
-
-Essa consulta não cria contagem nem altera estoque; ela somente resolve o item para que o fluxo mobile possa reutilizar o endpoint de contagem existente.
+- consulta restrita ao tenant autenticado;
+- prioriza grade única e rejeita códigos ambíguos.
 
 ## Bloco 5 — Experiência Angular/mobile
 
-O frontend operacional em `tplug-erp/frontend` passa a oferecer uma experiência responsiva para inventário, mantendo a TRAXUP Central fora desse runtime.
-
-- cliente HTTP dedicado para sessões, leitura por código de barras, contagens, divergências, conclusão, cancelamento e ajuste;
-- modelos TypeScript alinhados aos contratos do backend;
-- abertura e seleção de sessões por filial;
-- leitura/digitação de código de barras e resolução de produto/grade;
-- registro e recontagem de quantidade física;
-- visualização de contagens e divergências enriquecidas;
-- conclusão e cancelamento da sessão conforme o estado;
-- ajuste de estoque exibido somente para sessão concluída ainda não ajustada;
-- layout responsivo para operação em celular, sem acoplamento a fabricante de coletor.
-
-O tenant continua vindo exclusivamente do JWT e do interceptor de autenticação existente. A interface não envia `tenantId` como escopo de negócio nem cria cabeçalhos paralelos.
+O frontend operacional em `tplug-erp/frontend` oferece abertura e seleção de sessões, leitura, contagem, divergências, conclusão, cancelamento e ajuste explícito, com layout responsivo e tenant vindo exclusivamente do JWT/interceptor.
 
 ## Bloco 6 — Captura opcional por câmera
 
-A leitura por câmera foi adicionada como camada opcional sobre o mesmo fluxo de código de barras:
+A leitura por câmera funciona como camada opcional sobre o mesmo fluxo de código de barras, usando detecção de capacidade para `getUserMedia` e `BarcodeDetector`. Navegadores sem suporte continuam operando com digitação ou leitor físico. As imagens são processadas localmente e não são enviadas ao backend.
 
-- usa `navigator.mediaDevices.getUserMedia` apenas quando o navegador oferece suporte;
-- usa `BarcodeDetector` por detecção de capacidade, sem dependência obrigatória do recurso;
-- solicita preferencialmente a câmera traseira em dispositivos móveis;
-- ao detectar um código, encerra a câmera e reutiliza o endpoint tenant-safe de resolução já existente;
-- navegadores sem suporte continuam funcionando com digitação ou leitor físico;
-- a imagem da câmera é processada localmente no navegador e não é enviada ao backend;
-- tracks da câmera são encerradas ao fechar a captura, trocar a sessão, concluir/cancelar o inventário ou destruir o componente.
+## Bloco 7 — Contagem cega opcional
 
-Esse bloco não altera RBAC, regras de inventário, auditoria nem contratos do backend.
+A contagem cega foi formalmente adotada como opção por sessão:
+
+- `POST /api/v1/inventarios` aceita `contagemCega=true|false`; ausência preserva o modo convencional;
+- a opção é persistida na sessão pela migration `V61` e não muda durante a operação;
+- enquanto uma sessão cega estiver `ABERTA`, `quantidadeSistema` e `divergencia` são ocultadas das respostas de contagem;
+- a consulta de divergências é bloqueada enquanto a sessão cega estiver aberta, evitando vazamento indireto do saldo esperado;
+- a quantidade do sistema continua sendo capturada internamente para rastreabilidade;
+- após `CONCLUIR`, saldo e divergências ficam disponíveis para conferência antes do ajuste;
+- criação registra em auditoria se a sessão foi aberta em modo cego;
+- o modo convencional permanece retrocompatível com `contagemCega=false`.
 
 ## Segurança e auditoria
 
 - tenant vem exclusivamente do contexto autenticado;
-- filial sempre é validada por `tenant + filial`;
-- produtos e grades são validados dentro do tenant;
+- filial, produtos e grades são validados dentro do tenant;
 - `INVENTARIO_LER` protege consultas;
 - `INVENTARIO_EDITAR` protege criação, contagem, conclusão e cancelamento;
 - `INVENTARIO_AJUSTAR` protege o ajuste de estoque;
-- mutações geram auditoria `CRIAR`, `CONTAR`, `CONCLUIR`, `CANCELAR` e `AJUSTAR_ESTOQUE`;
-- as FKs de sessão, filial e usuário incluem `tenant_id` onde aplicável.
+- mutações permanecem auditadas.
 
 ## Regra operacional
 
-**Concluir um inventário não altera o saldo de estoque.** A conclusão fecha a contagem para conferência. O estoque só é alterado por uma chamada explícita ao endpoint de ajuste, que registra movimentações auditáveis.
-
-## Próximos blocos
-
-- suporte operacional a contagem cega, somente se essa regra for formalmente adotada.
+**Concluir um inventário não altera o saldo de estoque.** A conclusão fecha a contagem para conferência. O estoque só é alterado por chamada explícita ao endpoint de ajuste.
 
 A TRAXUP Central permanece separada e sem alteração de runtime.

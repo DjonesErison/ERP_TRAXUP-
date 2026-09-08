@@ -61,8 +61,8 @@ class PedidoVendaApplicationServiceTest {
         when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId)).thenReturn(List.of(produto, grade));
         service.faturar(tenantId, usuarioId, pedidoId);
         verify(repository).buscarParaFaturar(pedidoId, tenantId);
-        verify(estoqueMovimentacaoService).movimentar(eq(tenantId), eq(filialId), eq("PRODUTO"), eq(produtoId), eq("SAIDA"), eq(new BigDecimal("2.0000")), contains(pedidoId.toString()), eq(usuarioId));
-        verify(estoqueMovimentacaoService).movimentar(eq(tenantId), eq(filialId), eq("GRADE"), eq(gradeId), eq("SAIDA"), eq(new BigDecimal("1.0000")), contains(pedidoId.toString()), eq(usuarioId));
+        verify(estoqueMovimentacaoService).movimentarSaidaVenda(eq(tenantId), eq(filialId), eq("PRODUTO"), eq(produtoId), eq(new BigDecimal("2.0000")), contains(pedidoId.toString()), eq(usuarioId));
+        verify(estoqueMovimentacaoService).movimentarSaidaVenda(eq(tenantId), eq(filialId), eq("GRADE"), eq(gradeId), eq(new BigDecimal("1.0000")), contains(pedidoId.toString()), eq(usuarioId));
         verifyNoInteractions(contaReceberService); verify(pedido).faturar(); verify(repository).save(pedido);
     }
 

@@ -31,6 +31,7 @@ import static org.mockito.Mockito.*;
 class PedidoVendaApplicationServiceTest {
     @Mock PedidoVendaRepository repository;
     @Mock PedidoVendaItemRepository itemRepository;
+    @Mock PedidoVendaItemComboOpcaoRepository comboOpcaoRepository;
     @Mock FilialRepository filialRepository;
     @Mock PessoaRepository pessoaRepository;
     @Mock EstoqueMovimentacaoApplicationService estoqueMovimentacaoService;
@@ -44,7 +45,7 @@ class PedidoVendaApplicationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new PedidoVendaApplicationService(repository, itemRepository, filialRepository,
+        service = new PedidoVendaApplicationService(repository, itemRepository, comboOpcaoRepository, filialRepository,
                 pessoaRepository, estoqueMovimentacaoService, contaReceberService,
                 formaPagamentoRepository, condicaoPagamentoRepository, parcelaRepository, auditoria);
     }
@@ -56,8 +57,8 @@ class PedidoVendaApplicationServiceTest {
         PedidoVenda pedido = mock(PedidoVenda.class);
         when(pedido.getId()).thenReturn(pedidoId); when(pedido.getFilialId()).thenReturn(filialId); when(pedido.getStatus()).thenReturn("ABERTO");
         when(repository.buscarParaFaturar(pedidoId, tenantId)).thenReturn(Optional.of(pedido));
-        PedidoVendaItem produto = mock(PedidoVendaItem.class); when(produto.getProdutoId()).thenReturn(produtoId); when(produto.getGradeId()).thenReturn(null); when(produto.getQuantidade()).thenReturn(new BigDecimal("2.0000"));
-        PedidoVendaItem grade = mock(PedidoVendaItem.class); when(grade.getGradeId()).thenReturn(gradeId); when(grade.getQuantidade()).thenReturn(new BigDecimal("1.0000"));
+        PedidoVendaItem produto = mock(PedidoVendaItem.class); when(produto.getId()).thenReturn(UUID.randomUUID()); when(produto.getProdutoId()).thenReturn(produtoId); when(produto.getGradeId()).thenReturn(null); when(produto.getQuantidade()).thenReturn(new BigDecimal("2.0000"));
+        PedidoVendaItem grade = mock(PedidoVendaItem.class); when(grade.getId()).thenReturn(UUID.randomUUID()); when(grade.getGradeId()).thenReturn(gradeId); when(grade.getQuantidade()).thenReturn(new BigDecimal("1.0000"));
         when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId)).thenReturn(List.of(produto, grade));
         service.faturar(tenantId, usuarioId, pedidoId);
         verify(repository).buscarParaFaturar(pedidoId, tenantId);
@@ -67,12 +68,33 @@ class PedidoVendaApplicationServiceTest {
     }
 
     @Test
+    void deveBaixarEstoqueDaOpcaoEscolhidaPelaQuantidadeDoItem() {
+        UUID tenantId = UUID.randomUUID(); UUID filialId = UUID.randomUUID(); UUID pedidoId = UUID.randomUUID(); UUID usuarioId = UUID.randomUUID();
+        UUID itemId = UUID.randomUUID(); UUID comboId = UUID.randomUUID(); UUID opcaoId = UUID.randomUUID(); UUID produtoOpcaoId = UUID.randomUUID();
+        PedidoVenda pedido = mock(PedidoVenda.class);
+        when(pedido.getId()).thenReturn(pedidoId); when(pedido.getFilialId()).thenReturn(filialId); when(pedido.getStatus()).thenReturn("ABERTO");
+        when(repository.buscarParaFaturar(pedidoId, tenantId)).thenReturn(Optional.of(pedido));
+        PedidoVendaItem item = mock(PedidoVendaItem.class);
+        when(item.getId()).thenReturn(itemId); when(item.getProdutoId()).thenReturn(comboId); when(item.getQuantidade()).thenReturn(new BigDecimal("2.0000"));
+        when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId)).thenReturn(List.of(item));
+        PedidoVendaItemComboOpcao opcao = new PedidoVendaItemComboOpcao(tenantId, itemId, UUID.randomUUID(), opcaoId,
+                produtoOpcaoId, new BigDecimal("1.5000"), new BigDecimal("3.0000"));
+        when(comboOpcaoRepository.findAllByTenantIdAndPedidoVendaItemIdOrderByGrupoIdAscOpcaoIdAsc(tenantId, itemId))
+                .thenReturn(List.of(opcao));
+
+        service.faturar(tenantId, usuarioId, pedidoId);
+
+        verify(estoqueMovimentacaoService).movimentarSaidaVenda(eq(tenantId), eq(filialId), eq("PRODUTO"), eq(produtoOpcaoId),
+                eq(new BigDecimal("3.00000000")), contains(opcaoId.toString()), eq(usuarioId));
+    }
+
+    @Test
     void deveGerarContaReceberAoFaturarPedidoComClienteSemCondicaoConfigurada() {
         UUID tenantId = UUID.randomUUID(); UUID filialId = UUID.randomUUID(); UUID pedidoId = UUID.randomUUID(); UUID clienteId = UUID.randomUUID(); UUID usuarioId = UUID.randomUUID();
         PedidoVenda pedido = mock(PedidoVenda.class);
         when(pedido.getId()).thenReturn(pedidoId); when(pedido.getFilialId()).thenReturn(filialId); when(pedido.getClienteId()).thenReturn(clienteId); when(pedido.getNumero()).thenReturn("PV-100"); when(pedido.getStatus()).thenReturn("ABERTO");
         when(repository.buscarParaFaturar(pedidoId, tenantId)).thenReturn(Optional.of(pedido));
-        PedidoVendaItem item = mock(PedidoVendaItem.class); when(item.getProdutoId()).thenReturn(UUID.randomUUID()); when(item.getGradeId()).thenReturn(null); when(item.getQuantidade()).thenReturn(BigDecimal.ONE); when(item.getTotalItem()).thenReturn(new BigDecimal("125.50"));
+        PedidoVendaItem item = mock(PedidoVendaItem.class); when(item.getId()).thenReturn(UUID.randomUUID()); when(item.getProdutoId()).thenReturn(UUID.randomUUID()); when(item.getGradeId()).thenReturn(null); when(item.getQuantidade()).thenReturn(BigDecimal.ONE); when(item.getTotalItem()).thenReturn(new BigDecimal("125.50"));
         when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId)).thenReturn(List.of(item));
         service.faturar(tenantId, usuarioId, pedidoId);
         verify(contaReceberService).criarComOrigem(eq(tenantId), eq(usuarioId), eq(filialId), eq(clienteId),
@@ -86,7 +108,7 @@ class PedidoVendaApplicationServiceTest {
         PedidoVenda pedido = mock(PedidoVenda.class);
         when(pedido.getId()).thenReturn(pedidoId); when(pedido.getFilialId()).thenReturn(filialId); when(pedido.getClienteId()).thenReturn(clienteId); when(pedido.getNumero()).thenReturn("200"); when(pedido.getStatus()).thenReturn("ABERTO"); when(pedido.getCondicaoPagamentoId()).thenReturn(condicaoId);
         when(repository.buscarParaFaturar(pedidoId, tenantId)).thenReturn(Optional.of(pedido));
-        PedidoVendaItem item = mock(PedidoVendaItem.class); when(item.getProdutoId()).thenReturn(UUID.randomUUID()); when(item.getGradeId()).thenReturn(null); when(item.getQuantidade()).thenReturn(BigDecimal.ONE); when(item.getTotalItem()).thenReturn(new BigDecimal("100.0000"));
+        PedidoVendaItem item = mock(PedidoVendaItem.class); when(item.getId()).thenReturn(UUID.randomUUID()); when(item.getProdutoId()).thenReturn(UUID.randomUUID()); when(item.getGradeId()).thenReturn(null); when(item.getQuantidade()).thenReturn(BigDecimal.ONE); when(item.getTotalItem()).thenReturn(new BigDecimal("100.0000"));
         when(itemRepository.findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId)).thenReturn(List.of(item));
         when(condicaoPagamentoRepository.findByIdAndTenantId(condicaoId, tenantId)).thenReturn(Optional.of(new CondicaoPagamento(tenantId, "2X", "Duas parcelas")));
         CondicaoPagamentoParcela primeira = new CondicaoPagamentoParcela(tenantId, condicaoId, 1, 30, new BigDecimal("50.0000"));

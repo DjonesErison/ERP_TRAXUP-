@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from './auth.service';
 import { CrmService } from './crm.service';
 import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from './crm.models';
 
@@ -9,7 +10,42 @@ import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from '.
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="app-shell">
+    <div class="login-shell" *ngIf="!autenticado">
+      <section class="login-brand">
+        <div class="login-mark">T</div>
+        <p class="eyebrow light">TPlug ERP</p>
+        <h1>Gestão conectada.<br>Decisões mais rápidas.</h1>
+        <p>Entre no ambiente da sua empresa para acessar CRM, vendas, compras, estoque e financeiro.</p>
+      </section>
+      <section class="login-panel">
+        <form class="login-card" (ngSubmit)="entrar()">
+          <div>
+            <p class="eyebrow">Acesso seguro</p>
+            <h2>Entrar no TPlug ERP</h2>
+            <p class="subtitle">Use o tenant e as credenciais cadastradas no ERP.</p>
+          </div>
+          <div class="alert" *ngIf="loginError">{{ loginError }}</div>
+          <label>
+            Tenant
+            <input name="tenantId" [(ngModel)]="loginTenantId" required placeholder="UUID do tenant" autocomplete="organization">
+          </label>
+          <label>
+            E-mail
+            <input name="email" type="email" [(ngModel)]="loginEmail" required placeholder="usuario@empresa.com.br" autocomplete="username">
+          </label>
+          <label>
+            Senha
+            <input name="senha" type="password" [(ngModel)]="loginSenha" required maxlength="72" placeholder="Sua senha" autocomplete="current-password">
+          </label>
+          <button class="login-button" type="submit" [disabled]="loginLoading || !loginTenantId || !loginEmail || !loginSenha">
+            {{ loginLoading ? 'Entrando...' : 'Entrar' }}
+          </button>
+          <small class="security-note">O tenant é validado pelo backend e incorporado ao JWT. O frontend não define escopo por cabeçalho manual.</small>
+        </form>
+      </section>
+    </div>
+
+    <div class="app-shell" *ngIf="autenticado">
       <aside class="sidebar">
         <div class="brand">
           <div class="brand-mark">T</div>
@@ -22,6 +58,7 @@ import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from '.
           <a>Estoque</a>
           <a>Financeiro</a>
         </nav>
+        <button class="logout" (click)="sair()" [disabled]="logoutLoading">{{ logoutLoading ? 'Saindo...' : 'Sair' }}</button>
       </aside>
 
       <main>
@@ -122,6 +159,13 @@ import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from '.
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
+  autenticado = false;
+  loginTenantId = '';
+  loginEmail = '';
+  loginSenha = '';
+  loginLoading = false;
+  loginError = '';
+  logoutLoading = false;
   filialId = '';
   diasInatividade = 30;
   loading = false;
@@ -131,11 +175,48 @@ export class AppComponent implements OnInit {
   followups: ClienteFollowUp[] = [];
   interacoes: ClienteInteracao[] = [];
 
-  constructor(private readonly crm: CrmService) {}
+  constructor(private readonly crm: CrmService, private readonly auth: AuthService) {}
 
-  ngOnInit(): void { this.carregar(); }
+  ngOnInit(): void {
+    this.loginTenantId = this.auth.tenantId ?? '';
+    this.autenticado = this.auth.autenticado;
+    if (this.autenticado) this.carregar();
+  }
+
+  entrar(): void {
+    if (this.loginLoading) return;
+    this.loginLoading = true;
+    this.loginError = '';
+    this.auth.login({ tenantId: this.loginTenantId.trim(), email: this.loginEmail.trim(), senha: this.loginSenha }).subscribe({
+      next: () => {
+        this.loginLoading = false;
+        this.loginSenha = '';
+        this.autenticado = true;
+        this.carregar();
+      },
+      error: (err) => {
+        this.loginLoading = false;
+        this.loginError = err?.status === 401 || err?.status === 403
+          ? 'Tenant, e-mail ou senha inválidos.'
+          : 'Não foi possível entrar. Verifique os dados e a disponibilidade da API.';
+      }
+    });
+  }
+
+  sair(): void {
+    if (this.logoutLoading) return;
+    this.logoutLoading = true;
+    this.auth.logout().subscribe({
+      next: () => this.finalizarLogout(),
+      error: () => this.finalizarLogout()
+    });
+  }
 
   carregar(): void {
+    if (!this.auth.autenticado) {
+      this.autenticado = false;
+      return;
+    }
     this.loading = true;
     this.error = '';
     const filial = this.filialId.trim() || undefined;
@@ -147,15 +228,27 @@ export class AppComponent implements OnInit {
         this.interacoes = dados.interacoes;
         this.loading = false;
       },
-      error: (err) => {
+      error: () => {
         this.loading = false;
-        this.error = err?.status === 401
-          ? 'Sessão não autenticada. O painel espera um JWT válido em tplug_access_token.'
-          : 'Não foi possível carregar o CRM. Verifique a API e os filtros informados.';
+        if (!this.auth.autenticado) {
+          this.autenticado = false;
+          this.loginError = 'Sua sessão expirou. Entre novamente.';
+          return;
+        }
+        this.error = 'Não foi possível carregar o CRM. Verifique a API e os filtros informados.';
       }
     });
   }
 
   trackId(_: number, item: { id: string }): string { return item.id; }
   trackCliente(_: number, item: { clienteId: string }): string { return item.clienteId; }
+
+  private finalizarLogout(): void {
+    this.logoutLoading = false;
+    this.autenticado = false;
+    this.inativos = [];
+    this.rfv = [];
+    this.followups = [];
+    this.interacoes = [];
+  }
 }

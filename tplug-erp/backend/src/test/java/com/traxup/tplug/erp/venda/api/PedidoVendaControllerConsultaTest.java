@@ -64,12 +64,12 @@ class PedidoVendaControllerConsultaTest {
         UUID clienteId = UUID.randomUUID();
         PageRequest pageRequest = PageRequest.of(0, 20);
         when(tenantContext.tenantId()).thenReturn(tenantId);
-        when(consultaRecenteService.listar(tenantId, 0, 20, filialId, clienteId, "FATURADO", null, null))
+        when(consultaRecenteService.listar(tenantId, 0, 20, filialId, clienteId, "PV-123", "FATURADO", null, null))
                 .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
 
-        controller.listarRecentes(0, 20, filialId, clienteId, "FATURADO", null, null);
+        controller.listarRecentes(0, 20, filialId, clienteId, "PV-123", "FATURADO", null, null);
 
-        verify(consultaRecenteService).listar(tenantId, 0, 20, filialId, clienteId, "FATURADO", null, null);
+        verify(consultaRecenteService).listar(tenantId, 0, 20, filialId, clienteId, "PV-123", "FATURADO", null, null);
         verifyNoInteractions(service, detalheConsultaService);
     }
 
@@ -80,7 +80,7 @@ class PedidoVendaControllerConsultaTest {
         Instant fim = Instant.parse("2026-09-08T12:45:00Z");
         PageRequest pageRequest = PageRequest.of(2, 15);
         when(tenantContext.tenantId()).thenReturn(tenantId);
-        when(consultaRecenteService.listar(tenantId, 2, 15, null, null, null, inicio, fim))
+        when(consultaRecenteService.listar(tenantId, 2, 15, null, null, null, null, inicio, fim))
                 .thenReturn(new PageImpl<>(List.of(), pageRequest, 41));
 
         mockMvc.perform(get("/api/v1/vendas/pedidos/recentes")
@@ -94,7 +94,22 @@ class PedidoVendaControllerConsultaTest {
                 .andExpect(jsonPath("$.totalRegistros").value(41))
                 .andExpect(jsonPath("$.totalPaginas").value(3));
 
-        verify(consultaRecenteService).listar(tenantId, 2, 15, null, null, null, inicio, fim);
+        verify(consultaRecenteService).listar(tenantId, 2, 15, null, null, null, null, inicio, fim);
+        verifyNoInteractions(service, detalheConsultaService);
+    }
+
+    @Test
+    void deveEncaminharNumeroPelaCamadaHttp() throws Exception {
+        UUID tenantId = UUID.randomUUID();
+        PageRequest pageRequest = PageRequest.of(0, 20);
+        when(tenantContext.tenantId()).thenReturn(tenantId);
+        when(consultaRecenteService.listar(tenantId, 0, 20, null, null, "PV-123", null, null, null))
+                .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
+
+        mockMvc.perform(get("/api/v1/vendas/pedidos/recentes").param("numero", "PV-123"))
+                .andExpect(status().isOk());
+
+        verify(consultaRecenteService).listar(tenantId, 0, 20, null, null, "PV-123", null, null, null);
         verifyNoInteractions(service, detalheConsultaService);
     }
 

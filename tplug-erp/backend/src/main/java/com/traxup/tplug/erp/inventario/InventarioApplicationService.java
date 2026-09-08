@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.inventario;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.estoque.EstoqueSaldo;
 import com.traxup.tplug.erp.estoque.EstoqueSaldoRepository;
 import com.traxup.tplug.erp.filial.FilialRepository;
 import com.traxup.tplug.erp.produto.ProdutoRepository;
@@ -91,7 +92,7 @@ public class InventarioApplicationService {
 
         BigDecimal quantidadeSistema = estoqueSaldoRepository
                 .findByTenantIdAndFilialIdAndTipoItemAndItemId(tenantId, sessao.getFilialId(), tipoNormalizado, itemId)
-                .map(saldo -> saldo.getQuantidade())
+                .map(EstoqueSaldo::getQuantidade)
                 .orElse(BigDecimal.ZERO);
 
         InventarioContagem contagem = contagemRepository
@@ -116,6 +117,40 @@ public class InventarioApplicationService {
         sessaoRepository.save(sessao);
         auditoria.registrar(tenantId, usuarioId, null, sessao.getFilialId(), "CONCLUIR", "INVENTARIO_SESSAO",
                 sessao.getId(), null);
+        return sessao;
+    }
+
+    @Transactional
+    public InventarioSessao ajustarEstoque(UUID tenantId, UUID usuarioId, UUID inventarioId) {
+        InventarioSessao sessao = buscarParaAtualizar(tenantId, inventarioId);
+        if (!"CONCLUIDO".equals(sessao.getStatus())) {
+            throw new RegraNegocioException("Somente inventario CONCLUIDO pode ajustar estoque");
+        }
+        if (sessao.getAjustadoEm() != null) {
+            throw new RegraNegocioException("Estoque deste inventario ja foi ajustado");
+        }
+
+        List<InventarioContagem> contagens = contagemRepository
+                .findAllByTenantIdAndInventarioIdOrderByTipoItemAscItemIdAsc(tenantId, inventarioId);
+        if (contagens.isEmpty()) {
+            throw new RegraNegocioException("Inventario sem contagens nao pode ajustar estoque");
+        }
+
+        int divergentes = 0;
+        for (InventarioContagem contagem : contagens) {
+            EstoqueSaldo saldo = estoqueSaldoRepository
+                    .buscarParaAtualizar(tenantId, sessao.getFilialId(), contagem.getTipoItem(), contagem.getItemId())
+                    .orElseGet(() -> new EstoqueSaldo(tenantId, sessao.getFilialId(), contagem.getTipoItem(), contagem.getItemId()));
+            BigDecimal anterior = saldo.getQuantidade();
+            saldo.definirQuantidade(contagem.getQuantidadeContada());
+            estoqueSaldoRepository.save(saldo);
+            if (anterior.compareTo(contagem.getQuantidadeContada()) != 0) divergentes++;
+        }
+
+        sessao.marcarAjustado(usuarioId);
+        sessaoRepository.save(sessao);
+        auditoria.registrar(tenantId, usuarioId, null, sessao.getFilialId(), "AJUSTAR_ESTOQUE", "INVENTARIO_SESSAO",
+                sessao.getId(), "itens=" + contagens.size() + ";divergentes=" + divergentes);
         return sessao;
     }
 

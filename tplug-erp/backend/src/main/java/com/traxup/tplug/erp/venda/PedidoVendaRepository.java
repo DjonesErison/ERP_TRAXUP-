@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.venda;
 
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -16,7 +17,7 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
     List<PedidoVenda> findAllByTenantIdOrderByCriadoEmDescIdAsc(UUID tenantId);
     List<PedidoVenda> findAllByTenantIdOrderByCriadoEmDescIdAsc(UUID tenantId, Pageable pageable);
 
-    @Query("""
+    @Query(value = """
             select p from PedidoVenda p
             where p.tenantId = :tenantId
               and (:filialId is null or p.filialId = :filialId)
@@ -25,8 +26,17 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
               and (cast(:inicio as instant) is null or p.criadoEm >= :inicio)
               and (cast(:fim as instant) is null or p.criadoEm <= :fim)
             order by p.criadoEm desc, p.id asc
+            """,
+            countQuery = """
+            select count(p) from PedidoVenda p
+            where p.tenantId = :tenantId
+              and (:filialId is null or p.filialId = :filialId)
+              and (:clienteId is null or p.clienteId = :clienteId)
+              and (:status is null or p.status = :status)
+              and (cast(:inicio as instant) is null or p.criadoEm >= :inicio)
+              and (cast(:fim as instant) is null or p.criadoEm <= :fim)
             """)
-    List<PedidoVenda> buscarRecentesFiltrados(@Param("tenantId") UUID tenantId,
+    Page<PedidoVenda> buscarRecentesFiltrados(@Param("tenantId") UUID tenantId,
                                                @Param("filialId") UUID filialId,
                                                @Param("clienteId") UUID clienteId,
                                                @Param("status") String status,

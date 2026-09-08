@@ -15,11 +15,14 @@ import java.util.stream.Collectors;
 public class PedidoVendaDetalheConsultaService {
     private final PedidoVendaRepository pedidoRepository;
     private final PedidoVendaItemRepository itemRepository;
+    private final PedidoVendaItemComboOpcaoRepository comboOpcaoRepository;
 
     public PedidoVendaDetalheConsultaService(PedidoVendaRepository pedidoRepository,
-                                             PedidoVendaItemRepository itemRepository) {
+                                             PedidoVendaItemRepository itemRepository,
+                                             PedidoVendaItemComboOpcaoRepository comboOpcaoRepository) {
         this.pedidoRepository = pedidoRepository;
         this.itemRepository = itemRepository;
+        this.comboOpcaoRepository = comboOpcaoRepository;
     }
 
     public Detalhe consultar(UUID tenantId, UUID pedidoId) {
@@ -28,7 +31,12 @@ public class PedidoVendaDetalheConsultaService {
                         "Pedido de venda nao encontrado para o tenant informado"));
         List<PedidoVendaItem> itens = itemRepository
                 .findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(tenantId, pedidoId);
-        return new Detalhe(pedido, itens);
+        List<PedidoVendaItemComboOpcao> comboOpcoes = itens.isEmpty()
+                ? List.of()
+                : comboOpcaoRepository
+                        .findAllByTenantIdAndPedidoVendaItemIdInOrderByPedidoVendaItemIdAscGrupoIdAscOpcaoIdAsc(
+                                tenantId, itens.stream().map(PedidoVendaItem::getId).toList());
+        return new Detalhe(pedido, itens, comboOpcoes);
     }
 
     public Map<UUID, BigDecimal> totalLiquidoPorPedidos(UUID tenantId, List<UUID> pedidoIds) {
@@ -40,5 +48,6 @@ public class PedidoVendaDetalheConsultaService {
                         PedidoVendaItemRepository.TotalPedido::getTotalLiquido));
     }
 
-    public record Detalhe(PedidoVenda pedido, List<PedidoVendaItem> itens) {}
+    public record Detalhe(PedidoVenda pedido, List<PedidoVendaItem> itens,
+                          List<PedidoVendaItemComboOpcao> comboOpcoes) {}
 }

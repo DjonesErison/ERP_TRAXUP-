@@ -41,6 +41,20 @@ class ConciliacaoFiltroApplicationServiceTest {
     }
 
     @Test
+    void deveNormalizarFiltrosDoResumoEPreservarTenantEConta() {
+        UUID tenantId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        ContaFinanceira conta = new ContaFinanceira(tenantId, UUID.randomUUID(), "Banco", "BANCO", UUID.randomUUID());
+        Instant inicio = Instant.parse("2026-09-01T00:00:00Z");
+        Instant fim = Instant.parse("2026-09-06T23:59:59Z");
+        when(contaRepository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
+
+        novoService().resumir(tenantId, contaId, " ofx ", "taxa", "pendente", inicio, fim);
+
+        verify(repository).resumirFiltrado(tenantId, contaId, "OFX", "TAXA", "PENDENTE", inicio, fim);
+    }
+
+    @Test
     void deveRejeitarPeriodoInvertidoAntesDaConsulta() {
         UUID tenantId = UUID.randomUUID();
         UUID contaId = UUID.randomUUID();
@@ -48,6 +62,18 @@ class ConciliacaoFiltroApplicationServiceTest {
         when(contaRepository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
 
         assertThrows(RegraNegocioException.class, () -> novoService().listar(
+                tenantId, contaId, null, null, null,
+                Instant.parse("2026-09-06T00:00:00Z"), Instant.parse("2026-09-01T00:00:00Z")));
+    }
+
+    @Test
+    void deveRejeitarPeriodoInvertidoNoResumoAntesDaConsulta() {
+        UUID tenantId = UUID.randomUUID();
+        UUID contaId = UUID.randomUUID();
+        ContaFinanceira conta = new ContaFinanceira(tenantId, UUID.randomUUID(), "Banco", "BANCO", UUID.randomUUID());
+        when(contaRepository.findByIdAndTenantId(contaId, tenantId)).thenReturn(Optional.of(conta));
+
+        assertThrows(RegraNegocioException.class, () -> novoService().resumir(
                 tenantId, contaId, null, null, null,
                 Instant.parse("2026-09-06T00:00:00Z"), Instant.parse("2026-09-01T00:00:00Z")));
     }

@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from './auth.service';
 import { CrmService } from './crm.service';
 import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from './crm.models';
+import { InventarioMobileComponent } from './inventario-mobile.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, InventarioMobileComponent],
   template: `
     <div class="login-shell" *ngIf="!autenticado">
       <section class="login-brand">
@@ -55,7 +56,7 @@ import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from '.
           <a class="active">CRM</a>
           <a>Vendas</a>
           <a>Compras</a>
-          <a>Estoque</a>
+          <a href="#inventario">Inventário</a>
           <a>Financeiro</a>
         </nav>
         <button class="logout" (click)="sair()" [disabled]="logoutLoading">{{ logoutLoading ? 'Saindo...' : 'Sair' }}</button>
@@ -153,6 +154,8 @@ import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from '.
             </div>
           </article>
         </section>
+
+        <app-inventario-mobile id="inventario"></app-inventario-mobile>
       </main>
     </div>
   `,

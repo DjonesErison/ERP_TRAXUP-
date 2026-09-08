@@ -42,9 +42,7 @@ public class ConciliacaoApplicationService {
     public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId, String origem, String natureza,
                                               String status, Instant inicio, Instant fim) {
         contaFinanceiraService.buscar(tenantId, contaId);
-        if (inicio != null && fim != null && inicio.isAfter(fim)) {
-            throw new RegraNegocioException("Periodo inicial nao pode ser posterior ao periodo final");
-        }
+        validarPeriodo(inicio, fim);
         return repository.filtrar(tenantId, contaId, opcionalUpper(origem), opcionalUpper(natureza),
                 opcionalUpper(status), inicio, fim);
     }
@@ -52,6 +50,14 @@ public class ConciliacaoApplicationService {
     public ConciliacaoResumoProjection resumir(UUID tenantId, UUID contaId) {
         contaFinanceiraService.buscar(tenantId, contaId);
         return repository.resumir(tenantId, contaId);
+    }
+
+    public ConciliacaoResumoProjection resumir(UUID tenantId, UUID contaId, String origem, String natureza,
+                                                String status, Instant inicio, Instant fim) {
+        contaFinanceiraService.buscar(tenantId, contaId);
+        validarPeriodo(inicio, fim);
+        return repository.resumirFiltrado(tenantId, contaId, opcionalUpper(origem), opcionalUpper(natureza),
+                opcionalUpper(status), inicio, fim);
     }
 
     public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId) {
@@ -173,6 +179,12 @@ public class ConciliacaoApplicationService {
             throw new RegraNegocioException("Tipo deve ser ENTRADA ou SAIDA");
         }
         return valor;
+    }
+
+    private void validarPeriodo(Instant inicio, Instant fim) {
+        if (inicio != null && fim != null && inicio.isAfter(fim)) {
+            throw new RegraNegocioException("Periodo inicial nao pode ser posterior ao periodo final");
+        }
     }
 
     private String opcionalUpper(String valor) {

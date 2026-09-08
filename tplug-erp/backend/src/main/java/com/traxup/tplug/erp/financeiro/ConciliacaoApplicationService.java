@@ -49,6 +49,11 @@ public class ConciliacaoApplicationService {
                 opcionalUpper(status), inicio, fim);
     }
 
+    public ConciliacaoResumoProjection resumir(UUID tenantId, UUID contaId) {
+        contaFinanceiraService.buscar(tenantId, contaId);
+        return repository.resumir(tenantId, contaId);
+    }
+
     public List<ContaFinanceiraMovimento> sugerirMovimentos(UUID tenantId, UUID lancamentoId) {
         ConciliacaoLancamento lancamento = buscarLancamento(tenantId, lancamentoId);
         if (!"PENDENTE".equals(lancamento.getStatus())) {

@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.pessoa;
 
 import com.traxup.tplug.erp.crm.ClienteInativoProjection;
+import com.traxup.tplug.erp.crm.ClienteRfvProjection;
 import com.traxup.tplug.erp.venda.PedidoVenda;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
@@ -48,6 +49,36 @@ public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
                                                            @Param("filialId") UUID filialId,
                                                            @Param("limiteInatividade") Instant limiteInatividade,
                                                            Pageable pageable);
+
+    @Query("""
+            select p.id as clienteId,
+                   p.nomeRazaoSocial as nomeRazaoSocial,
+                   p.nomeFantasia as nomeFantasia,
+                   p.email as email,
+                   p.telefone as telefone,
+                   max(v.criadoEm) as ultimaCompraEm,
+                   count(distinct v.id) as quantidadeCompras,
+                   coalesce(sum(i.totalItem), 0) as valorTotalCompras
+            from Pessoa p, PedidoVenda v, PedidoVendaItem i
+            where p.id = v.clienteId
+              and i.pedidoVendaId = v.id
+              and i.tenantId = :tenantId
+              and p.tenant.id = :tenantId
+              and v.tenantId = :tenantId
+              and p.cliente = true
+              and p.ativo = true
+              and v.status = 'FATURADO'
+              and (:filialId is null or v.filialId = :filialId)
+              and (cast(:inicio as instant) is null or v.criadoEm >= :inicio)
+              and (cast(:fim as instant) is null or v.criadoEm <= :fim)
+            group by p.id, p.nomeRazaoSocial, p.nomeFantasia, p.email, p.telefone
+            order by sum(i.totalItem) desc, max(v.criadoEm) desc, p.id asc
+            """)
+    List<ClienteRfvProjection> buscarMetricasRfv(@Param("tenantId") UUID tenantId,
+                                                  @Param("filialId") UUID filialId,
+                                                  @Param("inicio") Instant inicio,
+                                                  @Param("fim") Instant fim,
+                                                  Pageable pageable);
 
     boolean existsByTenantIdAndCpfCnpj(UUID tenantId, String cpfCnpj);
 }

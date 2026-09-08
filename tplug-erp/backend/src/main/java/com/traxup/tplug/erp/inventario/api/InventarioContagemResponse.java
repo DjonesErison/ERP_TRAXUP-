@@ -18,7 +18,15 @@ public record InventarioContagemResponse(
         Instant atualizadoEm
 ) {
     public static InventarioContagemResponse from(InventarioContagem c) {
-        return new InventarioContagemResponse(c.getId(), c.getTipoItem(), c.getItemId(), c.getQuantidadeSistema(),
-                c.getQuantidadeContada(), c.getDivergencia(), c.getContadoPorId(), c.getContadoEm(), c.getAtualizadoEm());
+        return from(c, false);
+    }
+
+    public static InventarioContagemResponse from(InventarioContagem c, boolean ocultarSaldo) {
+        return new InventarioContagemResponse(
+                c.getId(), c.getTipoItem(), c.getItemId(),
+                ocultarSaldo ? null : c.getQuantidadeSistema(),
+                c.getQuantidadeContada(),
+                ocultarSaldo ? null : c.getDivergencia(),
+                c.getContadoPorId(), c.getContadoEm(), c.getAtualizadoEm());
     }
 }

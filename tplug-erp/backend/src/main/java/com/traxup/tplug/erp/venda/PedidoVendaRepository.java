@@ -74,5 +74,9 @@ public interface PedidoVendaRepository extends JpaRepository<PedidoVenda, UUID> 
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from PedidoVenda p where p.id = :id and p.tenantId = :tenantId")
+    Optional<PedidoVenda> buscarParaAtualizar(@Param("id") UUID id, @Param("tenantId") UUID tenantId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from PedidoVenda p where p.id = :id and p.tenantId = :tenantId")
     Optional<PedidoVenda> buscarParaFaturar(@Param("id") UUID id, @Param("tenantId") UUID tenantId);
 }

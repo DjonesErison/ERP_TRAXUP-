@@ -48,7 +48,7 @@ public class PedidoVendaItemComboSelecaoService {
     @Transactional
     public List<PedidoVendaItemComboOpcao> configurar(UUID tenantId, UUID usuarioId, UUID pedidoId, UUID itemId,
                                                        List<UUID> opcaoIds) {
-        PedidoVenda pedido = buscarPedido(tenantId, pedidoId, true);
+        PedidoVenda pedido = buscarPedidoParaAtualizar(tenantId, pedidoId);
         PedidoVendaItem item = buscarItem(tenantId, pedidoId, itemId);
         List<ProdutoComboGrupo> grupos = grupoRepository
                 .findAllByTenantIdAndComboProdutoIdOrderByNomeAsc(tenantId, item.getProdutoId());
@@ -99,10 +99,10 @@ public class PedidoVendaItemComboSelecaoService {
         return listar(tenantId, pedidoId, itemId);
     }
 
-    private PedidoVenda buscarPedido(UUID tenantId, UUID pedidoId, boolean exigirRascunho) {
-        PedidoVenda pedido = pedidoRepository.findByIdAndTenantId(pedidoId, tenantId)
+    private PedidoVenda buscarPedidoParaAtualizar(UUID tenantId, UUID pedidoId) {
+        PedidoVenda pedido = pedidoRepository.buscarParaAtualizar(pedidoId, tenantId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido de venda nao encontrado para o tenant informado"));
-        if (exigirRascunho && !"RASCUNHO".equals(pedido.getStatus())) {
+        if (!"RASCUNHO".equals(pedido.getStatus())) {
             throw new IllegalArgumentException("Opcoes do combo so podem ser alteradas enquanto o pedido estiver em RASCUNHO");
         }
         return pedido;

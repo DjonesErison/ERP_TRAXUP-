@@ -41,7 +41,7 @@ class PedidoVendaItemComboSelecaoServiceTest {
     }
 
     @Test
-    void devePersistirOpcaoValidaDoGrupo() {
+    void devePersistirOpcaoValidaDoGrupoComLockNoPedido() {
         UUID tenantId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
         UUID usuarioId = UUID.randomUUID();
@@ -53,7 +53,7 @@ class PedidoVendaItemComboSelecaoServiceTest {
         ProdutoComboGrupoOpcao opcao = new ProdutoComboGrupoOpcao(tenantId, grupo.getId(), UUID.randomUUID(),
                 BigDecimal.ONE, BigDecimal.ZERO);
 
-        when(pedidoRepository.findByIdAndTenantId(pedido.getId(), tenantId)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.buscarParaAtualizar(pedido.getId(), tenantId)).thenReturn(Optional.of(pedido));
         when(itemRepository.findByIdAndTenantIdAndPedidoVendaId(item.getId(), tenantId, pedido.getId()))
                 .thenReturn(Optional.of(item));
         when(grupoRepository.findAllByTenantIdAndComboProdutoIdOrderByNomeAsc(tenantId, produtoComboId))
@@ -64,6 +64,7 @@ class PedidoVendaItemComboSelecaoServiceTest {
 
         service.configurar(tenantId, usuarioId, pedido.getId(), item.getId(), List.of(opcao.getId()));
 
+        verify(pedidoRepository).buscarParaAtualizar(pedido.getId(), tenantId);
         verify(selecaoRepository).deleteByTenantIdAndPedidoVendaItemId(tenantId, item.getId());
         verify(selecaoRepository).flush();
         verify(selecaoRepository).save(any(PedidoVendaItemComboOpcao.class));
@@ -78,7 +79,7 @@ class PedidoVendaItemComboSelecaoServiceTest {
                 BigDecimal.ONE, BigDecimal.TEN);
         ProdutoComboGrupo grupo = new ProdutoComboGrupo(tenantId, produtoComboId, "Acompanhamento", 1, 2);
 
-        when(pedidoRepository.findByIdAndTenantId(pedido.getId(), tenantId)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.buscarParaAtualizar(pedido.getId(), tenantId)).thenReturn(Optional.of(pedido));
         when(itemRepository.findByIdAndTenantIdAndPedidoVendaId(item.getId(), tenantId, pedido.getId()))
                 .thenReturn(Optional.of(item));
         when(grupoRepository.findAllByTenantIdAndComboProdutoIdOrderByNomeAsc(tenantId, produtoComboId))
@@ -99,7 +100,7 @@ class PedidoVendaItemComboSelecaoServiceTest {
                 BigDecimal.ONE, BigDecimal.TEN);
         ProdutoComboGrupo grupo = new ProdutoComboGrupo(tenantId, produtoComboId, "Bebida", 1, 1);
 
-        when(pedidoRepository.findByIdAndTenantId(pedido.getId(), tenantId)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.buscarParaAtualizar(pedido.getId(), tenantId)).thenReturn(Optional.of(pedido));
         when(itemRepository.findByIdAndTenantIdAndPedidoVendaId(item.getId(), tenantId, pedido.getId()))
                 .thenReturn(Optional.of(item));
         when(grupoRepository.findAllByTenantIdAndComboProdutoIdOrderByNomeAsc(tenantId, produtoComboId))

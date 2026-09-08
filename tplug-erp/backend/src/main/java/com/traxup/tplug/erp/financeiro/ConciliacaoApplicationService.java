@@ -4,6 +4,7 @@ import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import com.traxup.tplug.erp.shared.exception.RegraNegocioException;
 import com.traxup.tplug.erp.shared.exception.RecursoConflitanteException;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,8 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class ConciliacaoApplicationService {
     private static final Duration JANELA_SUGESTAO = Duration.ofDays(3);
+    private static final int LIMITE_PADRAO_LISTAGEM = 100;
+    private static final int LIMITE_MAXIMO_LISTAGEM = 500;
     private static final Set<String> TIPOS = Set.of("ENTRADA", "SAIDA");
     private static final Set<String> NATUREZAS = Set.of("NORMAL", "TAXA", "ANTECIPACAO", "ESTORNO", "CHARGEBACK");
     private static final Set<String> STATUS = Set.of("PENDENTE", "CONCILIADO");
@@ -56,6 +59,17 @@ public class ConciliacaoApplicationService {
                 opcionalPermitido(natureza, NATUREZAS, "Natureza"),
                 opcionalPermitido(status, STATUS, "Status"),
                 opcionalPermitido(tipo, TIPOS, "Tipo"), inicio, fim);
+    }
+
+    public List<ConciliacaoLancamento> listar(UUID tenantId, UUID contaId, String origem, String natureza,
+                                              String status, String tipo, Instant inicio, Instant fim, Integer limite) {
+        contaFinanceiraService.buscar(tenantId, contaId);
+        validarPeriodo(inicio, fim);
+        int limiteValidado = validarLimite(limite);
+        return repository.filtrar(tenantId, contaId, opcionalUpper(origem),
+                opcionalPermitido(natureza, NATUREZAS, "Natureza"),
+                opcionalPermitido(status, STATUS, "Status"),
+                opcionalPermitido(tipo, TIPOS, "Tipo"), inicio, fim, PageRequest.of(0, limiteValidado));
     }
 
     public ConciliacaoResumoProjection resumir(UUID tenantId, UUID contaId) {
@@ -203,6 +217,14 @@ public class ConciliacaoApplicationService {
         if (inicio != null && fim != null && inicio.isAfter(fim)) {
             throw new RegraNegocioException("Periodo inicial nao pode ser posterior ao periodo final");
         }
+    }
+
+    private int validarLimite(Integer limite) {
+        int valor = limite == null ? LIMITE_PADRAO_LISTAGEM : limite;
+        if (valor < 1 || valor > LIMITE_MAXIMO_LISTAGEM) {
+            throw new RegraNegocioException("Limite da conciliacao deve estar entre 1 e 500");
+        }
+        return valor;
     }
 
     private String opcionalPermitido(String valor, Set<String> permitidos, String campo) {

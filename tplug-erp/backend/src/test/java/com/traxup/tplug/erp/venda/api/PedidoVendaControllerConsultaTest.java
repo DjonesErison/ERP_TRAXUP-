@@ -95,4 +95,13 @@ class PedidoVendaControllerConsultaTest {
 
         verifyNoInteractions(service, consultaRecenteService, detalheConsultaService, tenantContext);
     }
+
+    @Test
+    void deveRejeitarFimHttpInvalidoSemChamarServico() throws Exception {
+        mockMvc.perform(get("/api/v1/vendas/pedidos/recentes")
+                        .param("fim", "08-09-2026 12:45"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(service, consultaRecenteService, detalheConsultaService, tenantContext);
+    }
 }

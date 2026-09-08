@@ -28,12 +28,16 @@ public class InventarioSessao {
     private UUID criadoPorId;
     @Column(name = "concluido_por_id")
     private UUID concluidoPorId;
+    @Column(name = "ajustado_por_id")
+    private UUID ajustadoPorId;
     @Column(name = "criado_em", nullable = false)
     private Instant criadoEm;
     @Column(name = "atualizado_em", nullable = false)
     private Instant atualizadoEm;
     @Column(name = "concluido_em")
     private Instant concluidoEm;
+    @Column(name = "ajustado_em")
+    private Instant ajustadoEm;
 
     protected InventarioSessao() {}
 
@@ -71,6 +75,13 @@ public class InventarioSessao {
         concluidoEm = Instant.now();
     }
 
+    public void marcarAjustado(UUID usuarioId) {
+        if (!"CONCLUIDO".equals(status)) throw new RegraNegocioException("Somente inventario CONCLUIDO pode ajustar estoque");
+        if (ajustadoEm != null) throw new RegraNegocioException("Estoque deste inventario ja foi ajustado");
+        ajustadoPorId = usuarioId;
+        ajustadoEm = Instant.now();
+    }
+
     public UUID getId() { return id; }
     public UUID getTenantId() { return tenantId; }
     public UUID getFilialId() { return filialId; }
@@ -78,7 +89,9 @@ public class InventarioSessao {
     public String getDescricao() { return descricao; }
     public UUID getCriadoPorId() { return criadoPorId; }
     public UUID getConcluidoPorId() { return concluidoPorId; }
+    public UUID getAjustadoPorId() { return ajustadoPorId; }
     public Instant getCriadoEm() { return criadoEm; }
     public Instant getAtualizadoEm() { return atualizadoEm; }
     public Instant getConcluidoEm() { return concluidoEm; }
+    public Instant getAjustadoEm() { return ajustadoEm; }
 }

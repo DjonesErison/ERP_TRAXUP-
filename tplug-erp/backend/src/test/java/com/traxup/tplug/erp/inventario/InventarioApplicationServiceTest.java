@@ -15,13 +15,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -95,6 +96,50 @@ class InventarioApplicationServiceTest {
 
         assertThrows(RegraNegocioException.class, () -> service().concluir(tenantId, null, inventarioId));
         verify(sessaoRepository, never()).save(any(InventarioSessao.class));
+    }
+
+    @Test
+    void deveAplicarContagemAoEstoqueUmaUnicaVez() {
+        UUID tenantId = UUID.randomUUID();
+        UUID filialId = UUID.randomUUID();
+        UUID inventarioId = UUID.randomUUID();
+        UUID produtoId = UUID.randomUUID();
+        UUID usuarioId = UUID.randomUUID();
+        InventarioSessao sessao = new InventarioSessao(tenantId, filialId, null, usuarioId);
+        sessao.concluir(usuarioId);
+        InventarioContagem contagem = new InventarioContagem(tenantId, inventarioId, "PRODUTO", produtoId,
+                new BigDecimal("10.0000"), new BigDecimal("7.0000"), usuarioId);
+        EstoqueSaldo saldo = new EstoqueSaldo(tenantId, filialId, "PRODUTO", produtoId);
+        saldo.definirQuantidade(new BigDecimal("10.0000"));
+
+        when(sessaoRepository.buscarParaAtualizar(inventarioId, tenantId)).thenReturn(Optional.of(sessao));
+        when(contagemRepository.findAllByTenantIdAndInventarioIdOrderByTipoItemAscItemIdAsc(tenantId, inventarioId))
+                .thenReturn(List.of(contagem));
+        when(estoqueSaldoRepository.buscarParaAtualizar(tenantId, filialId, "PRODUTO", produtoId))
+                .thenReturn(Optional.of(saldo));
+        when(sessaoRepository.save(any(InventarioSessao.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InventarioSessao ajustada = service().ajustarEstoque(tenantId, usuarioId, inventarioId);
+
+        assertEquals(new BigDecimal("7.0000"), saldo.getQuantidade());
+        assertNotNull(ajustada.getAjustadoEm());
+        assertEquals(usuarioId, ajustada.getAjustadoPorId());
+        verify(estoqueSaldoRepository).save(saldo);
+
+        assertThrows(RegraNegocioException.class,
+                () -> service().ajustarEstoque(tenantId, usuarioId, inventarioId));
+    }
+
+    @Test
+    void deveRejeitarAjusteDeInventarioAberto() {
+        UUID tenantId = UUID.randomUUID();
+        UUID inventarioId = UUID.randomUUID();
+        InventarioSessao sessao = new InventarioSessao(tenantId, UUID.randomUUID(), null, null);
+        when(sessaoRepository.buscarParaAtualizar(inventarioId, tenantId)).thenReturn(Optional.of(sessao));
+
+        assertThrows(RegraNegocioException.class,
+                () -> service().ajustarEstoque(tenantId, null, inventarioId));
+        verifyNoInteractions(contagemRepository, estoqueSaldoRepository);
     }
 
     @Test

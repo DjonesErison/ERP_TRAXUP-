@@ -14,5 +14,8 @@ public interface InventarioContagemRepository extends JpaRepository<InventarioCo
     List<InventarioContagem> findAllByTenantIdAndInventarioIdOrderByTipoItemAscItemIdAsc(
             UUID tenantId, UUID inventarioId, Pageable pageable);
 
+    List<InventarioContagem> findAllByTenantIdAndInventarioIdOrderByTipoItemAscItemIdAsc(
+            UUID tenantId, UUID inventarioId);
+
     boolean existsByTenantIdAndInventarioId(UUID tenantId, UUID inventarioId);
 }

@@ -43,7 +43,7 @@ public class EstoqueMovimentacaoApplicationService {
         if (!TIPOS_MOVIMENTO.contains(movimento)) throw new IllegalArgumentException("Tipo de movimento invalido");
         if (quantidade == null || quantidade.signum() <= 0) throw new IllegalArgumentException("Quantidade deve ser maior que zero");
 
-        EstoqueSaldo saldo = saldoRepository.findByTenantIdAndFilialIdAndTipoItemAndItemId(tenantId, filialId, item, itemId)
+        EstoqueSaldo saldo = saldoRepository.buscarParaAtualizar(tenantId, filialId, item, itemId)
                 .orElseGet(() -> new EstoqueSaldo(tenantId, filialId, item, itemId));
         BigDecimal anterior = saldo.getQuantidade();
         BigDecimal posterior = switch (movimento) {

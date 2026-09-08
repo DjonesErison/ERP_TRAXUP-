@@ -45,9 +45,9 @@ class EstoqueMovimentacaoComboTest {
         saldoA.definirQuantidade(new BigDecimal("10"));
         EstoqueSaldo saldoB = new EstoqueSaldo(tenantId, filialId, "PRODUTO", componenteBId);
         saldoB.definirQuantidade(new BigDecimal("20"));
-        when(saldoRepository.findByTenantIdAndFilialIdAndTipoItemAndItemId(tenantId, filialId, "PRODUTO", componenteAId))
+        when(saldoRepository.buscarParaAtualizar(tenantId, filialId, "PRODUTO", componenteAId))
                 .thenReturn(Optional.of(saldoA));
-        when(saldoRepository.findByTenantIdAndFilialIdAndTipoItemAndItemId(tenantId, filialId, "PRODUTO", componenteBId))
+        when(saldoRepository.buscarParaAtualizar(tenantId, filialId, "PRODUTO", componenteBId))
                 .thenReturn(Optional.of(saldoB));
 
         service.movimentarSaidaVenda(tenantId, filialId, "PRODUTO", comboId, new BigDecimal("2"),
@@ -55,8 +55,7 @@ class EstoqueMovimentacaoComboTest {
 
         assertThat(saldoA.getQuantidade()).isEqualByComparingTo("6");
         assertThat(saldoB.getQuantidade()).isEqualByComparingTo("14");
-        verify(saldoRepository, never()).findByTenantIdAndFilialIdAndTipoItemAndItemId(
-                tenantId, filialId, "PRODUTO", comboId);
+        verify(saldoRepository, never()).buscarParaAtualizar(tenantId, filialId, "PRODUTO", comboId);
         verify(movimentacaoRepository, org.mockito.Mockito.times(2)).save(any(EstoqueMovimentacao.class));
     }
 
@@ -70,12 +69,13 @@ class EstoqueMovimentacaoComboTest {
                 .thenReturn(List.of());
         EstoqueSaldo saldo = new EstoqueSaldo(tenantId, filialId, "PRODUTO", produtoId);
         saldo.definirQuantidade(new BigDecimal("5"));
-        when(saldoRepository.findByTenantIdAndFilialIdAndTipoItemAndItemId(tenantId, filialId, "PRODUTO", produtoId))
+        when(saldoRepository.buscarParaAtualizar(tenantId, filialId, "PRODUTO", produtoId))
                 .thenReturn(Optional.of(saldo));
 
         service.movimentarSaidaVenda(tenantId, filialId, "PRODUTO", produtoId, new BigDecimal("2"),
                 "FATURAMENTO_PEDIDO_VENDA:teste", UUID.randomUUID());
 
         assertThat(saldo.getQuantidade()).isEqualByComparingTo("3");
+        verify(saldoRepository).buscarParaAtualizar(tenantId, filialId, "PRODUTO", produtoId);
     }
 }

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.Instant;
@@ -29,22 +30,26 @@ class PedidoVendaConsultaRecenteValidacaoTest {
     }
 
     @Test
-    void deveRejeitarLimiteForaDaFaixaSemConsultarRepositorio() {
+    void deveRejeitarPaginaNegativaSemConsultarRepositorio() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.listar(UUID.randomUUID(), -1, 20, null, null, null, null, null));
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void deveRejeitarTamanhoForaDaFaixaSemConsultarRepositorio() {
         UUID tenantId = UUID.randomUUID();
-
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(tenantId, 0, null, null, null, null, null));
+                () -> service.listar(tenantId, 0, 0, null, null, null, null, null));
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(tenantId, 101, null, null, null, null, null));
-
+                () -> service.listar(tenantId, 0, 101, null, null, null, null, null));
         verifyNoInteractions(repository);
     }
 
     @Test
     void deveRejeitarStatusInvalidoSemConsultarRepositorio() {
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(UUID.randomUUID(), 20, null, null, "DESCONHECIDO", null, null));
-
+                () -> service.listar(UUID.randomUUID(), 0, 20, null, null, "DESCONHECIDO", null, null));
         verifyNoInteractions(repository);
     }
 
@@ -52,28 +57,27 @@ class PedidoVendaConsultaRecenteValidacaoTest {
     void deveRejeitarInicioPosteriorAoFimSemConsultarRepositorio() {
         Instant inicio = Instant.parse("2026-09-08T13:00:00Z");
         Instant fim = Instant.parse("2026-09-08T12:00:00Z");
-
         assertThrows(IllegalArgumentException.class,
-                () -> service.listar(UUID.randomUUID(), 20, null, null, null, inicio, fim));
-
+                () -> service.listar(UUID.randomUUID(), 0, 20, null, null, null, inicio, fim));
         verifyNoInteractions(repository);
     }
 
     @Test
-    void deveNormalizarStatusEEncaminharFiltrosComLimiteSolicitado() {
+    void deveNormalizarStatusEEncaminharPaginaFiltrosETamanho() {
         UUID tenantId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
         Instant inicio = Instant.parse("2026-09-08T10:00:00Z");
         Instant fim = Instant.parse("2026-09-08T12:00:00Z");
-        PageRequest pagina = PageRequest.of(0, 37);
+        PageRequest pagina = PageRequest.of(2, 37);
         when(repository.buscarRecentesFiltrados(
                 tenantId, filialId, clienteId, "FATURADO", inicio, fim, pagina))
-                .thenReturn(List.of());
+                .thenReturn(new PageImpl<>(List.of(), pagina, 0));
 
-        var resultado = service.listar(tenantId, 37, filialId, clienteId, "  faturado  ", inicio, fim);
+        var resultado = service.listar(tenantId, 2, 37, filialId, clienteId, "  faturado  ", inicio, fim);
 
-        assertEquals(List.of(), resultado);
+        assertEquals(2, resultado.getNumber());
+        assertEquals(37, resultado.getSize());
         verify(repository).buscarRecentesFiltrados(
                 tenantId, filialId, clienteId, "FATURADO", inicio, fim, pagina);
     }

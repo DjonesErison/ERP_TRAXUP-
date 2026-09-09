@@ -20,7 +20,13 @@
               "zone.js"
             ],
             "tsConfig": "tsconfig.app.json",
-            "assets": [],
+            "assets": [
+              {
+                "glob": "build-info.json",
+                "input": "public",
+                "output": "/"
+              }
+            ],
             "styles": [
               "src/styles.css"
             ]

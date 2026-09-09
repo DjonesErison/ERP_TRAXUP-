@@ -35,8 +35,9 @@ class PdvVendaFechamentoApplicationServiceTest {
         UUID usuarioId = UUID.randomUUID();
         UUID formaId = UUID.randomUUID();
         UUID condicaoId = UUID.randomUUID();
-        PdvVendaSincronizacao sync = syncVinculada(tenantId);
-        PedidoVenda pedido = novoPedido(tenantId, sync.getFilialId());
+        Fixture fixture = fixtureVinculada(tenantId);
+        PdvVendaSincronizacao sync = fixture.sync();
+        PedidoVenda pedido = fixture.pedido();
 
         when(sincronizacaoRepository.findById(sync.getId())).thenReturn(Optional.of(sync));
         when(pedidoVendaRepository.buscarParaAtualizar(pedido.getId(), tenantId)).thenReturn(Optional.of(pedido));
@@ -61,8 +62,9 @@ class PdvVendaFechamentoApplicationServiceTest {
         UUID tenantId = UUID.randomUUID();
         UUID formaId = UUID.randomUUID();
         UUID condicaoId = UUID.randomUUID();
-        PdvVendaSincronizacao sync = syncVinculada(tenantId);
-        PedidoVenda pedido = novoPedido(tenantId, sync.getFilialId());
+        Fixture fixture = fixtureVinculada(tenantId);
+        PdvVendaSincronizacao sync = fixture.sync();
+        PedidoVenda pedido = fixture.pedido();
         pedido.configurarPagamento(formaId, condicaoId);
         pedido.abrir();
         pedido.faturar();
@@ -82,8 +84,9 @@ class PdvVendaFechamentoApplicationServiceTest {
         UUID tenantId = UUID.randomUUID();
         UUID formaId = UUID.randomUUID();
         UUID condicaoId = UUID.randomUUID();
-        PdvVendaSincronizacao sync = syncVinculada(tenantId);
-        PedidoVenda pedido = novoPedido(tenantId, sync.getFilialId());
+        Fixture fixture = fixtureVinculada(tenantId);
+        PdvVendaSincronizacao sync = fixture.sync();
+        PedidoVenda pedido = fixture.pedido();
         pedido.configurarPagamento(formaId, condicaoId);
         pedido.abrir();
         pedido.faturar();
@@ -100,7 +103,8 @@ class PdvVendaFechamentoApplicationServiceTest {
     @Test
     void sincronizacaoDeOutroTenantDeveSerInvisivel() {
         UUID tenantId = UUID.randomUUID();
-        PdvVendaSincronizacao sync = syncVinculada(UUID.randomUUID());
+        Fixture fixture = fixtureVinculada(UUID.randomUUID());
+        PdvVendaSincronizacao sync = fixture.sync();
         when(sincronizacaoRepository.findById(sync.getId())).thenReturn(Optional.of(sync));
 
         assertThatThrownBy(() -> service.fechar(tenantId, UUID.randomUUID(), sync.getId(), UUID.randomUUID(), UUID.randomUUID()))
@@ -108,16 +112,19 @@ class PdvVendaFechamentoApplicationServiceTest {
         verifyNoInteractions(pedidoVendaRepository, pedidoVendaService);
     }
 
-    private PdvVendaSincronizacao syncVinculada(UUID tenantId) {
+    private Fixture fixtureVinculada(UUID tenantId) {
+        UUID filialId = UUID.randomUUID();
+        PedidoVenda pedido = novoPedido(tenantId, filialId);
         PdvVendaSincronizacao sync = new PdvVendaSincronizacao(
-                tenantId, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                tenantId, filialId, UUID.randomUUID(), UUID.randomUUID(),
                 1, 1L, "a".repeat(64), Instant.parse("2026-09-08T20:00:00Z"));
-        PedidoVenda pedido = novoPedido(tenantId, sync.getFilialId());
         sync.vincularPedidoVenda(pedido.getId());
-        return sync;
+        return new Fixture(sync, pedido);
     }
 
     private PedidoVenda novoPedido(UUID tenantId, UUID filialId) {
         return new PedidoVenda(tenantId, filialId, null, "PDV-" + UUID.randomUUID(), null, UUID.randomUUID());
     }
+
+    private record Fixture(PdvVendaSincronizacao sync, PedidoVenda pedido) {}
 }

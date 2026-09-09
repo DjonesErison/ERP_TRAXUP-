@@ -20,11 +20,12 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 - `V71` — consolidação idempotente do documento fiscal estruturado com totais congelados.
 - `V72` — XML fiscal preparatório interno, versionado, íntegro por SHA-256 e restrito à homologação.
 - `V73` — catálogo tenant-safe de regras fiscais por operação, modelo, regime tributário e UF.
+- `V74` — aplicação imutável de CFOP e CST/CSOSN resolvidos ao documento fiscal.
 
 ## Regras para novas migrations
 
-- Não editar migrations já aplicadas (`V1`–`V73`).
-- A próxima migration deve usar `V74`.
+- Não editar migrations já aplicadas (`V1`–`V74`).
+- A próxima migration deve usar `V75`.
 - Migrations devem executar do zero em banco limpo no CI.
 - Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema e do catálogo RBAC versionado.
 - Toda constraint multi-tenant nova deve ser analisada também no nível do banco, não apenas na aplicação.

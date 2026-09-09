@@ -55,6 +55,15 @@ public class FiscalSolicitacao {
     @PreUpdate
     void preUpdate() { atualizadoEm = Instant.now(); }
 
+    public boolean iniciarProcessamento() {
+        if ("PROCESSANDO".equals(status)) return false;
+        if (!"PENDENTE".equals(status)) {
+            throw new IllegalArgumentException("Somente solicitacao PENDENTE pode iniciar processamento");
+        }
+        status = "PROCESSANDO";
+        return true;
+    }
+
     public UUID getId() { return id; }
     public UUID getTenantId() { return tenantId; }
     public UUID getFilialId() { return filialId; }

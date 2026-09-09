@@ -18,11 +18,12 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 - `V69` — contrato persistido e idempotente entre venda faturada e módulo fiscal, separado por modelo NFCE/NFE e ambiente HOMOLOGACAO/PRODUCAO, com RBAC fiscal próprio.
 - `V70` — snapshot imutável e tenant-safe dos itens da venda para preparação do documento fiscal.
 - `V71` — consolidação idempotente do documento fiscal estruturado com totais congelados.
+- `V72` — XML fiscal preparatório interno, versionado, íntegro por SHA-256 e restrito à homologação.
 
 ## Regras para novas migrations
 
-- Não editar migrations já aplicadas (`V1`–`V71`).
-- A próxima migration deve usar `V72`.
+- Não editar migrations já aplicadas (`V1`–`V72`).
+- A próxima migration deve usar `V73`.
 - Migrations devem executar do zero em banco limpo no CI.
 - Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema e do catálogo RBAC versionado.
 - Toda constraint multi-tenant nova deve ser analisada também no nível do banco, não apenas na aplicação.

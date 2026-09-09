@@ -159,11 +159,18 @@ public class FiscalCorrecaoApplicationService {
         int alterados = jdbc.update("""
                 UPDATE fiscal_documentos SET
                     cfop = COALESCE(?, cfop),
-                    cst_icms = CASE WHEN ? IS NOT NULL THEN ? ELSE cst_icms END,
-                    csosn = CASE WHEN ? IS NOT NULL THEN ? ELSE csosn END,
+                    cst_icms = CASE
+                        WHEN ? IS NOT NULL THEN ?
+                        WHEN ? IS NOT NULL THEN NULL
+                        ELSE cst_icms END,
+                    csosn = CASE
+                        WHEN ? IS NOT NULL THEN ?
+                        WHEN ? IS NOT NULL THEN NULL
+                        ELSE csosn END,
                     uf_destino = COALESCE(?, uf_destino)
                 WHERE tenant_id = ? AND id = ?
-                """, cfop, cst, cst, csosn, csosn, uf, tenantId, documentoId);
+                """, cfop, cst, cst, csosn, csosn, csosn, cst,
+                uf, tenantId, documentoId);
         if (alterados != 1) {
             throw new RecursoNaoEncontradoException(
                     "Documento fiscal nao encontrado para aplicar correcao");

@@ -4,7 +4,8 @@ ALTER TABLE pedido_venda_itens
 
 ALTER TABLE pedido_venda_itens
     ADD CONSTRAINT fk_pedido_venda_itens_pdv_sync
-        FOREIGN KEY (pdv_sincronizacao_id) REFERENCES pdv_vendas_sincronizacao(id),
+        FOREIGN KEY (tenant_id, pdv_sincronizacao_id)
+        REFERENCES pdv_vendas_sincronizacao (tenant_id, id),
     ADD CONSTRAINT ck_pedido_venda_itens_pdv_identidade
         CHECK ((pdv_sincronizacao_id IS NULL AND pdv_item_local_id IS NULL)
             OR (pdv_sincronizacao_id IS NOT NULL AND pdv_item_local_id IS NOT NULL)),

@@ -6,7 +6,7 @@ CREATE TABLE pdv_vendas_sincronizacao (
     operacao_local_id UUID NOT NULL,
     serie INTEGER NOT NULL,
     numero_local BIGINT NOT NULL,
-    checksum CHAR(64) NOT NULL,
+    checksum VARCHAR(64) NOT NULL,
     ocorrido_em TIMESTAMPTZ NOT NULL,
     recebido_em TIMESTAMPTZ NOT NULL,
     CONSTRAINT ck_pdv_vendas_sync_serie CHECK (serie > 0),

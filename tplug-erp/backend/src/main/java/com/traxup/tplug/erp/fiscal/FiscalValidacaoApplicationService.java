@@ -25,6 +25,15 @@ public class FiscalValidacaoApplicationService {
                     "Documento fiscal nao encontrado para o tenant informado");
         }
 
+        Boolean regraAplicada = jdbc.queryForObject("""
+                SELECT regra_operacao_id IS NOT NULL
+                    AND cfop IS NOT NULL
+                    AND ((regime_tributario = 'SIMPLES_NACIONAL' AND csosn IS NOT NULL AND cst_icms IS NULL)
+                      OR (regime_tributario = 'REGIME_NORMAL' AND cst_icms IS NOT NULL AND csosn IS NULL))
+                FROM fiscal_documentos
+                WHERE tenant_id = ? AND id = ?
+                """, Boolean.class, tenantId, documentoId);
+
         Contagens c = jdbc.queryForObject("""
                 SELECT COUNT(*)::INTEGER AS itens,
                        COUNT(*) FILTER (WHERE ncm IS NULL OR ncm !~ '^[0-9]{8}$')::INTEGER AS ncm_invalidos,
@@ -51,6 +60,7 @@ public class FiscalValidacaoApplicationService {
                 """, Boolean.class, tenantId, documentoId);
 
         List<Pendencia> pendencias = new ArrayList<>();
+        if (!Boolean.TRUE.equals(regraAplicada)) pendencias.add(new Pendencia("REGRA_FISCAL_NAO_APLICADA", 1));
         if (c == null || c.itens() == 0) pendencias.add(new Pendencia("SEM_ITENS", 1));
         if (c != null && c.ncmInvalidos() > 0) pendencias.add(new Pendencia("NCM_INVALIDO", c.ncmInvalidos()));
         if (c != null && c.unidadesInvalidas() > 0) pendencias.add(new Pendencia("UNIDADE_INVALIDA", c.unidadesInvalidas()));

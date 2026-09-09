@@ -1,12 +1,12 @@
 # Fase 7 — Bloco 2: sincronização idempotente do PDV
 
-Primeira entrega do Bloco 2 da Fase 7. Esta etapa estabelece o contrato de confirmação entre uma venda persistida localmente no terminal e a nuvem, sem ainda substituir o modelo comercial de `PedidoVenda`.
+Esta etapa estabelece o contrato de confirmação entre uma venda persistida localmente no terminal e a nuvem, sem duplicar a operação lógica.
 
 ## Objetivo
 
 O PDV deve poder registrar uma operação no SQLite local, reenviar a mesma operação após falha de rede e receber a mesma confirmação do servidor sem duplicar a venda lógica.
 
-## Contrato
+## Contrato de ACK
 
 Endpoint: `POST /api/v1/pdv/sincronizacoes/vendas`.
 
@@ -20,7 +20,7 @@ Campos enviados pelo terminal:
 
 A série não é aceita do cliente. Ela é derivada do terminal cadastrado na nuvem.
 
-## Idempotência
+## Idempotência do ACK
 
 A chave idempotente é `(tenant_id, terminal_id, operacao_local_id)`.
 
@@ -29,6 +29,25 @@ A chave idempotente é `(tenant_id, terminal_id, operacao_local_id)`.
 - reenvio da mesma operação com conteúdo diferente: rejeitado;
 - reutilização do mesmo número local dentro da série/filial: rejeitada.
 
+## Vínculo comercial — fatia reiniciada
+
+A migration `V64` adiciona o vínculo tenant-safe entre o ACK do PDV e um `PedidoVenda`.
+
+Endpoint: `POST /api/v1/pdv/sincronizacoes/vendas/rascunho`.
+
+Nesta fatia:
+
+- o ACK continua sendo a identidade estável da operação offline;
+- o backend cria no máximo um `PedidoVenda` em estado `RASCUNHO` para cada ACK;
+- o número do pedido é gerado no servidor como `PDV-{sincronizacaoId}`, cabendo no limite de 40 caracteres e evitando conflito entre filiais/terminais;
+- cliente é opcional e, quando informado, continua validado pelo serviço oficial de vendas;
+- filial é derivada do terminal já validado, nunca aceita do payload;
+- replay do mesmo ACK devolve o mesmo pedido e não cria outro;
+- tentativa de trocar o pedido já vinculado é bloqueada em domínio e por integridade no banco;
+- nenhum item, pagamento, estoque, financeiro ou faturamento é processado nesta fatia.
+
+Essa separação é intencional: primeiro provamos o vínculo comercial idempotente; depois adicionamos itens, pagamento e fechamento em entregas independentes.
+
 ## Segurança
 
 - permissão `PDV_SINCRONIZAR`;
@@ -36,14 +55,15 @@ A chave idempotente é `(tenant_id, terminal_id, operacao_local_id)`.
 - terminal precisa pertencer ao tenant e estar ativo;
 - filial e série vêm do cadastro tenant-safe do terminal;
 - checksum é validado como SHA-256;
-- confirmação inicial é auditada sem registrar o payload comercial completo.
+- criação do ACK e vínculo com pedido são auditados sem registrar payload comercial sensível.
 
 ## Persistência
 
-A migration `V63` cria `pdv_vendas_sincronizacao` e mantém vínculo composto com filial e terminal. O registro funciona como ACK durável da operação local.
+- `V63` cria `pdv_vendas_sincronizacao` como ACK durável da operação local;
+- `V64` adiciona `pedido_venda_id` e `pedido_venda_vinculado_em`, com consistência de nulidade, unicidade tenant-safe e FK composta para `pedidos_venda`.
 
 ## Próxima fatia do Bloco 2
 
-A próxima entrega deve transportar o payload comercial da venda (itens, totais e pagamentos), convertê-lo de forma idempotente para o núcleo de vendas existente e só então marcar a operação local como totalmente processada. O SQLite continua responsabilidade do aplicativo PDV local; este backend fornece o contrato seguro de sincronização.
+Adicionar itens do payload comercial ao pedido em `RASCUNHO`, reutilizando `PedidoVendaItemApplicationService`, mantendo replay idempotente e ainda sem faturamento automático. Pagamento e faturamento permanecem fora dessa próxima fatia.
 
-A TRAXUP Central permanece sem alteração de runtime.
+O SQLite continua responsabilidade do aplicativo PDV local. A TRAXUP Central permanece sem alteração de runtime.

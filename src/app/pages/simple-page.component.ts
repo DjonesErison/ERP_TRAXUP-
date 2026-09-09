@@ -3,11 +3,26 @@ import {ActivatedRoute} from '@angular/router';
 
 type Item = {title:string; detail:string; status?:string};
 type PageData = {subtitle:string; summary:string; items:Item[]};
+type BuildInfo = {
+  commit:string;
+  commitShort:string;
+  branch:string;
+  repository:string;
+  runId:string;
+  runNumber:string;
+  builtAt:string;
+};
 
 @Component({
   standalone:true,
   template:`<section class="page">
     <div class="page-head"><div><h1>{{title}}</h1><p>{{page.subtitle}}</p></div></div>
+    @if(buildInfo && buildInfo.commit !== 'local'){
+      <div class="card panel">
+        <div class="panel-title"><h2>Build em produção</h2><span class="badge">Automático</span></div>
+        <p>Commit {{buildInfo.commitShort}} · branch {{buildInfo.branch}} · build #{{buildInfo.runNumber}} · {{formatBuildDate(buildInfo.builtAt)}}</p>
+      </div>
+    }
     <div class="card panel">
       <div class="panel-title"><h2>{{icon}} {{title}}</h2><span class="badge">Conteúdo consolidado</span></div>
       <p>{{page.summary}}</p>
@@ -23,6 +38,8 @@ type PageData = {subtitle:string; summary:string; items:Item[]};
 })
 export class SimplePageComponent {
   title=''; icon='□'; page:PageData={subtitle:'',summary:'',items:[]};
+  buildInfo?:BuildInfo;
+
   private pages:Record<string,PageData>={
     'Regras de Negócio':{
       subtitle:'Requisitos oficiais e decisões funcionais do TRAXUP.',
@@ -65,12 +82,12 @@ export class SimplePageComponent {
     },
     'Testes':{
       subtitle:'Visão operacional da qualidade e validações automatizadas.',
-      summary:'Snapshot operacional atualizado após o saneamento da Central. CI da Central e testes do backend são acompanhados separadamente.',
+      summary:'CI da Central, publicação Docker e marcos do backend são acompanhados separadamente. O build implantado é lido automaticamente da própria imagem em produção.',
       items:[
-        {title:'Central Angular — CI',detail:'Workflow TRAXUP Central - CI executado na main para o commit f1fef621 do saneamento completo.',status:'SUCESSO — 09/09/2026'},
-        {title:'Central Angular — Docker',detail:'Workflow TRAXUP Central - Docker construiu e publicou a imagem correspondente ao commit f1fef621.',status:'SUCESSO — 09/09/2026'},
-        {title:'Produção — origem local',detail:'Container traxup-central respondeu HTTP 200 em 127.0.0.1:8081 após a atualização.',status:'VALIDADO'},
-        {title:'Produção — domínio público',detail:'central.traxup.com.br respondeu HTTP/2 200 através de Caddy + Nginx após o deploy.',status:'VALIDADO'},
+        {title:'Central Angular — CI',detail:'Validação de teste e build Angular executada pelo workflow TRAXUP Central - CI em pull requests e na main.',status:'Acompanhar no GitHub Actions'},
+        {title:'Central Angular — Docker',detail:'A imagem de produção publica metadados do próprio workflow Docker.',status:'Atualização automática'},
+        {title:'Produção — origem local',detail:'Container traxup-central é servido em 127.0.0.1:8081 e validado pelo script de deploy.',status:'Health check automatizado'},
+        {title:'Produção — domínio público',detail:'central.traxup.com.br é validado pelo script de deploy após a troca do container.',status:'Health check automatizado'},
         {title:'Backend — testes automatizados',detail:'Último marco consolidado do backend registrava 375 testes, migrations e Docker verdes.',status:'Último marco conhecido: verde'},
         {title:'Migrations',detail:'Validação obrigatória no CI do backend antes de aceitar merge.',status:'Obrigatória'},
         {title:'Fiscal',detail:'Perfil Fiscal por Filial permanece como marco implementado; cobertura deve acompanhar a evolução de NF-e/NFC-e.',status:'Em evolução'},
@@ -87,41 +104,89 @@ export class SimplePageComponent {
         {title:'Perfil Fiscal por Filial',detail:'Marco backend com isolamento por tenant, validação fiscal, RBAC, auditoria e persistência.',status:'Concluído'},
         {title:'PR #212',detail:'Dashboard, módulos, funcionalidades e roadmap foram saneados para retirar dados fictícios.',status:'Mergeada'},
         {title:'PR #214',detail:'Regras, referências, dependências, testes, histórico, GitHub, configurações, ideias e documentação receberam conteúdo consolidado.',status:'Mergeada em 09/09/2026'},
-        {title:'Deploy da Central saneada',detail:'CI e Docker verdes; nova imagem publicada no GHCR e container de produção recriado com validação HTTP 200 interna e externa.',status:'Produção validada — 09/09/2026'},
-        {title:'Próxima evolução da Central',detail:'Automatizar snapshots de GitHub/CI e reduzir etapas manuais de implantação.',status:'Em andamento'}
+        {title:'Deploy automático',detail:'Após Docker verde na main, o workflow de deploy conecta à VPS com usuário dedicado, implanta o SHA imutável e executa health checks com rollback em caso de falha.',status:'Concluído'},
+        {title:'Metadados do build',detail:'A Central passa a carregar da própria imagem o SHA, branch, run e horário do build implantado.',status:'Automatizado'}
       ]
     },
     'GitHub':{
       subtitle:'Repositórios, CI/CD e situação de integração.',
-      summary:'Snapshot operacional confirmado em 09/09/2026. Dados históricos são registrados sem apresentar integração automática como pronta.',
+      summary:'O identificador da versão em produção é obtido automaticamente da própria imagem. Nenhum token ou segredo é exposto no navegador.',
       items:[
         {title:'ERP_TRAXUP-',detail:'Repositório privado da Central TRAXUP em Angular.',status:'Ativo'},
-        {title:'Branch main',detail:'Produção da Central atualmente no commit f1fef621 após merge da PR #214.',status:'Atualizada'},
+        {title:'Branch main',detail:'A versão implantada será identificada automaticamente pelo build-info da imagem.',status:'Automático'},
         {title:'PR #212',detail:'Atualização consolidada de Dashboard, módulos, funcionalidades e roadmap.',status:'Mergeada'},
         {title:'PR #214',detail:'Saneamento das telas restantes da Central.',status:'Mergeada'},
-        {title:'TRAXUP Central - CI',detail:'Run pós-merge do commit f1fef621 concluída sem erro.',status:'SUCCESS'},
-        {title:'TRAXUP Central - Docker',detail:'Run pós-merge do commit f1fef621 concluída sem erro e imagem latest publicada.',status:'SUCCESS'},
-        {title:'Imagem de produção',detail:'ghcr.io/djoneserison/traxup-central:latest — digest implantado: sha256:bcf7bd2e6041f5ec21ae1c8702144fabe44e99741fcaf8073ddd22a371d1b25e.',status:'Em produção'},
-        {title:'Deploy VPS',detail:'Pull e recriação do container ainda são manuais; automação segura de deploy é a próxima melhoria de infraestrutura.',status:'Parcial'}
+        {title:'TRAXUP Central - CI',detail:'Workflow de teste e build Angular.',status:'Ativo'},
+        {title:'TRAXUP Central - Docker',detail:'Build e publicação no GHCR com tag latest e tag imutável por SHA.',status:'Ativo'},
+        {title:'Imagem de produção',detail:'ghcr.io/djoneserison/traxup-central:<SHA> — o SHA em execução é carregado automaticamente.',status:'Automático'},
+        {title:'Deploy VPS',detail:'Deploy acionado automaticamente após sucesso do Docker na main, com SSH dedicado, health checks e tentativa de rollback.',status:'Automatizado'}
       ]
     },
     'Configurações':{
       subtitle:'Ambientes e parâmetros públicos de infraestrutura.',
       summary:'Somente informações não sensíveis são exibidas aqui. Tokens, senhas, chaves e segredos nunca devem aparecer na Central.',
       items:[
-        {title:'Central',detail:'https://central.traxup.com.br',status:'Produção — HTTP 200 validado'},
-        {title:'Container',detail:'ghcr.io/djoneserison/traxup-central:latest',status:'Ativo'},
-        {title:'Imagem implantada',detail:'Digest sha256:bcf7bd2e6041f5ec21ae1c8702144fabe44e99741fcaf8073ddd22a371d1b25e.',status:'Validada em 09/09/2026'},
-        {title:'Porta local',detail:'127.0.0.1:8081 → 80 no container da Central.',status:'HTTP 200 validado'},
+        {title:'Central',detail:'https://central.traxup.com.br',status:'Produção'},
+        {title:'Container',detail:'ghcr.io/djoneserison/traxup-central:<SHA>',status:'Deploy por SHA imutável'},
+        {title:'Imagem implantada',detail:'O SHA e os metadados do build são carregados do arquivo público build-info.json incluído na própria imagem.',status:'Automático'},
+        {title:'Porta local',detail:'127.0.0.1:8081 → 80 no container da Central.',status:'Health check automatizado'},
         {title:'Proxy',detail:'Caddy com HTTPS e reverse proxy para Nginx da Central.',status:'Ativo'},
         {title:'Diretório padrão',detail:'/opt/traxup para arquivos específicos de implantação e configuração do TRAXUP.',status:'Regra de infraestrutura'},
-        {title:'Segredos',detail:'Devem permanecer apenas em mecanismos seguros de ambiente/CI e nunca no frontend.',status:'Protegidos'}
+        {title:'Segredos',detail:'Permanecem no GitHub Environment e nas credenciais locais da VPS; nunca são enviados ao frontend.',status:'Protegidos'}
       ]
     }
   };
+
   constructor(route:ActivatedRoute){
     this.title=route.snapshot.data['title']??'';
     this.icon=route.snapshot.data['icon']??'□';
     this.page=this.pages[this.title]??{subtitle:'Conteúdo em consolidação.',summary:'Esta área ainda não possui dados consolidados.',items:[]};
+    void this.loadBuildInfo();
+  }
+
+  formatBuildDate(value:string):string {
+    if (!value || value === 'local') return 'ambiente local';
+    const date=new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'}).format(date);
+  }
+
+  private async loadBuildInfo():Promise<void> {
+    try {
+      const response=await fetch('/build-info.json',{cache:'no-store'});
+      if (!response.ok) return;
+      const info=await response.json() as BuildInfo;
+      this.buildInfo=info;
+      if (!info.commit || info.commit === 'local') return;
+
+      const builtAt=this.formatBuildDate(info.builtAt);
+      this.replaceItem('GitHub','Branch main',{
+        detail:`Produção executando o commit ${info.commitShort} da branch ${info.branch}.`,
+        status:'Versão implantada'
+      });
+      this.replaceItem('GitHub','TRAXUP Central - Docker',{
+        detail:`Imagem do commit ${info.commitShort} gerada pelo run Docker #${info.runNumber}.`,
+        status:'SUCCESS — imagem em produção'
+      });
+      this.replaceItem('GitHub','Imagem de produção',{
+        detail:`ghcr.io/djoneserison/traxup-central:${info.commit}`,
+        status:`Build ${builtAt}`
+      });
+      this.replaceItem('Testes','Central Angular — Docker',{
+        detail:`A versão servida foi construída no run Docker #${info.runNumber}, commit ${info.commitShort}.`,
+        status:`Build ${builtAt}`
+      });
+      this.replaceItem('Configurações','Imagem implantada',{
+        detail:`Commit ${info.commit} · build Docker #${info.runNumber}.`,
+        status:`Build ${builtAt}`
+      });
+    } catch {
+      // A Central continua funcional mesmo se o snapshot de build não estiver disponível.
+    }
+  }
+
+  private replaceItem(pageTitle:string,itemTitle:string,patch:Partial<Item>):void {
+    const target=this.pages[pageTitle]?.items.find(item=>item.title===itemTitle);
+    if (target) Object.assign(target,patch);
   }
 }

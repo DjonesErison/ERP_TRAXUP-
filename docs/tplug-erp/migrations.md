@@ -4,10 +4,67 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 
 ## Inventário atual
 
-- `V1`–`V50` — fundação multi-tenant, autenticação/RBAC/auditoria, catálogo, estoque, pessoas, compras, vendas e financeiro.
-- `V51`–`V55` — Produto Combo, escolhas, snapshots e vigência.
-- `V56`–`V58` — CRM de retorno, follow-up e interações.
-- `V59`–`V61` — inventário, ajuste explícito e contagem cega.
+- `V1` — estrutura inicial de tenant, empresa e filial.
+- `V2` — reforço de integridade multi-tenant de empresa e filial.
+- `V3` — usuários por tenant.
+- `V4` — refresh tokens.
+- `V5` — perfis e permissões RBAC.
+- `V6` — catálogo de permissões fundamentais.
+- `V7` — fundação de auditoria multi-tenant.
+- `V8` — permissões de usuários.
+- `V9` — permissão de leitura de auditoria.
+- `V10` — produtos.
+- `V11` — grades de produto.
+- `V12` — saldos de estoque.
+- `V13` — movimentações de estoque.
+- `V14` — pessoas.
+- `V15` — endereços de pessoas.
+- `V16` — contatos de pessoas.
+- `V17` — sincronização de permissões do perfil ADMIN.
+- `V18` — pedidos de compra.
+- `V19` — itens de pedidos de compra.
+- `V20` — recebimentos de compra.
+- `V21` — integração do recebimento de compra com estoque.
+- `V22` — pedidos de venda.
+- `V23` — itens de pedidos de venda.
+- `V24` — desconto em itens de pedido de venda.
+- `V25` — contas a receber.
+- `V26` — hardening de contatos de pessoas.
+- `V27` — recebimentos parciais de contas a receber.
+- `V28` — contas a pagar.
+- `V29` — hardening dos recebimentos financeiros.
+- `V30` — contas financeiras e caixa.
+- `V31` — formas e condições de pagamento.
+- `V32` — forma e condição de pagamento nos pedidos de venda.
+- `V33` — conciliação financeira.
+- `V34` — hardening da conciliação financeira.
+- `V35` — classificação de eventos de conciliação.
+- `V36` — integrações financeiras.
+- `V37` — checkpoint de integrações financeiras.
+- `V38` — observabilidade das integrações financeiras.
+- `V39` — pagamentos parciais de contas a pagar.
+- `V40` — ajustes comerciais das condições de pagamento.
+- `V41` — origem idempotente das contas a receber.
+- `V42` — origem idempotente dos movimentos financeiros.
+- `V43` — índices operacionais de títulos financeiros.
+- `V44` — integridade de filial nos históricos de baixas financeiras.
+- `V45` — integridade tenant-safe do usuário nos históricos de baixas financeiras.
+- `V46` — integridade tenant-safe do usuário nos lançamentos de conciliação financeira, preservando registros históricos sem usuário.
+- `V47` — integridade tenant-safe das referências de integrações financeiras, vinculando conta à filial correta e usuário ao mesmo tenant.
+- `V48` — integridade tenant-safe das contas financeiras e movimentos de tesouraria, vinculando usuário ao tenant e movimento à conta da filial correta.
+- `V49` — integridade tenant-safe do usuário nos títulos de contas a receber e contas a pagar, preservando registros históricos sem usuário.
+- `V50` — integridade da conta financeira com a filial nos lançamentos de conciliação, inclusive enquanto pendentes.
+- `V51` — Produto Combo fixo, com componentes e quantidades tenant-scoped.
+- `V52` — grupos de escolha e opções configuráveis do Produto Combo.
+- `V53` — seleção de opções do Produto Combo nos itens do pedido de venda.
+- `V54` — snapshots de produto, quantidade e valor adicional das opções escolhidas para refletir corretamente preço e estoque da venda.
+- `V55` — vigência opcional do Produto Combo, com limites inclusivos, validação de intervalo e vínculo tenant-safe ao produto.
+- `V56` — índice de vendas faturadas para CRM de retorno e permissão RBAC de consulta de clientes inativos.
+- `V57` — agenda tenant-safe de follow-up de clientes e permissão RBAC de edição do CRM de retorno.
+- `V58` — histórico append-only de interações CRM com FKs tenant-safe e índices operacionais.
+- `V59` — sessões e contagens de inventário por filial, divergências, FKs tenant-safe e permissões RBAC do módulo.
+- `V60` — ajuste explícito e idempotente de estoque por inventário concluído.
+- `V61` — modo opcional de contagem cega por sessão de inventário, com default `false` para compatibilidade histórica.
 - `V62` — terminais de PDV tenant-safe, código estável, série única por filial, estado ativo/inativo e permissões RBAC próprias.
 - `V63` — registro tenant-safe e idempotente de operações locais de venda do PDV, com chave por terminal/operação, série derivada do terminal, número local único e checksum SHA-256.
 - `V64` — vínculo tenant-safe e idempotente entre o ACK da venda offline do PDV e um único `PedidoVenda` em rascunho.

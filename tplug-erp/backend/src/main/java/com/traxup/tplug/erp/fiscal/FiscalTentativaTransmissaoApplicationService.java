@@ -12,7 +12,7 @@ import java.util.UUID;
 @Service
 public class FiscalTentativaTransmissaoApplicationService {
     private final JdbcTemplate jdbc;
-    private final FiscalTransmissaoPort transmissoror;
+    private final FiscalTransmissaoPort transmissor;
     private final AuditoriaApplicationService auditoria;
 
     public FiscalTentativaTransmissaoApplicationService(JdbcTemplate jdbc,

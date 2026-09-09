@@ -50,7 +50,7 @@ public class FiscalDocumentoApplicationService {
                 ON CONFLICT (tenant_id, solicitacao_id) DO NOTHING
                 """, tenantId, solicitacaoId);
 
-        ResultadoBase base = jdbc.queryForObject("""
+        var documentos = jdbc.query("""
                 SELECT id, quantidade_itens, valor_bruto, valor_desconto, valor_total
                 FROM fiscal_documentos
                 WHERE tenant_id = ? AND solicitacao_id = ?
@@ -60,9 +60,10 @@ public class FiscalDocumentoApplicationService {
                         rs.getBigDecimal("valor_bruto"),
                         rs.getBigDecimal("valor_desconto"),
                         rs.getBigDecimal("valor_total")), tenantId, solicitacaoId);
-        if (base == null) {
+        if (documentos.isEmpty()) {
             throw new IllegalArgumentException("Snapshot de itens deve ser gerado antes do documento fiscal");
         }
+        ResultadoBase base = documentos.getFirst();
         if (inseridos > 0) {
             auditoria.registrar(tenantId, usuarioId, null, solicitacao.getFilialId(),
                     "ESTRUTURAR_DOCUMENTO", "FISCAL_DOCUMENTO", base.id(),

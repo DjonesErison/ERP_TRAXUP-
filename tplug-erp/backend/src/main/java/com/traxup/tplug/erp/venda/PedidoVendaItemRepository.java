@@ -12,6 +12,7 @@ import java.util.UUID;
 public interface PedidoVendaItemRepository extends JpaRepository<PedidoVendaItem, UUID> {
     List<PedidoVendaItem> findAllByTenantIdAndPedidoVendaIdOrderByCriadoEmAscIdAsc(UUID tenantId, UUID pedidoVendaId);
     Optional<PedidoVendaItem> findByIdAndTenantIdAndPedidoVendaId(UUID id, UUID tenantId, UUID pedidoVendaId);
+    Optional<PedidoVendaItem> findByTenantIdAndPdvSincronizacaoIdAndPdvItemLocalId(UUID tenantId, UUID pdvSincronizacaoId, UUID pdvItemLocalId);
 
     @Query("""
             select i.pedidoVendaId as pedidoVendaId, sum(i.totalItem) as totalLiquido
@@ -23,8 +24,5 @@ public interface PedidoVendaItemRepository extends JpaRepository<PedidoVendaItem
     List<TotalPedido> somarTotaisPorPedidos(@Param("tenantId") UUID tenantId,
                                              @Param("pedidoIds") List<UUID> pedidoIds);
 
-    interface TotalPedido {
-        UUID getPedidoVendaId();
-        BigDecimal getTotalLiquido();
-    }
+    interface TotalPedido { UUID getPedidoVendaId(); BigDecimal getTotalLiquido(); }
 }

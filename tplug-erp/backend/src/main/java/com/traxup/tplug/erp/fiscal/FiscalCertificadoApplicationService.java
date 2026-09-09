@@ -199,7 +199,7 @@ public class FiscalCertificadoApplicationService {
         }
     }
 
-    public public record Resultado(
+    public record Resultado(
             UUID id, UUID filialId, String tipo, String titular,
             String documentoTitularMascarado, String numeroSerie,
             String thumbprintMascarado, OffsetDateTime validadeInicio,

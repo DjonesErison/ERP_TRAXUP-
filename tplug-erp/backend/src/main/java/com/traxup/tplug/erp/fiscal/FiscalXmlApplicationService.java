@@ -87,7 +87,7 @@ public class FiscalXmlApplicationService {
         if (inseridos == 1) {
             auditoria.registrar(tenantId, usuarioId, null, documento.filialId(),
                     "GERAR_XML_HOMOLOGACAO", "FISCAL_DOCUMENTO_XML", xmlId,
-                    "documentoId=" + documentoId + ";versao=1.1;hash=" + hash);
+                    "documentoId=" + documentoId + ";versao=1.2;hash=" + hash);
         }
         return resultado;
     }

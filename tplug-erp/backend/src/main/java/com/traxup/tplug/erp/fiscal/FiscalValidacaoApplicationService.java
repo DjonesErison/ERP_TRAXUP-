@@ -3,8 +3,11 @@ package com.traxup.tplug.erp.fiscal;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -74,6 +77,9 @@ public class FiscalValidacaoApplicationService {
         if (contexto != null) {
             pendencias.addAll(validarPerfil(
                     tenantId, contexto.filialId(), contexto.ambiente(), contexto.regimeTributario()));
+            pendencias.addAll(validarCertificado(
+                    buscarCertificado(tenantId, contexto.filialId()),
+                    OffsetDateTime.now(ZoneOffset.UTC)));
         }
         if (!Boolean.TRUE.equals(regraAplicada)) pendencias.add(new Pendencia("REGRA_FISCAL_NAO_APLICADA", 1));
         if (c == null || c.itens() == 0) pendencias.add(new Pendencia("SEM_ITENS", 1));
@@ -103,6 +109,32 @@ public class FiscalValidacaoApplicationService {
         return List.copyOf(pendencias);
     }
 
+    private Optional<Certificado> buscarCertificado(UUID tenantId, UUID filialId) {
+        return jdbc.query("""
+                SELECT validade_inicio, validade_fim
+                FROM fiscal_certificados_digitais
+                WHERE tenant_id = ? AND filial_id = ? AND ativo = TRUE
+                """, (rs, n) -> new Certificado(
+                        rs.getObject("validade_inicio", OffsetDateTime.class),
+                        rs.getObject("validade_fim", OffsetDateTime.class)),
+                tenantId, filialId).stream().findFirst();
+    }
+
+    List<Pendencia> validarCertificado(Optional<Certificado> certificado,
+                                      OffsetDateTime agora) {
+        if (certificado.isEmpty()) {
+            return List.of(new Pendencia("CERTIFICADO_FISCAL_NAO_CONFIGURADO", 1));
+        }
+        if (certificado.get().validadeInicio().isAfter(agora)) {
+            return List.of(new Pendencia("CERTIFICADO_FISCAL_AINDA_NAO_VALIDO", 1));
+        }
+        if (!certificado.get().validadeFim().isAfter(agora)) {
+            return List.of(new Pendencia("CERTIFICADO_FISCAL_EXPIRADO", 1));
+        }
+        return List.of();
+    }
+
+    record Certificado(OffsetDateTime validadeInicio, OffsetDateTime validadeFim) {}
     private record ContextoDocumento(UUID filialId, String ambiente, String regimeTributario) {}
     private record Contagens(int itens, int ncmInvalidos, int unidadesInvalidas,
                              int quantidadesInvalidas, int totaisInvalidos) {}

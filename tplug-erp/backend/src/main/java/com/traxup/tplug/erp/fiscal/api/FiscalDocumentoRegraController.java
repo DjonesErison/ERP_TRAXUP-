@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/fiscal/documentdocumentos")
+@RequestMapping("/api/v1/fiscal/documentos")
 public class FiscalDocumentoRegraController {
     private final FiscalDocumentoRegraApplicationService service;
     private final TenantContext tenantContext;

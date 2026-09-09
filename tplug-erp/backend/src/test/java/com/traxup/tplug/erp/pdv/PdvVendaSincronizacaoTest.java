@@ -19,4 +19,20 @@ class PdvVendaSincronizacaoTest {
         assertThat(sync.corresponde(11L, checksum)).isFalse();
         assertThat(sync.corresponde(10L, "b".repeat(64))).isFalse();
     }
+
+    @Test
+    void deveMarcarOperacaoComoProcessadaUmaUnicaVezParaMesmoPedido() {
+        PdvVendaSincronizacao sync = new PdvVendaSincronizacao(
+                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                2, 42L, "c".repeat(64), Instant.parse("2026-09-08T20:00:00Z"));
+        UUID pedidoId = UUID.randomUUID();
+
+        sync.marcarProcessada(pedidoId);
+        Instant processadoEm = sync.getProcessadoEm();
+        sync.marcarProcessada(pedidoId);
+
+        assertThat(sync.isProcessada()).isTrue();
+        assertThat(sync.getPedidoVendaId()).isEqualTo(pedidoId);
+        assertThat(sync.getProcessadoEm()).isEqualTo(processadoEm);
+    }
 }

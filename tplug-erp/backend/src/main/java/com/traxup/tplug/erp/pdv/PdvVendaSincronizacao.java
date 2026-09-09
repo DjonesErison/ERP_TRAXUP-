@@ -32,6 +32,10 @@ public class PdvVendaSincronizacao {
     private Instant ocorridoEm;
     @Column(name = "recebido_em", nullable = false)
     private Instant recebidoEm;
+    @Column(name = "pedido_venda_id")
+    private UUID pedidoVendaId;
+    @Column(name = "processado_em")
+    private Instant processadoEm;
 
     protected PdvVendaSincronizacao() {}
 
@@ -58,6 +62,17 @@ public class PdvVendaSincronizacao {
         return this.numeroLocal.equals(numeroLocal) && this.checksum.equals(checksum);
     }
 
+    public boolean isProcessada() { return pedidoVendaId != null && processadoEm != null; }
+
+    public void marcarProcessada(UUID pedidoVendaId) {
+        if (pedidoVendaId == null) throw new IllegalArgumentException("Pedido de venda e obrigatorio");
+        if (isProcessada() && !this.pedidoVendaId.equals(pedidoVendaId)) {
+            throw new IllegalStateException("Sincronizacao ja vinculada a outro pedido de venda");
+        }
+        this.pedidoVendaId = pedidoVendaId;
+        if (this.processadoEm == null) this.processadoEm = Instant.now();
+    }
+
     public UUID getId() { return id; }
     public UUID getTenantId() { return tenantId; }
     public UUID getFilialId() { return filialId; }
@@ -68,4 +83,6 @@ public class PdvVendaSincronizacao {
     public String getChecksum() { return checksum; }
     public Instant getOcorridoEm() { return ocorridoEm; }
     public Instant getRecebidoEm() { return recebidoEm; }
+    public UUID getPedidoVendaId() { return pedidoVendaId; }
+    public Instant getProcessadoEm() { return processadoEm; }
 }

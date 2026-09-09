@@ -78,7 +78,7 @@ public class PdvVendaProcessamentoApplicationService {
                 "PROCESSAR", "PDV_VENDA", sincronizacao.getId(),
                 "pedidoVendaId=" + faturado.getId() + ";terminalId=" + terminalId + ";numeroLocal=" + numeroLocal);
 
-        return new Resultado(sincronizacao, faturado, ack.repetida());
+        return new Resultado(sincronizacao, faturado, false);
     }
 
     public record ItemComando(UUID produtoId, UUID gradeId, BigDecimal quantidade,

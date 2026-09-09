@@ -15,11 +15,12 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 - `V66` — permissões RBAC específicas de pós-venda do PDV.
 - `V67` — configuração operacional tenant-safe por terminal.
 - `V68` — sessões de caixa tenant-safe por terminal, vinculadas a conta financeira do tipo CAIXA, com saldo de abertura, saldo de fechamento, diferença e permissões RBAC próprias.
+- `V69` — contrato persistido e idempotente entre venda faturada e módulo fiscal, separado por modelo NFCE/NFE e ambiente HOMOLOGACAO/PRODUCAO, com RBAC fiscal próprio.
 
 ## Regras para novas migrations
 
-- Não editar migrations já aplicadas (`V1`–`V68`).
-- A próxima migration deve usar `V69`.
+- Não editar migrations já aplicadas (`V1`–`V69`).
+- A próxima migration deve usar `V70`.
 - Migrations devem executar do zero em banco limpo no CI.
 - Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema e do catálogo RBAC versionado.
 - Toda constraint multi-tenant nova deve ser analisada também no nível do banco, não apenas na aplicação.

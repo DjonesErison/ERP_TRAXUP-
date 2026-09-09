@@ -48,6 +48,21 @@ Nesta fatia:
 
 Essa separação é intencional: primeiro provamos o vínculo comercial idempotente; depois adicionamos itens, pagamento e fechamento em entregas independentes.
 
+## Itens comerciais offline — V65
+
+Endpoint: `POST /api/v1/pdv/sincronizacoes/vendas/{sincronizacaoId}/itens`.
+
+Cada item criado localmente recebe um `itemLocalId` UUID estável. A identidade persistida no servidor é `(tenant_id, pdv_sincronizacao_id, pdv_item_local_id)`.
+
+- o ACK precisa pertencer ao tenant autenticado e já possuir `PedidoVenda` vinculado;
+- o pedido vinculado permanece obrigatoriamente em `RASCUNHO` para aceitar itens;
+- produto, grade, quantidade, preço e vigência de combo continuam validados pelo `PedidoVendaItemApplicationService` oficial;
+- primeiro envio cria o item no pedido;
+- replay com a mesma identidade e mesmo conteúdo devolve o item existente, sem duplicação;
+- replay com produto, grade, quantidade, preço ou pedido divergente é rejeitado;
+- a V65 exige que sincronização e item pertençam ao mesmo tenant também no banco, usando FK composta `(tenant_id, pdv_sincronizacao_id)`;
+- pagamento, abertura/faturamento, movimentação de estoque e financeiro continuam fora desta fatia.
+
 ## Segurança
 
 - permissão `PDV_SINCRONIZAR`;
@@ -55,15 +70,17 @@ Essa separação é intencional: primeiro provamos o vínculo comercial idempote
 - terminal precisa pertencer ao tenant e estar ativo;
 - filial e série vêm do cadastro tenant-safe do terminal;
 - checksum é validado como SHA-256;
-- criação do ACK e vínculo com pedido são auditados sem registrar payload comercial sensível.
+- criação do ACK e vínculo com pedido são auditados sem registrar payload comercial sensível;
+- itens reutilizam as validações e auditoria já existentes no núcleo de vendas.
 
 ## Persistência
 
 - `V63` cria `pdv_vendas_sincronizacao` como ACK durável da operação local;
-- `V64` adiciona `pedido_venda_id` e `pedido_venda_vinculado_em`, com consistência de nulidade, unicidade tenant-safe e FK composta para `pedidos_venda`.
+- `V64` adiciona `pedido_venda_id` e `pedido_venda_vinculado_em`, com consistência de nulidade, unicidade tenant-safe e FK composta para `pedidos_venda`;
+- `V65` adiciona a identidade local idempotente dos itens do PDV e reforça o vínculo tenant-safe entre item e ACK.
 
 ## Próxima fatia do Bloco 2
 
-Adicionar itens do payload comercial ao pedido em `RASCUNHO`, reutilizando `PedidoVendaItemApplicationService`, mantendo replay idempotente e ainda sem faturamento automático. Pagamento e faturamento permanecem fora dessa próxima fatia.
+Adicionar configuração de pagamento ao pedido em `RASCUNHO`, preservando a identidade da operação offline e sem faturamento automático. A abertura/faturamento e seus efeitos de estoque/financeiro permanecem em uma entrega posterior e controlada.
 
 O SQLite continua responsabilidade do aplicativo PDV local. A TRAXUP Central permanece sem alteração de runtime.

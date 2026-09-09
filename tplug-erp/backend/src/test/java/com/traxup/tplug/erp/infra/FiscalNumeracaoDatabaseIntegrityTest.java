@@ -52,12 +52,19 @@ class FiscalNumeracaoDatabaseIntegrityTest {
     }
 
     @Test
-    void rejeitaSerieENumeroForaDoIntervalo() {
-        UUID tenantId = inserirTenant("Tenant Intervalos Fiscais");
-        UUID filialId = inserirFilial(tenantId, "Filial Intervalos Fiscais");
+    void rejeitaSerieForaDoIntervalo() {
+        UUID tenantId = inserirTenant("Tenant Serie Invalida");
+        UUID filialId = inserirFilial(tenantId, "Filial Serie Invalida");
 
         assertThrows(DataIntegrityViolationException.class, () ->
                 inserirNumerador(tenantId, filialId, "NFE", "HOMOLOGACAO", 0));
+    }
+
+    @Test
+    void rejeitaNumeroForaDoIntervalo() {
+        UUID tenantId = inserirTenant("Tenant Numero Invalido");
+        UUID filialId = inserirFilial(tenantId, "Filial Numero Invalido");
+
         assertThrows(DataIntegrityViolationException.class, () -> jdbc.update("""
                 INSERT INTO fiscal_numeradores
                     (tenant_id, filial_id, modelo, ambiente, serie, ultimo_numero)

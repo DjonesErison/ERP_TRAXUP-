@@ -65,14 +65,16 @@ export class SimplePageComponent {
     },
     'Testes':{
       subtitle:'Visão operacional da qualidade e validações automatizadas.',
-      summary:'O status abaixo registra evidências conhecidas do projeto e diferencia CI da Central dos testes do backend.',
+      summary:'Snapshot operacional atualizado após o saneamento da Central. CI da Central e testes do backend são acompanhados separadamente.',
       items:[
-        {title:'Central Angular — CI',detail:'Pipeline executa instalação de dependências e build Angular a cada PR/push relevante.',status:'Verde no último merge da Central'},
-        {title:'Central Angular — Docker',detail:'Pipeline publica ghcr.io/djoneserison/traxup-central:latest após push na main.',status:'Verde no último deploy'},
-        {title:'Backend — testes automatizados',detail:'Último marco conhecido incluía suíte de testes e validação de migrations antes do Docker.',status:'Último marco consolidado: verde'},
+        {title:'Central Angular — CI',detail:'Workflow TRAXUP Central - CI executado na main para o commit f1fef621 do saneamento completo.',status:'SUCESSO — 09/09/2026'},
+        {title:'Central Angular — Docker',detail:'Workflow TRAXUP Central - Docker construiu e publicou a imagem correspondente ao commit f1fef621.',status:'SUCESSO — 09/09/2026'},
+        {title:'Produção — origem local',detail:'Container traxup-central respondeu HTTP 200 em 127.0.0.1:8081 após a atualização.',status:'VALIDADO'},
+        {title:'Produção — domínio público',detail:'central.traxup.com.br respondeu HTTP/2 200 através de Caddy + Nginx após o deploy.',status:'VALIDADO'},
+        {title:'Backend — testes automatizados',detail:'Último marco consolidado do backend registrava 375 testes, migrations e Docker verdes.',status:'Último marco conhecido: verde'},
         {title:'Migrations',detail:'Validação obrigatória no CI do backend antes de aceitar merge.',status:'Obrigatória'},
-        {title:'Fiscal',detail:'Cenários de Perfil Fiscal por filial e evolução de NF-e/NFC-e devem permanecer cobertos por testes.',status:'Em evolução'},
-        {title:'PDV offline',detail:'Testes de sincronização, conflito, séries por terminal e recuperação de conexão ainda precisam ser ampliados.',status:'Planejado'}
+        {title:'Fiscal',detail:'Perfil Fiscal por Filial permanece como marco implementado; cobertura deve acompanhar a evolução de NF-e/NFC-e.',status:'Em evolução'},
+        {title:'PDV offline',detail:'Sincronização, conflitos, séries por terminal e recuperação de conexão exigirão suíte dedicada.',status:'Planejado'}
       ]
     },
     'Histórico':{
@@ -81,32 +83,37 @@ export class SimplePageComponent {
       items:[
         {title:'Central Angular 19 criada',detail:'Primeira versão visual da ERP Central do Produto, com navegação e páginas-base.',status:'Concluído'},
         {title:'Container traxup-central',detail:'Frontend publicado em Docker/Nginx e distribuído pelo GitHub Container Registry.',status:'Concluído'},
-        {title:'Domínio oficial',detail:'central.traxup.com.br configurado com DNS, Caddy, HTTPS e reverse proxy para a Central.',status:'Concluído'},
-        {title:'Perfil Fiscal por Filial',detail:'Último marco backend consolidado antes desta rodada de atualização da Central.',status:'Concluído'},
+        {title:'Domínio oficial',detail:'central.traxup.com.br configurado com Caddy, HTTPS e reverse proxy para a Central.',status:'Concluído'},
+        {title:'Perfil Fiscal por Filial',detail:'Marco backend com isolamento por tenant, validação fiscal, RBAC, auditoria e persistência.',status:'Concluído'},
         {title:'PR #212',detail:'Dashboard, módulos, funcionalidades e roadmap foram saneados para retirar dados fictícios.',status:'Mergeada'},
-        {title:'Saneamento completo da Central',detail:'Substituição dos placeholders de regras, referências, dependências, testes, histórico e GitHub por conteúdo real.',status:'Em implementação'}
+        {title:'PR #214',detail:'Regras, referências, dependências, testes, histórico, GitHub, configurações, ideias e documentação receberam conteúdo consolidado.',status:'Mergeada em 09/09/2026'},
+        {title:'Deploy da Central saneada',detail:'CI e Docker verdes; nova imagem publicada no GHCR e container de produção recriado com validação HTTP 200 interna e externa.',status:'Produção validada — 09/09/2026'},
+        {title:'Próxima evolução da Central',detail:'Automatizar snapshots de GitHub/CI e reduzir etapas manuais de implantação.',status:'Em andamento'}
       ]
     },
     'GitHub':{
       subtitle:'Repositórios, CI/CD e situação de integração.',
-      summary:'Visão resumida do repositório da Central e dos processos de entrega atualmente confirmados.',
+      summary:'Snapshot operacional confirmado em 09/09/2026. Dados históricos são registrados sem apresentar integração automática como pronta.',
       items:[
-        {title:'ERP_TRAXUP-',detail:'Repositório privado da ERP Central do Produto em Angular.',status:'Ativo'},
-        {title:'Branch main',detail:'Branch de produção da Central; merges nela disparam CI e publicação Docker.',status:'Ativa'},
-        {title:'TRAXUP Central - CI',detail:'Valida build Angular em pull requests e push.',status:'Ativo'},
-        {title:'TRAXUP Central - Docker',detail:'Gera e publica a imagem traxup-central:latest no GHCR.',status:'Ativo'},
-        {title:'PR #212',detail:'Atualização consolidada de status do produto.',status:'Mergeada'},
-        {title:'Deploy VPS',detail:'Atualização da imagem ainda é executada manualmente na VPS; automação é próxima melhoria de infraestrutura.',status:'Parcial'}
+        {title:'ERP_TRAXUP-',detail:'Repositório privado da Central TRAXUP em Angular.',status:'Ativo'},
+        {title:'Branch main',detail:'Produção da Central atualmente no commit f1fef621 após merge da PR #214.',status:'Atualizada'},
+        {title:'PR #212',detail:'Atualização consolidada de Dashboard, módulos, funcionalidades e roadmap.',status:'Mergeada'},
+        {title:'PR #214',detail:'Saneamento das telas restantes da Central.',status:'Mergeada'},
+        {title:'TRAXUP Central - CI',detail:'Run pós-merge do commit f1fef621 concluída sem erro.',status:'SUCCESS'},
+        {title:'TRAXUP Central - Docker',detail:'Run pós-merge do commit f1fef621 concluída sem erro e imagem latest publicada.',status:'SUCCESS'},
+        {title:'Imagem de produção',detail:'ghcr.io/djoneserison/traxup-central:latest — digest implantado: sha256:bcf7bd2e6041f5ec21ae1c8702144fabe44e99741fcaf8073ddd22a371d1b25e.',status:'Em produção'},
+        {title:'Deploy VPS',detail:'Pull e recriação do container ainda são manuais; automação segura de deploy é a próxima melhoria de infraestrutura.',status:'Parcial'}
       ]
     },
     'Configurações':{
       subtitle:'Ambientes e parâmetros públicos de infraestrutura.',
       summary:'Somente informações não sensíveis são exibidas aqui. Tokens, senhas, chaves e segredos nunca devem aparecer na Central.',
       items:[
-        {title:'Central',detail:'https://central.traxup.com.br',status:'Produção'},
+        {title:'Central',detail:'https://central.traxup.com.br',status:'Produção — HTTP 200 validado'},
         {title:'Container',detail:'ghcr.io/djoneserison/traxup-central:latest',status:'Ativo'},
-        {title:'Porta local',detail:'127.0.0.1:8081 → 80 no container da Central.',status:'Ativa'},
-        {title:'Proxy',detail:'Caddy com HTTPS automático e reverse proxy para a Central.',status:'Ativo'},
+        {title:'Imagem implantada',detail:'Digest sha256:bcf7bd2e6041f5ec21ae1c8702144fabe44e99741fcaf8073ddd22a371d1b25e.',status:'Validada em 09/09/2026'},
+        {title:'Porta local',detail:'127.0.0.1:8081 → 80 no container da Central.',status:'HTTP 200 validado'},
+        {title:'Proxy',detail:'Caddy com HTTPS e reverse proxy para Nginx da Central.',status:'Ativo'},
         {title:'Diretório padrão',detail:'/opt/traxup para arquivos específicos de implantação e configuração do TRAXUP.',status:'Regra de infraestrutura'},
         {title:'Segredos',detail:'Devem permanecer apenas em mecanismos seguros de ambiente/CI e nunca no frontend.',status:'Protegidos'}
       ]

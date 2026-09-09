@@ -57,8 +57,9 @@ class FiscalPerfilFilialApplicationServiceTest {
         UUID filialId = UUID.randomUUID();
         FiscalPerfilFilial existente = new FiscalPerfilFilial(
                 tenantId, filialId, "SIMPLES_NACIONAL", (short) 1, "HOMOLOGACAO", 1, 1);
+        Filial filial = filialAtiva(UUID.randomUUID());
         when(filialRepository.findByIdAndTenantId(filialId, tenantId))
-                .thenReturn(Optional.of(filialAtiva(UUID.randomUUID())));
+                .thenReturn(Optional.of(filial));
         when(repository.findByTenantIdAndFilialId(tenantId, filialId)).thenReturn(Optional.of(existente));
         when(repository.saveAndFlush(existente)).thenReturn(existente);
 

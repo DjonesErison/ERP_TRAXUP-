@@ -1,12 +1,12 @@
 # Fase 7 — Bloco 2: sincronização idempotente do PDV
 
-Primeira entrega do Bloco 2 da Fase 7. Esta etapa estabelece o contrato de confirmação entre uma venda persistida localmente no terminal e a nuvem, sem ainda substituir o modelo comercial de `PedidoVenda`.
+O Bloco 2 estabelece o contrato entre a venda persistida localmente no terminal e a nuvem, preservando idempotência e reutilizando o núcleo comercial oficial de `PedidoVenda`.
 
 ## Objetivo
 
-O PDV deve poder registrar uma operação no SQLite local, reenviar a mesma operação após falha de rede e receber a mesma confirmação do servidor sem duplicar a venda lógica.
+O PDV deve poder registrar uma operação no SQLite local, reenviar a mesma operação após falha de rede e receber a mesma confirmação do servidor sem duplicar a venda lógica nem os efeitos de estoque/financeiro.
 
-## Contrato
+## Contrato de ACK
 
 Endpoint: `POST /api/v1/pdv/sincronizacoes/vendas`.
 
@@ -20,7 +20,7 @@ Campos enviados pelo terminal:
 
 A série não é aceita do cliente. Ela é derivada do terminal cadastrado na nuvem.
 
-## Idempotência
+## Idempotência do ACK
 
 A chave idempotente é `(tenant_id, terminal_id, operacao_local_id)`.
 
@@ -29,21 +29,53 @@ A chave idempotente é `(tenant_id, terminal_id, operacao_local_id)`.
 - reenvio da mesma operação com conteúdo diferente: rejeitado;
 - reutilização do mesmo número local dentro da série/filial: rejeitada.
 
+## Processamento comercial
+
+Endpoint: `POST /api/v1/pdv/sincronizacoes/vendas/processar`.
+
+Além dos campos do ACK, o payload transporta:
+
+- cliente opcional;
+- forma e condição de pagamento;
+- observação opcional;
+- itens com produto, grade opcional, quantidade, preço unitário e desconto opcional.
+
+O backend não cria um segundo modelo de venda para o PDV. Ele reutiliza os serviços oficiais de `PedidoVenda` para:
+
+1. criar o pedido com filial derivada do terminal;
+2. incluir e validar os itens tenant-safe;
+3. aplicar descontos;
+4. validar forma e condição de pagamento;
+5. abrir o pedido;
+6. faturar usando as regras já existentes de estoque, financeiro e auditoria;
+7. marcar o ACK como processado somente após o faturamento concluir na mesma transação.
+
+O número do pedido de venda é gerado de forma determinística a partir do identificador da sincronização, mantendo o limite de 40 caracteres e impedindo dependência de numeração enviada pelo terminal.
+
+Se a operação comercial já estiver processada, o replay retorna o mesmo `pedidoVendaId` e não cria novo pedido, nova baixa de estoque ou novo financeiro.
+
 ## Segurança
 
 - permissão `PDV_SINCRONIZAR`;
 - tenant sempre vem do `TenantContext` autenticado;
 - terminal precisa pertencer ao tenant e estar ativo;
 - filial e série vêm do cadastro tenant-safe do terminal;
-- checksum é validado como SHA-256;
-- confirmação inicial é auditada sem registrar o payload comercial completo.
+- produto, grade, cliente, forma e condição de pagamento são validados pelos serviços de domínio existentes;
+- checksum é validado como SHA-256 e comparado com o fingerprint persistido em reenvios;
+- confirmação e processamento são auditados sem registrar payload comercial sensível completo.
 
 ## Persistência
 
-A migration `V63` cria `pdv_vendas_sincronizacao` e mantém vínculo composto com filial e terminal. O registro funciona como ACK durável da operação local.
+- `V63` cria `pdv_vendas_sincronizacao` como ACK durável da operação local;
+- `V64` adiciona `pedido_venda_id` e `processado_em`, com vínculo composto tenant-safe ao pedido e constraint que impede estado parcial persistido.
 
-## Próxima fatia do Bloco 2
+## Próximas fatias do Bloco 2
 
-A próxima entrega deve transportar o payload comercial da venda (itens, totais e pagamentos), convertê-lo de forma idempotente para o núcleo de vendas existente e só então marcar a operação local como totalmente processada. O SQLite continua responsabilidade do aplicativo PDV local; este backend fornece o contrato seguro de sincronização.
+Ainda ficam para evolução do aplicativo PDV local e do contrato de sincronização:
+
+- armazenamento e fila SQLite no aplicativo desktop;
+- política de retentativa/backoff e confirmação local após ACK;
+- suporte a múltiplos pagamentos por venda quando o núcleo comercial adotar divisão de pagamentos;
+- transporte de dados fiscais específicos somente por contrato com o módulo fiscal isolado.
 
 A TRAXUP Central permanece sem alteração de runtime.

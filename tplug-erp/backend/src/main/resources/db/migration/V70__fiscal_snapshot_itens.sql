@@ -1,3 +1,6 @@
+ALTER TABLE pedido_venda_itens
+    ADD CONSTRAINT uq_pedido_venda_itens_tenant_id UNIQUE (tenant_id, id);
+
 CREATE TABLE fiscal_solicitacao_itens (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,

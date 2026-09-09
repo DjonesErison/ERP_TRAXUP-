@@ -46,7 +46,7 @@ public class FiscalTentativaApplicationService {
                   ON d.tenant_id = c.tenant_id AND d.id = c.documento_id
                 WHERE c.tenant_id = ? AND c.id = ?
                 FOR UPDATE OF c, d
-               ელობის""".replace("               ელობის", ""),
+                """,
                 (rs, n) -> new Origem(
                         rs.getObject("correcao_id", UUID.class),
                         rs.getObject("rejeicao_id", UUID.class),

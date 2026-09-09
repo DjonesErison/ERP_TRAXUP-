@@ -70,6 +70,20 @@ public class FiscalSolicitacaoApplicationService {
         }
     }
 
+    @Transactional
+    public ResultadoProcessamento iniciarProcessamento(UUID tenantId, UUID usuarioId, UUID solicitacaoId) {
+        FiscalSolicitacao solicitacao = buscar(tenantId, solicitacaoId);
+        boolean iniciada = solicitacao.iniciarProcessamento();
+        if (iniciada) {
+            auditoria.registrar(tenantId, usuarioId, null, solicitacao.getFilialId(),
+                    "INICIAR_PROCESSAMENTO", "FISCAL_SOLICITACAO", solicitacao.getId(),
+                    "pedidoVendaId=" + solicitacao.getPedidoVendaId()
+                            + ";modelo=" + solicitacao.getModelo()
+                            + ";ambiente=" + solicitacao.getAmbiente());
+        }
+        return new ResultadoProcessamento(solicitacao, !iniciada);
+    }
+
     private String normalizar(String valor, Set<String> permitidos, String mensagem) {
         if (valor == null || valor.isBlank()) throw new IllegalArgumentException(mensagem);
         String normalizado = valor.trim().toUpperCase(Locale.ROOT).replace("-", "");
@@ -78,4 +92,5 @@ public class FiscalSolicitacaoApplicationService {
     }
 
     public record Resultado(FiscalSolicitacao solicitacao, boolean repetida) {}
+    public record ResultadoProcessamento(FiscalSolicitacao solicitacao, boolean repetida) {}
 }

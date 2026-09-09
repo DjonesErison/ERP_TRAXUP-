@@ -40,6 +40,14 @@ public class FiscalSolicitacaoController {
         return FiscalSolicitacaoResponse.from(service.buscar(tenantContext.tenantId(), solicitacaoId), false);
     }
 
+    @PostMapping("/{solicitacaoId}/processamento")
+    @PreAuthorize("hasAuthority('FISCAL_DOCUMENTO_EMITIR')")
+    public FiscalSolicitacaoResponse iniciarProcessamento(@PathVariable UUID solicitacaoId) {
+        var resultado = service.iniciarProcessamento(
+                tenantContext.tenantId(), tenantContext.usuarioIdOuNulo(), solicitacaoId);
+        return FiscalSolicitacaoResponse.from(resultado.solicitacao(), resultado.repetida());
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('FISCAL_DOCUMENTO_EMITIR')")
     public ResponseEntity<FiscalSolicitacaoResponse> solicitar(@Valid @RequestBody CriarFiscalSolicitacaoRequest request) {

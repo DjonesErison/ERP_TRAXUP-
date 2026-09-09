@@ -94,4 +94,50 @@ class FiscalSolicitacaoApplicationServiceTest {
                 () -> service.solicitar(tenantId, null, pedidoId, "NFCE", "PRODUCAO"));
         verify(repository, never()).saveAndFlush(any());
     }
+
+    @Test
+    void iniciaProcessamentoPendenteComAuditoria() {
+        UUID tenantId = UUID.randomUUID();
+        UUID usuarioId = UUID.randomUUID();
+        UUID solicitacaoId = UUID.randomUUID();
+        UUID filialId = UUID.randomUUID();
+        FiscalSolicitacao solicitacao = new FiscalSolicitacao(
+                tenantId, filialId, UUID.randomUUID(), "NFCE", "HOMOLOGACAO");
+        when(repository.findByIdAndTenantId(solicitacaoId, tenantId)).thenReturn(Optional.of(solicitacao));
+
+        var resultado = service.iniciarProcessamento(tenantId, usuarioId, solicitacaoId);
+
+        assertFalse(resultado.repetida());
+        assertEquals("PROCESSANDO", resultado.solicitacao().getStatus());
+        verify(auditoria).registrar(eq(tenantId), eq(usuarioId), isNull(), eq(filialId),
+                eq("INICIAR_PROCESSAMENTO"), eq("FISCAL_SOLICITACAO"), eq(solicitacao.getId()), anyString());
+    }
+
+    @Test
+    void replayDoProcessamentoEIdempotenteESemNovaAuditoria() {
+        UUID tenantId = UUID.randomUUID();
+        UUID solicitacaoId = UUID.randomUUID();
+        FiscalSolicitacao solicitacao = new FiscalSolicitacao(
+                tenantId, UUID.randomUUID(), UUID.randomUUID(), "NFE", "PRODUCAO");
+        solicitacao.iniciarProcessamento();
+        when(repository.findByIdAndTenantId(solicitacaoId, tenantId)).thenReturn(Optional.of(solicitacao));
+
+        var resultado = service.iniciarProcessamento(tenantId, null, solicitacaoId);
+
+        assertTrue(resultado.repetida());
+        assertEquals("PROCESSANDO", resultado.solicitacao().getStatus());
+        verifyNoInteractions(auditoria);
+    }
+
+    @Test
+    void processamentoNaoEncontraSolicitacaoDeOutroTenant() {
+        UUID tenantId = UUID.randomUUID();
+        UUID solicitacaoId = UUID.randomUUID();
+        when(repository.findByIdAndTenantId(solicitacaoId, tenantId)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class,
+                () -> service.iniciarProcessamento(tenantId, null, solicitacaoId));
+        verifyNoInteractions(auditoria);
+    }
+
 }

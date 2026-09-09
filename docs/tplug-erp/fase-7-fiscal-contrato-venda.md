@@ -20,9 +20,11 @@ Base: `/api/v1/fiscal/solicitacoes`
 
 - `GET /api/v1/fiscal/solicitacoes` — requer `FISCAL_DOCUMENTO_LER`;
 - `GET /api/v1/fiscal/solicitacoes/{id}` — requer `FISCAL_DOCUMENTO_LER`;
-- `POST /api/v1/fiscal/solicitacoes` — requer `FISCAL_DOCUMENTO_EMITIR`.
+- `POST /api/v1/fiscal/solicitacoes` — requer `FISCAL_DOCUMENTO_EMITIR`;
+- `POST /api/v1/fiscal/solicitacoes/{id}/processamento` — inicia `PENDENTE → PROCESSANDO`, requer `FISCAL_DOCUMENTO_EMITIR` e aceita replay idempotente.
 
-O `POST` retorna HTTP `201` na primeira criação e HTTP `200` em replay idêntico.
+O `POST` de criação retorna HTTP `201` na primeira chamada e HTTP `200` em replay idêntico.
+O início do processamento é auditado apenas na primeira transição; chamadas repetidas em `PROCESSANDO` não duplicam auditoria.
 
 ## Fora do escopo desta fatia
 

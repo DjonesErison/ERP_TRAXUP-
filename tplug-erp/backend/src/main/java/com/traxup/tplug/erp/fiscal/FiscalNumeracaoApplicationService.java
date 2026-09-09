@@ -84,15 +84,17 @@ public class FiscalNumeracaoApplicationService {
         }
 
         long numero = numeros.getFirst();
-        Instant numeradoEm = Instant.now();
-        int atualizados = jdbc.update("""
+        var instantes = jdbc.query("""
                 UPDATE fiscal_documentos
-                SET serie = ?, numero = ?, numerado_em = ?
+                SET serie = ?, numero = ?, numerado_em = CURRENT_TIMESTAMP
                 WHERE tenant_id = ? AND id = ? AND numero IS NULL
-                """, serie, numero, numeradoEm, tenantId, documentoId);
-        if (atualizados != 1) {
+                RETURNING numerado_em
+                """, (rs, n) -> rs.getTimestamp("numerado_em").toInstant(),
+                serie, numero, tenantId, documentoId);
+        if (instantes.size() != 1) {
             throw new IllegalStateException("Documento fiscal nao pode receber numeracao");
         }
+        Instant numeradoEm = instantes.getFirst();
 
         auditoria.registrar(tenantId, usuarioId, null, documento.filialId(),
                 "NUMERAR_DOCUMENTO", "FISCAL_DOCUMENTO", documentoId,

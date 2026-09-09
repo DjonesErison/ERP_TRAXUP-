@@ -14,7 +14,8 @@ import java.util.regex.Pattern;
 public class FiscalRegraOperacaoApplicationService {
     private static final Pattern UF = Pattern.compile("[A-Z]{2}");
     private static final Pattern CFOP = Pattern.compile("[0-9]{4}");
-    private static final Pattern CODIGO = Pattern.compile("[0-9]{3}");
+    private static final Pattern CST = Pattern.compile("[0-9]{2}");
+    private static final Pattern CSOSN = Pattern.compile("[0-9]{3}");
 
     private final JdbcTemplate jdbc;
     private final AuditoriaApplicationService auditoria;
@@ -83,11 +84,11 @@ public class FiscalRegraOperacaoApplicationService {
         if (!UF.matcher(uf).matches()) throw new IllegalArgumentException("UF de destino invalida");
         if (!CFOP.matcher(cfop).matches()) throw new IllegalArgumentException("CFOP invalido");
         if (regime.equals("SIMPLES_NACIONAL")) {
-            if (csosn == null || !CODIGO.matcher(csosn).matches() || cst != null)
+            if (csosn == null || !CSOSN.matcher(csosn).matches() || cst != null)
                 throw new IllegalArgumentException("Simples Nacional exige apenas CSOSN com 3 digitos");
         } else if (regime.equals("REGIME_NORMAL")) {
-            if (cst == null || !CODIGO.matcher(cst).matches() || csosn != null)
-                throw new IllegalArgumentException("Regime Normal exige apenas CST ICMS com 3 digitos");
+            if (cst == null || !CST.matcher(cst).matches() || csosn != null)
+                throw new IllegalArgumentException("Regime Normal exige apenas CST ICMS com 2 digitos");
         } else throw new IllegalArgumentException("Regime tributario invalido");
     }
 

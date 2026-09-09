@@ -77,8 +77,9 @@ class FiscalPerfilFilialApplicationServiceTest {
     void rejeitaCrtIncompativelComRegime() {
         UUID tenantId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
+        Filial filial = filialAtiva(UUID.randomUUID());
         when(filialRepository.findByIdAndTenantId(filialId, tenantId))
-                .thenReturn(Optional.of(filialAtiva(UUID.randomUUID())));
+                .thenReturn(Optional.of(filial));
 
         assertThrows(IllegalArgumentException.class, () -> service.salvar(
                 tenantId, null, filialId, "SIMPLES_NACIONAL", (short) 3, "PRODUCAO", 1, 1));
@@ -100,8 +101,9 @@ class FiscalPerfilFilialApplicationServiceTest {
     void rejeitaSerieForaDoIntervaloFiscal() {
         UUID tenantId = UUID.randomUUID();
         UUID filialId = UUID.randomUUID();
+        Filial filial = filialAtiva(UUID.randomUUID());
         when(filialRepository.findByIdAndTenantId(filialId, tenantId))
-                .thenReturn(Optional.of(filialAtiva(UUID.randomUUID())));
+                .thenReturn(Optional.of(filial));
 
         assertThrows(IllegalArgumentException.class, () -> service.salvar(
                 tenantId, null, filialId, "REGIME_NORMAL", (short) 3, "HOMOLOGACAO", 0, 1));

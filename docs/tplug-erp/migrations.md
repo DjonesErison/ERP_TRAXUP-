@@ -67,11 +67,12 @@ As migrations abaixo pertencem ao histórico oficial do backend e são imutávei
 - `V61` — modo opcional de contagem cega por sessão de inventário, com default `false` para compatibilidade histórica.
 - `V62` — terminais de PDV tenant-safe, código estável, série única por filial, estado ativo/inativo e permissões RBAC próprias.
 - `V63` — registro tenant-safe e idempotente de operações locais de venda do PDV, com chave por terminal/operação, série derivada do terminal, número local único e checksum SHA-256.
+- `V64` — vínculo tenant-safe e idempotente entre o ACK da venda offline do PDV e um único `PedidoVenda` em rascunho.
 
 ## Regras para novas migrations
 
-- Não editar migrations já aplicadas (`V1`–`V63`).
-- A próxima migration deve usar `V64`.
+- Não editar migrations já aplicadas (`V1`–`V64`).
+- A próxima migration deve usar `V65`.
 - Migrations devem executar do zero em banco limpo no CI.
 - Hibernate permanece com `ddl-auto=validate`; o Flyway é o dono da evolução do schema e do catálogo RBAC versionado.
 - Toda constraint multi-tenant nova deve ser analisada também no nível do banco, não apenas na aplicação.

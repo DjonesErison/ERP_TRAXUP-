@@ -78,12 +78,12 @@ public class FiscalXmlApplicationService {
                 ON CONFLICT (tenant_id, documento_id, versao) DO NOTHING
                 """, xmlId, tenantId, documentoId, xml, hash);
         Resultado resultado = inseridos == 1
-                ? new Resultado(xmlId, documentoId, "1.0", hash, false)
+                ? new Resultado(xmlId, documentoId, "1.1", hash, false)
                 : buscar(tenantId, documentoId).getFirst().comRepetida(true);
         if (inseridos == 1) {
             auditoria.registrar(tenantId, usuarioId, null, documento.filialId(),
                     "GERAR_XML_HOMOLOGACAO", "FISCAL_DOCUMENTO_XML", xmlId,
-                    "documentoId=" + documentoId + ";versao=1.0;hash=" + hash);
+                    "documentoId=" + documentoId + ";versao=1.1;hash=" + hash);
         }
         return resultado;
     }
@@ -103,7 +103,7 @@ public class FiscalXmlApplicationService {
             var w = XMLOutputFactory.newFactory().createXMLStreamWriter(out);
             w.writeStartDocument("UTF-8", "1.0");
             w.writeStartElement("TraxUPFiscal");
-            w.writeAttribute("versao", "1.0");
+            w.writeAttribute("versao", "1.1");
             elemento(w, "ambiente", d.ambiente()); elemento(w, "modelo", d.modelo());
             elemento(w, "documentoId", d.id().toString());
             elemento(w, "filialId", d.filialId().toString());

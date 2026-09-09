@@ -19,8 +19,15 @@ CREATE TABLE fiscal_solicitacao_itens (
     total_item NUMERIC(19,4) NOT NULL,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_fiscal_item_snapshot UNIQUE (tenant_id, solicitacao_id, pedido_venda_item_id),
-    CONSTRAINT fk_fiscal_item_snapshot_solicitacao FOREIGN KEY (tenant_id, solicitacao_id)
-        REFERENCES fiscal_solicitacoes (tenant_id, id)
+    CONSTRAINT fk_fiscal_snapshot_solicitacao FOREIGN KEY (tenant_id, solicitacao_id)
+        REFERENCES fiscal_solicitacoes (tenant_id, id),
+    CONSTRAINT fk_fiscal_snapshot_item FOREIGN KEY (tenant_id, pedido_venda_item_id)
+        REFERENCES pedido_venda_itens (tenant_id, id),
+    CONSTRAINT ck_fiscal_snapshot_quantidade CHECK (quantidade > 0),
+    CONSTRAINT ck_fiscal_snapshot_valores CHECK (
+        preco_unitario >= 0 AND adicional_combo_unitario >= 0
+        AND desconto_valor >= 0 AND total_item >= 0
+    )
 );
 
 CREATE INDEX idx_fiscal_item_snapshot_solicitacao

@@ -10,9 +10,11 @@ import java.util.UUID;
 @Service
 public class FiscalValidacaoApplicationService {
     private final JdbcTemplate jdbc;
+    private final FiscalPerfilFilialRepository perfis;
 
-    public FiscalValidacaoApplicationService(JdbcTemplate jdbc) {
+    public FiscalValidacaoApplicationService(JdbcTemplate jdbc, FiscalPerfilFilialRepository perfis) {
         this.jdbc = jdbc;
+        this.perfis = perfis;
     }
 
     public Resultado validar(UUID tenantId, UUID documentoId) {
@@ -24,6 +26,15 @@ public class FiscalValidacaoApplicationService {
             throw new com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException(
                     "Documento fiscal nao encontrado para o tenant informado");
         }
+
+        ContextoDocumento contexto = jdbc.queryForObject("""
+                SELECT filial_id, ambiente, regime_tributario
+                FROM fiscal_documentos
+                WHERE tenant_id = ? AND id = ?
+                """, (rs, n) -> new ContextoDocumento(
+                        rs.getObject("filial_id", UUID.class),
+                        rs.getString("ambiente"),
+                        rs.getString("regime_tributario")), tenantId, documentoId);
 
         Boolean regraAplicada = jdbc.queryForObject("""
                 SELECT regra_operacao_id IS NOT NULL
@@ -60,6 +71,20 @@ public class FiscalValidacaoApplicationService {
                 """, Boolean.class, tenantId, documentoId);
 
         List<Pendencia> pendencias = new ArrayList<>();
+        var perfil = contexto == null ? java.util.Optional.<FiscalPerfilFilial>empty()
+                : perfis.findByTenantIdAndFilialIdAndAtivoTrue(tenantId, contexto.filialId());
+        if (perfil.isEmpty()) {
+            pendencias.add(new Pendencia("PERFIL_FISCAL_NAO_CONFIGURADO", 1));
+        } else {
+            FiscalPerfilFilial configuracao = perfil.get();
+            if (!configuracao.getAmbiente().equals(contexto.ambiente())) {
+                pendencias.add(new Pendencia("AMBIENTE_FISCAL_DIVERGENTE", 1));
+            }
+            if (contexto.regimeTributario() != null
+                    && !configuracao.getRegimeTributario().equals(contexto.regimeTributario())) {
+                pendencias.add(new Pendencia("REGIME_FISCAL_DIVERGENTE", 1));
+            }
+        }
         if (!Boolean.TRUE.equals(regraAplicada)) pendencias.add(new Pendencia("REGRA_FISCAL_NAO_APLICADA", 1));
         if (c == null || c.itens() == 0) pendencias.add(new Pendencia("SEM_ITENS", 1));
         if (c != null && c.ncmInvalidos() > 0) pendencias.add(new Pendencia("NCM_INVALIDO", c.ncmInvalidos()));
@@ -70,6 +95,7 @@ public class FiscalValidacaoApplicationService {
         return new Resultado(pendencias.isEmpty(), c == null ? 0 : c.itens(), List.copyOf(pendencias));
     }
 
+    private record ContextoDocumento(UUID filialId, String ambiente, String regimeTributario) {}
     private record Contagens(int itens, int ncmInvalidos, int unidadesInvalidas,
                              int quantidadesInvalidas, int totaisInvalidos) {}
     public record Pendencia(String codigo, int ocorrencias) {}

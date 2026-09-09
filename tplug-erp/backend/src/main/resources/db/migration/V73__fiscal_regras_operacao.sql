@@ -19,8 +19,7 @@ CREATE TABLE fiscal_regras_operacao (
     CONSTRAINT ck_fiscal_regra_uf CHECK (uf_destino ~ '^[A-Z]{2}$'),
     CONSTRAINT ck_fiscal_regra_cfop CHECK (cfop ~ '^[0-9]{4}$'),
     CONSTRAINT ck_fiscal_regra_icms CHECK (
-        (regime_tributario = 'SIMPLES_NACIONAL' AND csosn ~ '^[0-9]{3}$' AND cst_icms IS NULL
-            IS NULL)
+        (regime_tributario = 'SIMPLES_NACIONAL' AND csosn ~ '^[0-9]{3}$' AND cst_icms IS NULL)
         OR (regime_tributario = 'REGIME_NORMAL' AND cst_icms ~ '^[0-9]{2,3}$' AND csosn IS NULL)
     )
 );

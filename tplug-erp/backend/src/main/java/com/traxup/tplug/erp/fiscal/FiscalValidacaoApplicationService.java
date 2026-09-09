@@ -71,19 +71,9 @@ public class FiscalValidacaoApplicationService {
                 """, Boolean.class, tenantId, documentoId);
 
         List<Pendencia> pendencias = new ArrayList<>();
-        var perfil = contexto == null ? java.util.Optional.<FiscalPerfilFilial>empty()
-                : perfis.findByTenantIdAndFilialIdAndAtivoTrue(tenantId, contexto.filialId());
-        if (perfil.isEmpty()) {
-            pendencias.add(new Pendencia("PERFIL_FISCAL_NAO_CONFIGURADO", 1));
-        } else {
-            FiscalPerfilFilial configuracao = perfil.get();
-            if (!configuracao.getAmbiente().equals(contexto.ambiente())) {
-                pendencias.add(new Pendencia("AMBIENTE_FISCAL_DIVERGENTE", 1));
-            }
-            if (contexto.regimeTributario() != null
-                    && !configuracao.getRegimeTributario().equals(contexto.regimeTributario())) {
-                pendencias.add(new Pendencia("REGIME_FISCAL_DIVERGENTE", 1));
-            }
+        if (contexto != null) {
+            pendencias.addAll(validarPerfil(
+                    tenantId, contexto.filialId(), contexto.ambiente(), contexto.regimeTributario()));
         }
         if (!Boolean.TRUE.equals(regraAplicada)) pendencias.add(new Pendencia("REGRA_FISCAL_NAO_APLICADA", 1));
         if (c == null || c.itens() == 0) pendencias.add(new Pendencia("SEM_ITENS", 1));
@@ -93,6 +83,24 @@ public class FiscalValidacaoApplicationService {
         if (c != null && c.totaisInvalidos() > 0) pendencias.add(new Pendencia("TOTAL_ITEM_DIVERGENTE", c.totaisInvalidos()));
         if (!Boolean.TRUE.equals(totalCoerente)) pendencias.add(new Pendencia("TOTAL_DOCUMENTO_DIVERGENTE", 1));
         return new Resultado(pendencias.isEmpty(), c == null ? 0 : c.itens(), List.copyOf(pendencias));
+    }
+
+    List<Pendencia> validarPerfil(UUID tenantId, UUID filialId, String ambiente, String regimeTributario) {
+        var perfil = perfis.findByTenantIdAndFilialIdAndAtivoTrue(tenantId, filialId);
+        if (perfil.isEmpty()) {
+            return List.of(new Pendencia("PERFIL_FISCAL_NAO_CONFIGURADO", 1));
+        }
+
+        List<Pendencia> pendencias = new ArrayList<>();
+        FiscalPerfilFilial configuracao = perfil.get();
+        if (!configuracao.getAmbiente().equals(ambiente)) {
+            pendencias.add(new Pendencia("AMBIENTE_FISCAL_DIVERGENTE", 1));
+        }
+        if (regimeTributario != null
+                && !configuracao.getRegimeTributario().equals(regimeTributario)) {
+            pendencias.add(new Pendencia("REGIME_FISCAL_DIVERGENTE", 1));
+        }
+        return List.copyOf(pendencias);
     }
 
     private record ContextoDocumento(UUID filialId, String ambiente, String regimeTributario) {}

@@ -32,14 +32,15 @@ public class FiscalXmlApplicationService {
         if (!existente.isEmpty()) return existente.getFirst().comRepetida(true);
 
         Documento documento = jdbc.query("""
-                SELECT id, filial_id, pedido_venda_id, modelo, ambiente,
+                SELECT id, filial_id, pedido_venda_id, modelo, ambiente, serie, numero,
                        valor_bruto, valor_desconto, valor_total,
                        tipo_operacao, regime_tributario, uf_destino, cfop, cst_icms, csosn
                 FROM fiscal_documentos WHERE tenant_id = ? AND id = ?
                 """, (rs, n) -> new Documento(
                         rs.getObject("id", UUID.class), rs.getObject("filial_id", UUID.class),
                         rs.getObject("pedido_venda_id", UUID.class), rs.getString("modelo"),
-                        rs.getString("ambiente"), rs.getBigDecimal("valor_bruto"),
+                        rs.getString("ambiente"), rs.getObject("serie", Integer.class),
+                        rs.getObject("numero", Long.class), rs.getBigDecimal("valor_bruto"),
                         rs.getBigDecimal("valor_desconto"), rs.getBigDecimal("valor_total"),
                         rs.getString("tipo_operacao"), rs.getString("regime_tributario"),
                         rs.getString("uf_destino"), rs.getString("cfop"),
@@ -47,7 +48,10 @@ public class FiscalXmlApplicationService {
                 tenantId, documentoId).stream().findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Documento fiscal nao encontrado para o tenant"));
         if (documento.cfop() == null || (documento.cst() == null && documento.csosn() == null)) {
-            throw new IllegalArgumentException("Regra fiscal deve ser aplicada antes do XML 1.1");
+            throw new IllegalArgumentException("Regra fiscal deve ser aplicada antes do XML 1.2");
+        }
+        if (documento.serie() == null || documento.numero() == null) {
+            throw new IllegalArgumentException("Documento fiscal deve ser numerado antes do XML 1.2");
         }
         if (!"HOMOLOGACAO".equals(documento.ambiente())) {
             throw new IllegalArgumentException("XML preparatorio permitido somente em HOMOLOGACAO");
@@ -70,20 +74,20 @@ public class FiscalXmlApplicationService {
 
         String xml = escrever(documento, itens);
         String hash = sha256(xml);
-        UUID xmlId = UUID.nameUUIDFromBytes((documentoId + ":xml:1.1").getBytes(StandardCharsets.UTF_8));
+        UUID xmlId = UUID.nameUUIDFromBytes((documentoId + ":xml:1.2").getBytes(StandardCharsets.UTF_8));
         int inseridos = jdbc.update("""
                 INSERT INTO fiscal_documentos_xml
                     (id, tenant_id, documento_id, versao, conteudo, hash_sha256)
-                VALUES (?, ?, ?, '1.1', ?, ?)
+                VALUES (?, ?, ?, '1.2', ?, ?)
                 ON CONFLICT (tenant_id, documento_id, versao) DO NOTHING
                 """, xmlId, tenantId, documentoId, xml, hash);
         Resultado resultado = inseridos == 1
-                ? new Resultado(xmlId, documentoId, "1.1", hash, false)
+                ? new Resultado(xmlId, documentoId, "1.2", hash, false)
                 : buscar(tenantId, documentoId).getFirst().comRepetida(true);
         if (inseridos == 1) {
             auditoria.registrar(tenantId, usuarioId, null, documento.filialId(),
                     "GERAR_XML_HOMOLOGACAO", "FISCAL_DOCUMENTO_XML", xmlId,
-                    "documentoId=" + documentoId + ";versao=1.1;hash=" + hash);
+                    "documentoId=" + documentoId + ";versao=1.2;hash=" + hash);
         }
         return resultado;
     }
@@ -91,20 +95,22 @@ public class FiscalXmlApplicationService {
     private List<Resultado> buscar(UUID tenantId, UUID documentoId) {
         return jdbc.query("""
                 SELECT id, documento_id, versao, hash_sha256
-                FROM fiscal_documentos_xml WHERE tenant_id = ? AND documento_id = ? AND versao = '1.1'
+                FROM fiscal_documentos_xml WHERE tenant_id = ? AND documento_id = ? AND versao = '1.2'
                 """, (rs, n) -> new Resultado(rs.getObject("id", UUID.class),
                         rs.getObject("documento_id", UUID.class), rs.getString("versao"),
                         rs.getString("hash_sha256"), false), tenantId, documentoId);
     }
 
-    private String escrever(Documento d, List<Item> itens) {
+    String escrever(Documento d, List<Item> itens) {
         try {
             StringWriter out = new StringWriter();
             var w = XMLOutputFactory.newFactory().createXMLStreamWriter(out);
             w.writeStartDocument("UTF-8", "1.0");
             w.writeStartElement("TraxUPFiscal");
-            w.writeAttribute("versao", "1.1");
+            w.writeAttribute("versao", "1.2");
             elemento(w, "ambiente", d.ambiente()); elemento(w, "modelo", d.modelo());
+            elemento(w, "serie", Integer.toString(d.serie()));
+            elemento(w, "numero", Long.toString(d.numero()));
             elemento(w, "documentoId", d.id().toString());
             elemento(w, "filialId", d.filialId().toString());
             elemento(w, "pedidoVendaId", d.pedidoVendaId().toString());
@@ -153,11 +159,11 @@ public class FiscalXmlApplicationService {
         }
     }
 
-    private record Documento(UUID id, UUID filialId, UUID pedidoVendaId, String modelo,
-                             String ambiente, BigDecimal bruto, BigDecimal desconto, BigDecimal total,
+    record Documento(UUID id, UUID filialId, UUID pedidoVendaId, String modelo,
+                             String ambiente, Integer serie, Long numero, BigDecimal bruto, BigDecimal desconto, BigDecimal total,
                              String tipoOperacao, String regime, String uf, String cfop,
                              String cst, String csosn) {}
-    private record Item(String codigo, String descricao, String ncm, String unidade,
+    record Item(String codigo, String descricao, String ncm, String unidade,
                         BigDecimal quantidade, BigDecimal precoUnitario, BigDecimal adicional,
                         BigDecimal desconto, BigDecimal total) {}
     public record Resultado(UUID xmlId, UUID documentoId, String versao, String hashSha256,

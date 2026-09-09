@@ -58,7 +58,7 @@ public class FiscalDocumentoRegraApplicationService {
 
     private Documento buscarDocumento(UUID tenantId, UUID documentoId) {
         return jdbc.query("""
-                SELECT id, filial_id, modelo,, regra_operacao_id, tipo_operacao,
+                SELECT id, filial_id, modelo, regra_operacao_id, tipo_operacao,
                        regime_tributario, uf_destino, cfop, cst_icms, csosn
                 FROM fiscal_documentos WHERE tenant_id = ? AND id = ?
                 """, (rs, n) -> new Documento(rs.getObject("id", UUID.class),

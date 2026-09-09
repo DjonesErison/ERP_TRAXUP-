@@ -33,15 +33,22 @@ public class FiscalXmlApplicationService {
 
         Documento documento = jdbc.query("""
                 SELECT id, filial_id, pedido_venda_id, modelo, ambiente,
-                       valor_bruto, valor_desconto, valor_total
+                       valor_bruto, valor_desconto, valor_total,
+                       tipo_operacao, regime_tributario, uf_destino, cfop, cst_icms, csosn
                 FROM fiscal_documentos WHERE tenant_id = ? AND id = ?
                 """, (rs, n) -> new Documento(
                         rs.getObject("id", UUID.class), rs.getObject("filial_id", UUID.class),
                         rs.getObject("pedido_venda_id", UUID.class), rs.getString("modelo"),
                         rs.getString("ambiente"), rs.getBigDecimal("valor_bruto"),
-                        rs.getBigDecimal("valor_desconto"), rs.getBigDecimal("valor_total")),
+                        rs.getBigDecimal("valor_desconto"), rs.getBigDecimal("valor_total"),
+                        rs.getString("tipo_operacao"), rs.getString("regime_tributario"),
+                        rs.getString("uf_destino"), rs.getString("cfop"),
+                        rs.getString("cst_icms"), rs.getString("csosn")),
                 tenantId, documentoId).stream().findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Documento fiscal nao encontrado para o tenant"));
+        if (documento.cfop() == null || (documento.cst() == null && documento.csosn() == null)) {
+            throw new IllegalArgumentException("Regra fiscal deve ser aplicada antes do XML 1.1");
+        }
         if (!"HOMOLOGACAO".equals(documento.ambiente())) {
             throw new IllegalArgumentException("XML preparatorio permitido somente em HOMOLOGACAO");
         }
@@ -63,12 +70,12 @@ public class FiscalXmlApplicationService {
 
         String xml = escrever(documento, itens);
         String hash = sha256(xml);
-        UUID xmlId = UUID.nameUUIDFromBytes((documentoId + ":xml:1.0").getBytes(StandardCharsets.UTF_8));
+        UUID xmlId = UUID.nameUUIDFromBytes((documentoId + ":xml:1.1").getBytes(StandardCharsets.UTF_8));
         int inseridos = jdbc.update("""
                 INSERT INTO fiscal_documentos_xml
                     (id, tenant_id, documento_id, versao, conteudo, hash_sha256)
-                VALUES (?, ?, ?, '1.0', ?, ?)
-                ON CONFLICT (tenant_id, documento_id) DO NOTHING
+                VALUES (?, ?, ?, '1.1', ?, ?)
+                ON CONFLICT (tenant_id, documento_id, versao) DO NOTHING
                 """, xmlId, tenantId, documentoId, xml, hash);
         Resultado resultado = inseridos == 1
                 ? new Resultado(xmlId, documentoId, "1.0", hash, false)
@@ -84,7 +91,7 @@ public class FiscalXmlApplicationService {
     private List<Resultado> buscar(UUID tenantId, UUID documentoId) {
         return jdbc.query("""
                 SELECT id, documento_id, versao, hash_sha256
-                FROM fiscal_documentos_xml WHERE tenant_id = ? AND documento_id = ?
+                FROM fiscal_documentos_xml WHERE tenant_id = ? AND documento_id = ? AND versao = '1.1'
                 """, (rs, n) -> new Resultado(rs.getObject("id", UUID.class),
                         rs.getObject("documento_id", UUID.class), rs.getString("versao"),
                         rs.getString("hash_sha256"), false), tenantId, documentoId);
@@ -101,6 +108,14 @@ public class FiscalXmlApplicationService {
             elemento(w, "documentoId", d.id().toString());
             elemento(w, "filialId", d.filialId().toString());
             elemento(w, "pedidoVendaId", d.pedidoVendaId().toString());
+            w.writeStartElement("tributacao");
+            elemento(w, "tipoOperacao", d.tipoOperacao());
+            elemento(w, "regimeTributario", d.regime());
+            elemento(w, "ufDestino", d.uf());
+            elemento(w, "cfop", d.cfop());
+            if (d.cst() != null) elemento(w, "cstIcms", d.cst());
+            if (d.csosn() != null) elemento(w, "csosn", d.csosn());
+            w.writeEndElement();
             w.writeStartElement("itens");
             for (Item i : itens) {
                 w.writeStartElement("item");
@@ -139,7 +154,9 @@ public class FiscalXmlApplicationService {
     }
 
     private record Documento(UUID id, UUID filialId, UUID pedidoVendaId, String modelo,
-                             String ambiente, BigDecimal bruto, BigDecimal desconto, BigDecimal total) {}
+                             String ambiente, BigDecimal bruto, BigDecimal desconto, BigDecimal total,
+                             String tipoOperacao, String regime, String uf, String cfop,
+                             String cst, String csosn) {}
     private record Item(String codigo, String descricao, String ncm, String unidade,
                         BigDecimal quantidade, BigDecimal precoUnitario, BigDecimal adicional,
                         BigDecimal desconto, BigDecimal total) {}

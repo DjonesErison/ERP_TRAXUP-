@@ -29,13 +29,12 @@ public class FiscalRejeicaoApplicationService {
     private static final Pattern CAMPO = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_.]{0,79}$");
 
     private final JdbcTemplate jdbc;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final AuditoriaApplicationService auditoria;
 
-    public FiscalRejeicaoApplicationService(JdbcTemplate jdbc, ObjectMapper objectMapper,
+    public FiscalRejeicaoApplicationService(JdbcTemplate jdbc,
                                             AuditoriaApplicationService auditoria) {
         this.jdbc = jdbc;
-        this.objectMapper = objectMapper;
         this.auditoria = auditoria;
     }
 

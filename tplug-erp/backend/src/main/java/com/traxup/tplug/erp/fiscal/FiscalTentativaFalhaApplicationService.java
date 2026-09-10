@@ -35,6 +35,20 @@ public class FiscalTentativaFalhaApplicationService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void registrar(UUID tenantId, UUID tentativaId, Etapa etapa,
                           RuntimeException erro) {
+        boolean existe = Boolean.TRUE.equals(jdbc.queryForObject("""
+                SELECT EXISTS (
+                    SELECT 1 FROM fiscal_tentativas_emissao
+                    WHERE tenant_id = ? AND id = ?
+                )
+                """, Boolean.class, tenantId, tentativaId));
+        if (!existe) return;
+        jdbc.update("""
+                UPDATE fiscal_tentativas_emissao
+                SET status = 'FALHOU',
+                    iniciada_em = COALESCE(iniciada_em, CURRENT_TIMESTAMP),
+                    concluida_em = CURRENT_TIMESTAMP
+                WHERE tenant_id = ? AND id = ? AND status <> 'CONCLUIDA'
+                """, tenantId, tentativaId);
         String tipo = erro.getClass().getSimpleName();
         UUID id = UUID.nameUUIDFromBytes((tentativaId + ":" + etapa + ":"
                 + UUID.randomUUID()).getBytes(StandardCharsets.UTF_8));
@@ -54,4 +68,7 @@ public class FiscalTentativaFalhaApplicationService {
     }
 
     public enum Etapa { XML, ASSINATURA, TRANSMISSAO, PROCESSADO }
+    public enum Etapa {
+        XML, ASSINATURA, TRANSMISSAO, PROCESSADO
+    }
 }

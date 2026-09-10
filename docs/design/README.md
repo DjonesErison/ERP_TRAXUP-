@@ -35,6 +35,7 @@ Este diretório reúne as referências visuais aprovadas para implementação da
 | UI-013 | Aplicativo do vendedor | `11-aplicativos/aplicativo-vendedor.webp` | Aprovada como direção visual |
 | UI-014 | Captação do trial de 7 dias | `12-trial-admin/trial-7-dias.webp` | Proposta para revisão funcional |
 | UI-015 | Administração de clientes SaaS | `12-trial-admin/admin-clientes-saas.webp` | Proposta para revisão funcional |
+| UI-016 | Login da Central | `01-central/login-central.webp` | Em revisão visual |
 
 ## Fluxo de aprovação
 
@@ -44,4 +45,3 @@ Este diretório reúne as referências visuais aprovadas para implementação da
 4. Mapeamento de API
 5. Implementação Angular
 6. Testes e homologação
-

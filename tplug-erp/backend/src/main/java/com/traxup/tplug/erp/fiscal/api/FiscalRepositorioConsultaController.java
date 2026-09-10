@@ -25,7 +25,7 @@ public class FiscalRepositorioConsultaController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('FISCAL_DOCUMENTO_LER')")
+    @PreAuthorize("hasAuthority('FISCAL_REPOSITORIO_CONTABILIDADE_LER')")
     public FiscalRepositorioConsultaApplicationService.Resultado listar(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,

@@ -24,6 +24,8 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class FiscalExportacaoContabilidadeApplicationService {
     private static final int LIMITE_ARQUIVOS = 500;
+    private static final String CABECALHO_MANIFESTO =
+            "arquivo_id;documento_id;modelo;serie;numero;hash_sha256;nome_arquivo\n";
     private final JdbcTemplate jdbc;
     private final ObjectProvider<FiscalArquivoStoragePort> storageProvider;
     private final AuditoriaApplicationService auditoria;
@@ -87,6 +89,10 @@ public class FiscalExportacaoContabilidadeApplicationService {
             ByteArrayOutputStream saida = new ByteArrayOutputStream();
             try (ZipOutputStream zip = new ZipOutputStream(saida,
                     StandardCharsets.UTF_8)) {
+                zip.putNextEntry(new ZipEntry("manifesto.csv"));
+                zip.write(manifesto(arquivos).getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+
                 for (Arquivo arquivo : arquivos) {
                     byte[] xml = storage.baixar(arquivo.chave());
                     if (!FiscalArquivoDownloadApplicationService
@@ -105,6 +111,32 @@ public class FiscalExportacaoContabilidadeApplicationService {
         }
     }
 
+    static String manifesto(List<Arquivo> arquivos) {
+        StringBuilder conteudo = new StringBuilder(CABECALHO_MANIFESTO);
+        for (Arquivo arquivo : arquivos) {
+            conteudo.append(campoCsv(arquivo.id())).append(';')
+                    .append(campoCsv(arquivo.documentoId())).append(';')
+                    .append(campoCsv(modeloSeguro(arquivo.modelo()))).append(';')
+                    .append(campoCsv(arquivo.serie())).append(';')
+                    .append(campoCsv(arquivo.numero())).append(';')
+                    .append(campoCsv(arquivo.hash())).append(';')
+                    .append(campoCsv(nomeEntrada(arquivo))).append('\n');
+        }
+        return conteudo.toString();
+    }
+
+    private static String campoCsv(Object valor) {
+        if (valor == null)
+            return "";
+        String texto = valor.toString()
+                .replace("\r", " ")
+                .replace("\n", " ")
+                .replace("\"", "\"\"");
+        if (!texto.isEmpty() && "=+-@".indexOf(texto.charAt(0)) >= 0)
+            texto = "'" + texto;
+        return "\"" + texto + "\"";
+    }
+
     static void validarPeriodo(LocalDate inicio, LocalDate fim) {
         if (inicio == null || fim == null)
             throw new IllegalArgumentException(
@@ -117,15 +149,18 @@ public class FiscalExportacaoContabilidadeApplicationService {
                     "Exportacao permite no maximo 32 dias consecutivos");
     }
 
-    static String nomeEntrada(Arquivo arquivo) {
-        String modelo = arquivo.modelo() == null ? "FISCAL"
-                : arquivo.modelo().toUpperCase(Locale.ROOT)
+    private static String modeloSeguro(String modelo) {
+        return modelo == null ? "FISCAL"
+                : modelo.toUpperCase(Locale.ROOT)
                     .replaceAll("[^A-Z0-9_-]", "_");
+    }
+
+    static String nomeEntrada(Arquivo arquivo) {
         String serie = arquivo.serie() == null ? "SEM-SERIE"
                 : arquivo.serie().toString();
         String numero = arquivo.numero() == null ? "SEM-NUMERO"
                 : arquivo.numero().toString();
-        return modelo + "-" + serie + "-" + numero + "-"
+        return modeloSeguro(arquivo.modelo()) + "-" + serie + "-" + numero + "-"
                 + arquivo.id() + ".xml";
     }
 

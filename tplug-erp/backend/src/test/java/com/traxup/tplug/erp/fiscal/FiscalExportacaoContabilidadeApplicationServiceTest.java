@@ -3,11 +3,13 @@ package com.traxup.tplug.erp.fiscal;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FiscalExportacaoContabilidadeApplicationServiceTest {
     @Test
@@ -40,5 +42,28 @@ class FiscalExportacaoContabilidadeApplicationServiceTest {
                 FiscalExportacaoContabilidadeApplicationService.nomeZip(
                         LocalDate.of(2026, 8, 1),
                         LocalDate.of(2026, 8, 31)));
+    }
+
+    @Test
+    void geraManifestoVerificavelSemExporChaveDeArmazenamento() {
+        UUID arquivoId = UUID.randomUUID();
+        UUID documentoId = UUID.randomUUID();
+        String hash = "b".repeat(64);
+        var arquivo = new FiscalExportacaoContabilidadeApplicationService.Arquivo(
+                arquivoId, documentoId, "tenant/secreto/documento.xml", hash,
+                "NF-e", 2, 123L);
+
+        String manifesto = FiscalExportacaoContabilidadeApplicationService
+                .manifesto(List.of(arquivo));
+
+        assertTrue(manifesto.startsWith(
+                "arquivo_id;documento_id;modelo;serie;numero;hash_sha256;"
+                        + "nome_arquivo\n"));
+        assertTrue(manifesto.contains("\"" + arquivoId + "\""));
+        assertTrue(manifesto.contains("\"" + documentoId + "\""));
+        assertTrue(manifesto.contains("\"" + hash + "\""));
+        assertTrue(manifesto.contains(
+                "\"NF-E-2-123-" + arquivoId + ".xml\""));
+        assertFalse(manifesto.contains("tenant/secreto"));
     }
 }

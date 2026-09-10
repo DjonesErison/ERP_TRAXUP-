@@ -2,6 +2,7 @@ package com.traxup.tplug.erp.fiscal.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.fiscal.FiscalArquivoDownloadApplicationService;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,8 @@ public class FiscalArquivoDownloadController {
                 .contentType(MediaType.APPLICATION_XML)
                 .contentLength(resultado.conteudo().length)
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename="" + resultado.nomeArquivo() + """)
+                        ContentDisposition.attachment()
+                                .filename(resultado.nomeArquivo()).build().toString())
                 .header("X-Content-SHA256", resultado.hashSha256())
                 .body(resultado.conteudo());
     }

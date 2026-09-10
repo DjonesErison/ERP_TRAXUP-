@@ -1,0 +1,44 @@
+package com.traxup.tplug.erp.fiscal;
+
+import org.junit.jupiter.api.Test;
+
+import java.time.LocalDate;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class FiscalExportacaoContabilidadeApplicationServiceTest {
+    @Test
+    void validaPeriodoMensalLimitado() {
+        LocalDate inicio = LocalDate.of(2026, 8, 1);
+        LocalDate fim = LocalDate.of(2026, 8, 31);
+
+        FiscalExportacaoContabilidadeApplicationService
+                .validarPeriodo(inicio, fim);
+        assertThrows(IllegalArgumentException.class,
+                () -> FiscalExportacaoContabilidadeApplicationService
+                        .validarPeriodo(fim, inicio));
+        assertThrows(IllegalArgumentException.class,
+                () -> FiscalExportacaoContabilidadeApplicationService
+                        .validarPeriodo(inicio, inicio.plusDays(32)));
+    }
+
+    @Test
+    void geraNomesControladosParaZipEXml() {
+        UUID id = UUID.randomUUID();
+        var arquivo = new FiscalExportacaoContabilidadeApplicationService.Arquivo(
+                id, UUID.randomUUID(), "interna", "a".repeat(64),
+                "NF-e/../../", 1, 99L);
+
+        String entrada = FiscalExportacaoContabilidadeApplicationService
+                .nomeEntrada(arquivo);
+        assertEquals("NF-E_______-1-99-" + id + ".xml", entrada);
+        assertFalse(entrada.contains(".."));
+        assertEquals("traxup-xml-2026-08-01-a-2026-08-31.zip",
+                FiscalExportacaoContabilidadeApplicationService.nomeZip(
+                        LocalDate.of(2026, 8, 1),
+                        LocalDate.of(2026, 8, 31)));
+    }
+}

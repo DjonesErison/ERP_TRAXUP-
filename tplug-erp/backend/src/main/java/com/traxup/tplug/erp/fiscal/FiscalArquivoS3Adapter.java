@@ -2,6 +2,7 @@ package com.traxup.tplug.erp.fiscal;
 
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.util.Map;
@@ -24,5 +25,13 @@ public class FiscalArquivoS3Adapter implements FiscalArquivoStoragePort {
                 .metadata(Map.of("sha256", hashSha256))
                 .build();
         s3.putObject(requisicao, RequestBody.fromBytes(conteudo));
+    }
+    @Override
+    public byte[] baixar(String chave) {
+        var requisicao = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(chave)
+                .build();
+        return s3.getObjectAsBytes(requisicao).asByteArray();
     }
 }

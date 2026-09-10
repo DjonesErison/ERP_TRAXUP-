@@ -50,8 +50,10 @@ class RbacAdminControllerIntegrationTest {
                                 .jwt(token -> token.claim("tenant_id", tenantA.getId().toString()))
                                 .authorities(new SimpleGrantedAuthority("RBAC_GERENCIAR"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(perfilA.getId().toString()))
-                .andExpect(jsonPath("$[0].nome").value("Financeiro"))
+                .andExpect(jsonPath("$[?(@.id == '"
+                        + perfilA.getId() + "')]").exists())
+                .andExpect(jsonPath("$[?(@.nome == 'Financeiro')]").exists())
+                .andExpect(jsonPath("$[?(@.nome == 'CONTABILIDADE')]").exists())
                 .andExpect(jsonPath("$[?(@.nome == 'Compras')]").doesNotExist());
     }
 

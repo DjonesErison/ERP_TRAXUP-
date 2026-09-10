@@ -29,7 +29,7 @@ public class FiscalExportacaoContabilidadeController {
     }
 
     @GetMapping("/exportacao-contabilidade")
-    @PreAuthorize("hasAuthority('FISCAL_DOCUMENTO_LER')")
+    @PreAuthorize("hasAuthority('FISCAL_REPOSITORIO_CONTABILIDADE_LER')")
     public ResponseEntity<byte[]> exportar(
             @RequestParam
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,

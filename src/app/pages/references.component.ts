@@ -25,22 +25,22 @@ type Reference = {code:string; title:string; file:string; status:string};
 })
 export class ReferencesComponent {
   references:Reference[]=[
-    {code:'UI-001',title:'Dashboard da Central',file:'01-central/dashboard-central.webp',status:'Direção visual aprovada'},
-    {code:'UI-002',title:'Clientes',file:'02-cadastros/clientes.webp',status:'Revisão funcional'},
-    {code:'UI-003',title:'Produtos',file:'02-cadastros/produtos.webp',status:'Revisão funcional'},
-    {code:'UI-004',title:'Estoque',file:'03-estoque/estoque.webp',status:'Revisão funcional'},
-    {code:'UI-005',title:'Vendas',file:'04-vendas/vendas.webp',status:'Revisão funcional'},
-    {code:'UI-006',title:'Financeiro',file:'05-financeiro/financeiro.webp',status:'Revisão funcional'},
-    {code:'UI-007',title:'Fiscal',file:'06-fiscal/modulo-fiscal.webp',status:'Revisão funcional'},
-    {code:'UI-008',title:'CRM',file:'07-crm-bi/crm.webp',status:'Revisão funcional'},
-    {code:'UI-009',title:'Relatórios',file:'08-relatorios/relatorios.webp',status:'Revisão funcional'},
-    {code:'UI-010',title:'Configurações',file:'09-configuracoes/configuracoes.webp',status:'Revisão funcional'},
-    {code:'UI-011',title:'PDV Desktop',file:'10-pdv/pdv-desktop.webp',status:'Direção visual aprovada'},
-    {code:'UI-012',title:'Aplicativo do cliente',file:'11-aplicativos/aplicativo-cliente.webp',status:'Direção visual aprovada'},
-    {code:'UI-013',title:'Aplicativo do vendedor',file:'11-aplicativos/aplicativo-vendedor.webp',status:'Direção visual aprovada'},
-    {code:'UI-014',title:'Trial de 7 dias',file:'12-trial-admin/trial-7-dias.webp',status:'Revisão funcional'},
-    {code:'UI-015',title:'Administração SaaS',file:'12-trial-admin/admin-clientes-saas.webp',status:'Revisão funcional'},
-    {code:'UI-016',title:'Login da Central',file:'01-central/login-central.webp',status:'Revisão visual'}
+    {code:'UI-001',title:'Dashboard do TraxUp ERP',file:'01-traxup-erp/UI-001-dashboard-traxup-erp.webp',status:'Aprovada como direção visual'},
+    {code:'UI-002',title:'Clientes',file:'02-cadastros/clientes.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-003',title:'Produtos',file:'02-cadastros/produtos.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-004',title:'Estoque',file:'03-estoque/estoque.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-005',title:'Vendas',file:'04-vendas/vendas.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-006',title:'Financeiro',file:'05-financeiro/financeiro.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-007',title:'Fiscal',file:'06-fiscal/modulo-fiscal.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-008',title:'CRM',file:'07-crm-bi/crm.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-009',title:'Relatórios',file:'08-relatorios/relatorios.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-010',title:'Configurações',file:'09-configuracoes/configuracoes.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-011',title:'PDV Desktop',file:'10-pdv/pdv-desktop.webp',status:'Aprovada como direção visual'},
+    {code:'UI-012',title:'Aplicativo do cliente',file:'11-aplicativos/aplicativo-cliente.webp',status:'Aprovada como direção visual'},
+    {code:'UI-013',title:'Aplicativo do vendedor',file:'11-aplicativos/aplicativo-vendedor.webp',status:'Aprovada como direção visual'},
+    {code:'UI-014',title:'Captação do trial de 7 dias',file:'12-trial-admin/trial-7-dias.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-015',title:'Administração de clientes SaaS',file:'12-trial-admin/admin-clientes-saas.webp',status:'Proposta para revisão funcional'},
+    {code:'UI-016',title:'Login do TraxUp ERP',file:'01-traxup-erp/UI-016-login-traxup-erp.webp',status:'✅ Visual aprovado'}
   ];
   asset(file:string){return `/assets/design/${file}`;}
 }

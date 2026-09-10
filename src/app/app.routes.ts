@@ -7,6 +7,7 @@ import { IdeasComponent } from './pages/ideas.component';
 import { DocumentationComponent } from './pages/documentation.component';
 import { RoadmapComponent } from './pages/roadmap.component';
 import { SimplePageComponent } from './pages/simple-page.component';
+import { ReferencesComponent } from './pages/references.component';
 
 export const routes: Routes = [
   {path:'', component:DashboardComponent},
@@ -18,7 +19,7 @@ export const routes: Routes = [
   {path:'documentacao', component:DocumentationComponent},
   {path:'roadmap', component:RoadmapComponent},
   {path:'regras', component:SimplePageComponent, data:{title:'Regras de Negócio', icon:'▤'}},
-  {path:'referencias', component:SimplePageComponent, data:{title:'Referências / Imagens', icon:'▧'}},
+  {path:'referencias', component:ReferencesComponent},
   {path:'dependencias', component:SimplePageComponent, data:{title:'Dependências', icon:'⌘'}},
   {path:'testes', component:SimplePageComponent, data:{title:'Testes', icon:'☑'}},
   {path:'historico', component:SimplePageComponent, data:{title:'Histórico', icon:'↶'}},

@@ -42,6 +42,7 @@ public class FiscalTentativaFalhaApplicationService {
                 )
                 """, Boolean.class, tenantId, tentativaId));
         if (!existe) return;
+
         jdbc.update("""
                 UPDATE fiscal_tentativas_emissao
                 SET status = 'FALHOU',
@@ -49,6 +50,7 @@ public class FiscalTentativaFalhaApplicationService {
                     concluida_em = CURRENT_TIMESTAMP
                 WHERE tenant_id = ? AND id = ? AND status <> 'CONCLUIDA'
                 """, tenantId, tentativaId);
+
         String tipo = erro.getClass().getSimpleName();
         UUID id = UUID.nameUUIDFromBytes((tentativaId + ":" + etapa + ":"
                 + UUID.randomUUID()).getBytes(StandardCharsets.UTF_8));
@@ -57,17 +59,8 @@ public class FiscalTentativaFalhaApplicationService {
                     (id, tenant_id, tentativa_id, etapa, tipo_erro)
                 VALUES (?, ?, ?, ?, ?)
                 """, id, tenantId, tentativaId, etapa.name(), tipo);
-        jdbc.update("""
-                UPDATE fiscal_tentativas_emissao
-                SET status = 'FALHOU',
-                    iniciada_em = COALESCE(iniciada_em, CURRENT_TIMESTAMP),
-                    concluida_em = CURRENT_TIMESTAMP
-                WHERE tenant_id = ? AND id = ?
-                  AND status IN ('CRIADA', 'EM_PROCESSAMENTO')
-                """, tenantId, tentativaId);
     }
 
-    public enum Etapa { XML, ASSINATURA, TRANSMISSAO, PROCESSADO }
     public enum Etapa {
         XML, ASSINATURA, TRANSMISSAO, PROCESSADO
     }

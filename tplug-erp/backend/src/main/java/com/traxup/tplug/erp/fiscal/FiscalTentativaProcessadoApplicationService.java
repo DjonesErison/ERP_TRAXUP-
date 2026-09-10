@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,7 +71,7 @@ public class FiscalTentativaProcessadoApplicationService {
                 o.transmissaoId(), o.solicitacaoId(), o.documentoId(), o.assinaturaId(),
                 o.transmissaoStatus(), o.codigo(), o.mensagem(), o.protocolo(),
                 o.hashResposta(), o.conteudoAssinado(), o.filialId()));
-        String hash = FiscalHash.sha256(conteudo);
+        String hash = sha256(conteudo);
         UUID id = UUID.nameUUIDFromBytes((tentativaId + ":processado:simulado:1.0")
                 .getBytes(StandardCharsets.UTF_8));
 
@@ -123,6 +126,15 @@ public class FiscalTentativaProcessadoApplicationService {
                         rs.getString("tipo"), rs.getString("versao"),
                         rs.getString("hash_sha256"), rs.getString("conteudo"), false),
                 tenantId, tentativaId);
+    }
+
+    private String sha256(String valor) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                    .digest(valor.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 indisponivel", e);
+        }
     }
 
     static void validar(String tentativaStatus, String ambiente, String provedor,

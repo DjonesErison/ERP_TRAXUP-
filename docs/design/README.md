@@ -1,6 +1,6 @@
 # TraxUp — Catálogo Visual
 
-Este diretório reúne as referências visuais aprovadas para implementação da Central Web, PDV, aplicativos e administração SaaS.
+Este diretório reúne as referências visuais do projeto TraxUp ERP, incluindo ERP Web, PDV, aplicativos e administração SaaS. Elas serão utilizadas como base de implementação no **Projeto - TraxUP**.
 
 ## Regras de uso
 
@@ -20,7 +20,7 @@ Este diretório reúne as referências visuais aprovadas para implementação da
 
 | Código | Tela | Arquivo | Situação |
 |---|---|---|---|
-| UI-001 | Dashboard da Central | `01-central/dashboard-central.webp` | Aprovada como direção visual |
+| UI-001 | Dashboard do TraxUp ERP | `01-traxup-erp/UI-001-dashboard-traxup-erp.webp` | Aprovada como direção visual |
 | UI-002 | Clientes | `02-cadastros/clientes.webp` | Proposta para revisão funcional |
 | UI-003 | Produtos | `02-cadastros/produtos.webp` | Proposta para revisão funcional |
 | UI-004 | Estoque | `03-estoque/estoque.webp` | Proposta para revisão funcional |
@@ -35,13 +35,13 @@ Este diretório reúne as referências visuais aprovadas para implementação da
 | UI-013 | Aplicativo do vendedor | `11-aplicativos/aplicativo-vendedor.webp` | Aprovada como direção visual |
 | UI-014 | Captação do trial de 7 dias | `12-trial-admin/trial-7-dias.webp` | Proposta para revisão funcional |
 | UI-015 | Administração de clientes SaaS | `12-trial-admin/admin-clientes-saas.webp` | Proposta para revisão funcional |
-| UI-016 | Login da Central | `01-central/login-central.webp` | Em revisão visual |
+| UI-016 | Login do TraxUp ERP | `01-traxup-erp/UI-016-login-traxup-erp.webp` | ✅ Visual aprovado |
 
 ## Fluxo de aprovação
 
 1. Proposta visual
-2. Revisão funcional
-3. Aprovação
-4. Mapeamento de API
-5. Implementação Angular
-6. Testes e homologação
+2. Revisão visual e funcional
+3. Aprovação visual
+4. Organização da referência no GitHub
+
+A implementação, a integração com o backend e os testes funcionais são conduzidos separadamente no **Projeto - TraxUP**.

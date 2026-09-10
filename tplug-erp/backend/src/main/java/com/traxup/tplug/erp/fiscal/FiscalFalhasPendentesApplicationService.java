@@ -21,16 +21,21 @@ public class FiscalFalhasPendentesApplicationService {
     public Resultado listar(UUID tenantId, Integer limiteSolicitado) {
         int limite = normalizarLimite(limiteSolicitado);
         List<Item> itens = jdbc.query("""
-                SELECT DISTINCT ON (te.id)
-                       te.id AS tentativa_id, te.documento_id, te.numero,
-                       te.status AS tentativa_status, f.id AS falha_id,
-                       f.etapa, f.tipo_erro, f.ocorrida_em
-                FROM fiscal_tentativas_emissao te
-                JOIN fiscal_tentativa_falhas f
-                  ON f.tenant_id = te.tenant_id AND f.tentativa_id = te.id
-                 AND f.resolvida_em IS NULL
-                WHERE te.tenant_id = ?
-                ORDER BY te.id, f.ocorrida_em DESC, f.id DESC
+                SELECT tentativa_id, documento_id, numero, tentativa_status,
+                       falha_id, etapa, tipo_erro, ocorrida_em
+                FROM (
+                    SELECT DISTINCT ON (te.id)
+                           te.id AS tentativa_id, te.documento_id, te.numero,
+                           te.status AS tentativa_status, f.id AS falha_id,
+                           f.etapa, f.tipo_erro, f.ocorrida_em
+                    FROM fiscal_tentativas_emissao te
+                    JOIN fiscal_tentativa_falhas f
+                      ON f.tenant_id = te.tenant_id AND f.tentativa_id = te.id
+                     AND f.resolvida_em IS NULL
+                    WHERE te.tenant_id = ?
+                    ORDER BY te.id, f.ocorrida_em DESC, f.id DESC
+                ) ultimas
+                ORDER BY ocorrida_em DESC, tentativa_id DESC
                 LIMIT ?
                 """, (rs, n) -> new Item(
                         rs.getObject("tentativa_id", UUID.class),
@@ -40,7 +45,6 @@ public class FiscalFalhasPendentesApplicationService {
                         rs.getString("tipo_erro"),
                         instante(rs.getTimestamp("ocorrida_em"))),
                 tenantId, limite);
-        itens.sort((a, b) -> b.ocorridaEm().compareTo(a.ocorridaEm()));
         return new Resultado(itens.size(), limite, itens);
     }
 

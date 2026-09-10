@@ -45,7 +45,9 @@ class FiscalPerfilContabilidadeIntegrationTest {
                 """, String.class, tenant.getId(), perfilId);
 
         assertThat(permissoes)
-                .containsExactly("FISCAL_REPOSITORIO_CONTABILIDADE_LER")
+                .containsExactly(
+                        "CONTABILIDADE_LIVRO_CAIXA_LER",
+                        "FISCAL_REPOSITORIO_CONTABILIDADE_LER")
                 .doesNotContain("FISCAL_DOCUMENTO_EMITIR");
     }
 }

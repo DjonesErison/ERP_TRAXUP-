@@ -28,7 +28,7 @@ public class FiscalArquivoDownloadApplicationService {
         this.auditoria = auditoria;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Resultado baixar(UUID tenantId, UUID usuarioId, UUID arquivoId) {
         Origem origem = jdbc.query("""
                 SELECT a.id, a.documento_id, a.chave_objeto, a.hash_sha256,

@@ -6,8 +6,10 @@ import org.mockito.InOrder;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class FiscalTentativaFluxoApplicationServiceTest {
@@ -17,8 +19,9 @@ class FiscalTentativaFluxoApplicationServiceTest {
         var assinatura = mock(FiscalTentativaAssinaturaApplicationService.class);
         var transmissao = mock(FiscalTentativaTransmissaoApplicationService.class);
         var processado = mock(FiscalTentativaProcessadoApplicationService.class);
+        var falhas = mock(FiscalTentativaFalhaApplicationService.class);
         var service = new FiscalTentativaFluxoApplicationService(
-                xml, assinatura, transmissao, processado);
+                xml, assinatura, transmissao, processado, falhas);
         UUID tenant = UUID.randomUUID();
         UUID usuario = UUID.randomUUID();
         UUID tentativa = UUID.randomUUID();
@@ -48,7 +51,8 @@ class FiscalTentativaFluxoApplicationServiceTest {
 
         var resultado = service.processar(tenant, usuario, tentativa);
 
-        InOrder ordem = inOrder(xml, assinatura, transmissao, processado);
+        InOrder ordem = inOrder(falhas, xml, assinatura, transmissao, processado);
+        ordem.verify(falhas).prepararRetomada(tenant, tentativa);
         ordem.verify(xml).gerar(tenant, usuario, tentativa);
         ordem.verify(assinatura).assinar(tenant, usuario, tentativa);
         ordem.verify(transmissao).transmitir(tenant, usuario, tentativa);
@@ -56,4 +60,31 @@ class FiscalTentativaFluxoApplicationServiceTest {
         assertEquals(processadoId, resultado.processadoId());
         assertEquals("SIM-123", resultado.protocolo());
     }
+    @Test
+    void registraEtapaQueFalhouSemEngolirErroOriginal() {
+        var xml = mock(FiscalTentativaXmlApplicationService.class);
+        var assinatura = mock(FiscalTentativaAssinaturaApplicationService.class);
+        var transmissao = mock(FiscalTentativaTransmissaoApplicationService.class);
+        var processado = mock(FiscalTentativaProcessadoApplicationService.class);
+        var falhas = mock(FiscalTentativaFalhaApplicationService.class);
+        var service = new FiscalTentativaFluxoApplicationService(
+                xml, assinatura, transmissao, processado, falhas);
+        UUID tenant = UUID.randomUUID();
+        UUID usuario = UUID.randomUUID();
+        UUID tentativa = UUID.randomUUID();
+        UUID documento = UUID.randomUUID();
+        RuntimeException erro = new IllegalStateException("falha controlada");
+
+        when(xml.gerar(tenant, usuario, tentativa)).thenReturn(
+                new FiscalTentativaXmlApplicationService.Resultado(
+                        UUID.randomUUID(), documento, tentativa, 1,
+                        "1.2", "a".repeat(64), false));
+        when(assinatura.assinar(tenant, usuario, tentativa)).thenThrow(erro);
+
+        assertThrows(IllegalStateException.class,
+                () -> service.processar(tenant, usuario, tentativa));
+        verify(falhas).registrar(tenant, tentativa,
+                FiscalTentativaFalhaApplicationService.Etapa.ASSINATURA, erro);
+    }
+
 }

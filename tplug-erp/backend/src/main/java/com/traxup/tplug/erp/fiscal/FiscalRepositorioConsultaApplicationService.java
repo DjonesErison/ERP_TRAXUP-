@@ -38,7 +38,7 @@ public class FiscalRepositorioConsultaApplicationService {
                   ON d.tenant_id = a.tenant_id AND d.id = a.documento_id
                 WHERE a.tenant_id = ?
                   AND a.criado_em::date BETWEEN ? AND ?
-                  AND (? IS NULL OR a.status = ?)
+                  AND (CAST(? AS VARCHAR) IS NULL OR a.status = ?)
                 ORDER BY a.criado_em DESC, a.id DESC
                 LIMIT ?
                 """, (rs, n) -> new Item(

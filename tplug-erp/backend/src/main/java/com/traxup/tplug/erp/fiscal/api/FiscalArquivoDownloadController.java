@@ -28,7 +28,7 @@ public class FiscalArquivoDownloadController {
     }
 
     @GetMapping("/{arquivoId}/download")
-    @PreAuthorize("hasAuthority('FISCAL_DOCUMENTO_LER')")
+    @PreAuthorize("hasAuthority('FISCAL_REPOSITORIO_CONTABILIDADE_LER')")
     public ResponseEntity<byte[]> baixar(@PathVariable UUID arquivoId) {
         var resultado = service.baixar(tenantContext.tenantId(),
                 tenantContext.usuarioIdOuNulo(), arquivoId);

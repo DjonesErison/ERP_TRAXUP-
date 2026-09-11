@@ -65,7 +65,8 @@ public class SpedExportacaoApplicationService {
         int limiteEfetivo = validarLimite(limite);
         List<Exportacao> exportacoes = jdbc.query("""
                 SELECT id, tipo, competencia, status, hash_sha256,
-                       erro_codigo, criado_em, atualizado_em, concluido_em
+                       versao_layout, erro_codigo, criado_em, atualizado_em,
+                       concluido_em
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ?
                   AND (CAST(? AS VARCHAR) IS NULL OR tipo = ?)
@@ -77,6 +78,7 @@ public class SpedExportacaoApplicationService {
                         rs.getDate("competencia"),
                         rs.getString("status"),
                         rs.getString("hash_sha256"),
+                        rs.getString("versao_layout"),
                         rs.getString("erro_codigo"),
                         rs.getTimestamp("criado_em").toInstant(),
                         rs.getTimestamp("atualizado_em").toInstant(),
@@ -95,7 +97,8 @@ public class SpedExportacaoApplicationService {
             UUID tenantId, String tipo, YearMonth competencia) {
         List<Exportacao> encontrados = jdbc.query("""
                 SELECT id, tipo, competencia, status, hash_sha256,
-                       erro_codigo, criado_em, atualizado_em, concluido_em
+                       versao_layout, erro_codigo, criado_em, atualizado_em,
+                       concluido_em
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ?
                   AND tipo = ?
@@ -106,6 +109,7 @@ public class SpedExportacaoApplicationService {
                         rs.getDate("competencia"),
                         rs.getString("status"),
                         rs.getString("hash_sha256"),
+                        rs.getString("versao_layout"),
                         rs.getString("erro_codigo"),
                         rs.getTimestamp("criado_em").toInstant(),
                         rs.getTimestamp("atualizado_em").toInstant(),
@@ -120,11 +124,12 @@ public class SpedExportacaoApplicationService {
 
     private static Exportacao mapear(
             UUID id, String tipo, Date competencia, String status,
-            String hash, String erroCodigo, Instant criadoEm,
-            Instant atualizadoEm, Instant concluidoEm) {
+            String hash, String versaoLayout, String erroCodigo,
+            Instant criadoEm, Instant atualizadoEm, Instant concluidoEm) {
         return new Exportacao(id, tipo,
                 YearMonth.from(competencia.toLocalDate()), status,
-                hash, erroCodigo, criadoEm, atualizadoEm, concluidoEm);
+                hash, versaoLayout, erroCodigo, criadoEm, atualizadoEm,
+                concluidoEm);
     }
 
     static String normalizarTipo(String tipo) {
@@ -151,6 +156,7 @@ public class SpedExportacaoApplicationService {
             YearMonth competencia,
             String status,
             String hashSha256,
+            String versaoLayout,
             String erroCodigo,
             Instant criadoEm,
             Instant atualizadoEm,

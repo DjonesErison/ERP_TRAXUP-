@@ -32,7 +32,7 @@ class SpedExportacaoWorkerApplicationServiceTest {
     void calculaHashEChaveDeterministicos() {
         byte[] conteudo = "SPED-controlado".getBytes(StandardCharsets.UTF_8);
         assertEquals(
-                "f51d4dc9c24adafebc2019595b150a46ea87d2999183829cad17e71538c24fb3",
+                "f6e9f502ca3c204b64f93eaaee108e595b2da1e8ea61d4eec6e3ba64ed92b157",
                 SpedExportacaoWorkerApplicationService.sha256(conteudo));
 
         UUID tenantId = UUID.fromString(

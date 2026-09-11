@@ -36,7 +36,7 @@ public class InventarioController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('INVENTARIO_LER')")
+    @PreAuthorize("hasAnyAuthority('INVENTARIO_LER', 'CONTABILIDADE_INVENTARIO_LER')")
     public List<InventarioSessaoResponse> listar(
             @RequestParam(required = false) UUID filialId,
             @RequestParam(required = false) String status,
@@ -46,13 +46,13 @@ public class InventarioController {
     }
 
     @GetMapping("/{inventarioId}")
-    @PreAuthorize("hasAuthority('INVENTARIO_LER')")
+    @PreAuthorize("hasAnyAuthority('INVENTARIO_LER', 'CONTABILIDADE_INVENTARIO_LER')")
     public InventarioSessaoResponse buscar(@PathVariable UUID inventarioId) {
         return InventarioSessaoResponse.from(service.buscar(tenantContext.tenantId(), inventarioId));
     }
 
     @GetMapping("/{inventarioId}/contagens")
-    @PreAuthorize("hasAuthority('INVENTARIO_LER')")
+    @PreAuthorize("hasAnyAuthority('INVENTARIO_LER', 'CONTABILIDADE_INVENTARIO_LER')")
     public List<InventarioContagemResponse> listarContagens(
             @PathVariable UUID inventarioId,
             @RequestParam(required = false, defaultValue = "100") Integer limite) {
@@ -64,7 +64,7 @@ public class InventarioController {
     }
 
     @GetMapping("/{inventarioId}/divergencias")
-    @PreAuthorize("hasAuthority('INVENTARIO_LER')")
+    @PreAuthorize("hasAnyAuthority('INVENTARIO_LER', 'CONTABILIDADE_INVENTARIO_LER')")
     public List<InventarioDivergenciaResponse> listarDivergencias(
             @PathVariable UUID inventarioId,
             @RequestParam(required = false, defaultValue = "100") Integer limite) {

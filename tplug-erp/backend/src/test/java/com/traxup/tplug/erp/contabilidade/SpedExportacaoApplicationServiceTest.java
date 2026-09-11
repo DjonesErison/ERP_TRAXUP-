@@ -4,6 +4,8 @@ import com.traxup.tplug.erp.contabilidade.api.SpedExportacaoController;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -34,10 +36,12 @@ class SpedExportacaoApplicationServiceTest {
     }
 
     @Test
-    void protegeSolicitacaoEListagemComPermissaoDedicada()
+    void protegeOperacoesSpedComPermissoesDedicadas()
             throws NoSuchMethodException {
-        String regraEsperada =
+        String regraSolicitar =
                 "hasAuthority('CONTABILIDADE_SPED_SOLICITAR')";
+        String regraBaixar =
+                "hasAuthority('CONTABILIDADE_SPED_BAIXAR')";
 
         PreAuthorize post = SpedExportacaoController.class
                 .getDeclaredMethod("solicitar",
@@ -47,8 +51,12 @@ class SpedExportacaoApplicationServiceTest {
         PreAuthorize get = SpedExportacaoController.class
                 .getDeclaredMethod("listar", String.class, Integer.class)
                 .getAnnotation(PreAuthorize.class);
+        PreAuthorize download = SpedExportacaoController.class
+                .getDeclaredMethod("baixar", UUID.class)
+                .getAnnotation(PreAuthorize.class);
 
-        assertEquals(regraEsperada, post.value());
-        assertEquals(regraEsperada, get.value());
+        assertEquals(regraSolicitar, post.value());
+        assertEquals(regraSolicitar, get.value());
+        assertEquals(regraBaixar, download.value());
     }
 }

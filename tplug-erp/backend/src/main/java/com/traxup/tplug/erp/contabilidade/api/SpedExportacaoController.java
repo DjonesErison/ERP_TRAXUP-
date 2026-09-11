@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.contabilidade.api;
 
 import com.traxup.tplug.erp.auth.TenantContext;
+import com.traxup.tplug.erp.contabilidade.SpedCancelamentoApplicationService;
 import com.traxup.tplug.erp.contabilidade.SpedDownloadApplicationService;
 import com.traxup.tplug.erp.contabilidade.SpedExportacaoApplicationService;
 import com.traxup.tplug.erp.contabilidade.SpedReprocessamentoApplicationService;
@@ -33,6 +34,7 @@ import java.util.UUID;
 @RequestMapping("/api/v1/contabilidade/sped/exportacoes")
 public class SpedExportacaoController {
     private final SpedExportacaoApplicationService service;
+    private final SpedCancelamentoApplicationService cancelamentoService;
     private final SpedDownloadApplicationService downloadService;
     private final SpedReprocessamentoApplicationService reprocessamentoService;
     private final SpedResumoApplicationService resumoService;
@@ -40,11 +42,13 @@ public class SpedExportacaoController {
 
     public SpedExportacaoController(
             SpedExportacaoApplicationService service,
+            SpedCancelamentoApplicationService cancelamentoService,
             SpedDownloadApplicationService downloadService,
             SpedReprocessamentoApplicationService reprocessamentoService,
             SpedResumoApplicationService resumoService,
             TenantContext tenantContext) {
         this.service = service;
+        this.cancelamentoService = cancelamentoService;
         this.downloadService = downloadService;
         this.reprocessamentoService = reprocessamentoService;
         this.resumoService = resumoService;
@@ -107,6 +111,15 @@ public class SpedExportacaoController {
                 .contentLength(download.conteudo().length)
                 .header(HttpHeaders.CONTENT_DISPOSITION, disposition)
                 .body(download.conteudo());
+    }
+
+    @PostMapping("/{id}/cancelamento")
+    @PreAuthorize("hasAuthority('CONTABILIDADE_SPED_CANCELAR')")
+    public SpedCancelamentoApplicationService.Resultado cancelar(
+            @PathVariable UUID id) {
+        return cancelamentoService.cancelar(
+                tenantContext.tenantId(),
+                tenantContext.usuarioIdOuNulo(), id);
     }
 
     @PostMapping("/{id}/reprocessamento")

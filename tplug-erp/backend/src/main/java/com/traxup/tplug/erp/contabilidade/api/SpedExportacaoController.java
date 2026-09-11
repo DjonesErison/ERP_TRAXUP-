@@ -4,6 +4,7 @@ import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.contabilidade.SpedCancelamentoApplicationService;
 import com.traxup.tplug.erp.contabilidade.SpedDownloadApplicationService;
 import com.traxup.tplug.erp.contabilidade.SpedExportacaoApplicationService;
+import com.traxup.tplug.erp.contabilidade.SpedProntidaoApplicationService;
 import com.traxup.tplug.erp.contabilidade.SpedReprocessamentoApplicationService;
 import com.traxup.tplug.erp.contabilidade.SpedResumoApplicationService;
 import jakarta.validation.Valid;
@@ -36,6 +37,7 @@ public class SpedExportacaoController {
     private final SpedExportacaoApplicationService service;
     private final SpedCancelamentoApplicationService cancelamentoService;
     private final SpedDownloadApplicationService downloadService;
+    private final SpedProntidaoApplicationService prontidaoService;
     private final SpedReprocessamentoApplicationService reprocessamentoService;
     private final SpedResumoApplicationService resumoService;
     private final TenantContext tenantContext;
@@ -44,12 +46,14 @@ public class SpedExportacaoController {
             SpedExportacaoApplicationService service,
             SpedCancelamentoApplicationService cancelamentoService,
             SpedDownloadApplicationService downloadService,
+            SpedProntidaoApplicationService prontidaoService,
             SpedReprocessamentoApplicationService reprocessamentoService,
             SpedResumoApplicationService resumoService,
             TenantContext tenantContext) {
         this.service = service;
         this.cancelamentoService = cancelamentoService;
         this.downloadService = downloadService;
+        this.prontidaoService = prontidaoService;
         this.reprocessamentoService = reprocessamentoService;
         this.resumoService = resumoService;
         this.tenantContext = tenantContext;
@@ -80,6 +84,12 @@ public class SpedExportacaoController {
                 tenantContext.tenantId(),
                 tenantContext.usuarioIdOuNulo(),
                 tipo, status, competenciaInicio, competenciaFim, limite);
+    }
+
+    @GetMapping("/prontidao")
+    @PreAuthorize("hasAuthority('CONTABILIDADE_SPED_SOLICITAR')")
+    public SpedProntidaoApplicationService.Prontidao consultarProntidao() {
+        return prontidaoService.consultar();
     }
 
     @GetMapping("/resumo")

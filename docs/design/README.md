@@ -1,4 +1,3 @@
-# TraxUp — Catálogo Visual
 
 Este diretório reúne as referências visuais do projeto TraxUp ERP, incluindo ERP Web, PDV, aplicativos e administração SaaS. Elas serão utilizadas como base de implementação no **Projeto - TraxUP**.
 
@@ -41,6 +40,7 @@ Este diretório reúne as referências visuais do projeto TraxUp ERP, incluindo 
 | UI-019 | Boas-vindas e configuração inicial do TraxUp ERP | `01-traxup-erp/UI-019-onboarding-traxup-erp.webp` | ✅ Visual aprovado |
 | UI-020 | Usuários e permissões do TraxUp ERP | `01-traxup-erp/UI-020-usuarios-permissoes-traxup-erp.webp` | ✅ Visual aprovado |
 | UI-021 | Cadastro e edição de cliente do TraxUp ERP | `02-cadastros/UI-021-cadastro-cliente-traxup-erp.webp` | ✅ Visual aprovado |
+| UI-022 | Visão 360º do cliente do TraxUp ERP | `02-cadastros/UI-022-visao-360-cliente-traxup-erp.webp` | ✅ Visual aprovado |
 
 ## Fluxo de aprovação
 

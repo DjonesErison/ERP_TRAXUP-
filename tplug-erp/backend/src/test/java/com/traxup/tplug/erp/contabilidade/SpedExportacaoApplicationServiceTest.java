@@ -42,6 +42,8 @@ class SpedExportacaoApplicationServiceTest {
                 "hasAuthority('CONTABILIDADE_SPED_SOLICITAR')";
         String regraBaixar =
                 "hasAuthority('CONTABILIDADE_SPED_BAIXAR')";
+        String regraReprocessar =
+                "hasAuthority('CONTABILIDADE_SPED_REPROCESSAR')";
 
         PreAuthorize post = SpedExportacaoController.class
                 .getDeclaredMethod("solicitar",
@@ -54,9 +56,13 @@ class SpedExportacaoApplicationServiceTest {
         PreAuthorize download = SpedExportacaoController.class
                 .getDeclaredMethod("baixar", UUID.class)
                 .getAnnotation(PreAuthorize.class);
+        PreAuthorize reprocessamento = SpedExportacaoController.class
+                .getDeclaredMethod("reprocessar", UUID.class)
+                .getAnnotation(PreAuthorize.class);
 
         assertEquals(regraSolicitar, post.value());
         assertEquals(regraSolicitar, get.value());
         assertEquals(regraBaixar, download.value());
+        assertEquals(regraReprocessar, reprocessamento.value());
     }
 }

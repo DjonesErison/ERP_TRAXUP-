@@ -68,7 +68,7 @@ public class SpedExportacaoApplicationService {
                        erro_codigo, criado_em, atualizado_em, concluido_em
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ?
-                  AND (? IS NULL OR tipo = ?)
+                  AND (CAST(? AS VARCHAR) IS NULL OR tipo = ?)
                 ORDER BY competencia DESC, criado_em DESC, id
                 LIMIT ?
                 """, (rs, n) -> mapear(

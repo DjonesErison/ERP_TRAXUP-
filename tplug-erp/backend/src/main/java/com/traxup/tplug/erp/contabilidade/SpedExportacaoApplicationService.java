@@ -18,6 +18,8 @@ import java.util.UUID;
 public class SpedExportacaoApplicationService {
     private static final Set<String> TIPOS =
             Set.of("EFD_ICMS_IPI", "EFD_CONTRIBUICOES");
+    private static final Set<String> STATUS =
+            Set.of("PENDENTE", "PROCESSANDO", "CONCLUIDO", "FALHOU");
     private static final int LIMITE_PADRAO = 100;
     private static final int LIMITE_MAXIMO = 500;
 
@@ -60,9 +62,24 @@ public class SpedExportacaoApplicationService {
     @Transactional
     public List<Exportacao> listar(UUID tenantId, UUID usuarioId,
                                    String tipo, Integer limite) {
+        return listar(tenantId, usuarioId, tipo, null, null, null, limite);
+    }
+
+    @Transactional
+    public List<Exportacao> listar(
+            UUID tenantId, UUID usuarioId, String tipo, String status,
+            YearMonth competenciaInicio, YearMonth competenciaFim,
+            Integer limite) {
         String tipoNormalizado =
                 tipo == null || tipo.isBlank() ? null : normalizarTipo(tipo);
+        String statusNormalizado = normalizarStatusOpcional(status);
+        validarIntervalo(competenciaInicio, competenciaFim);
+        Date inicio = competenciaInicio == null ? null
+                : Date.valueOf(competenciaInicio.atDay(1));
+        Date fim = competenciaFim == null ? null
+                : Date.valueOf(competenciaFim.atDay(1));
         int limiteEfetivo = validarLimite(limite);
+
         List<Exportacao> exportacoes = jdbc.query("""
                 SELECT id, tipo, competencia, status, hash_sha256,
                        versao_layout, erro_codigo, criado_em, atualizado_em,
@@ -70,6 +87,9 @@ public class SpedExportacaoApplicationService {
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ?
                   AND (CAST(? AS VARCHAR) IS NULL OR tipo = ?)
+                  AND (CAST(? AS VARCHAR) IS NULL OR status = ?)
+                  AND (CAST(? AS DATE) IS NULL OR competencia >= ?)
+                  AND (CAST(? AS DATE) IS NULL OR competencia <= ?)
                 ORDER BY competencia DESC, criado_em DESC, id
                 LIMIT ?
                 """, (rs, n) -> mapear(
@@ -84,11 +104,17 @@ public class SpedExportacaoApplicationService {
                         rs.getTimestamp("atualizado_em").toInstant(),
                         rs.getTimestamp("concluido_em") == null ? null
                                 : rs.getTimestamp("concluido_em").toInstant()),
-                tenantId, tipoNormalizado, tipoNormalizado, limiteEfetivo);
+                tenantId,
+                tipoNormalizado, tipoNormalizado,
+                statusNormalizado, statusNormalizado,
+                inicio, inicio, fim, fim, limiteEfetivo);
 
         auditoria.registrar(tenantId, usuarioId, null, null,
                 "LISTAR_EXPORTACOES_SPED", "SPED_EXPORTACAO",
                 UUID.randomUUID(), "tipo=" + tipoNormalizado
+                        + ";status=" + statusNormalizado
+                        + ";inicio=" + competenciaInicio
+                        + ";fim=" + competenciaFim
                         + ";resultados=" + exportacoes.size());
         return exportacoes;
     }
@@ -140,6 +166,21 @@ public class SpedExportacaoApplicationService {
             throw new IllegalArgumentException(
                     "Tipo deve ser EFD_ICMS_IPI ou EFD_CONTRIBUICOES");
         return normalizado;
+    }
+
+    static String normalizarStatusOpcional(String status) {
+        if (status == null || status.isBlank()) return null;
+        String normalizado = status.trim().toUpperCase(Locale.ROOT);
+        if (!STATUS.contains(normalizado))
+            throw new IllegalArgumentException(
+                    "Status de exportacao SPED invalido");
+        return normalizado;
+    }
+
+    static void validarIntervalo(YearMonth inicio, YearMonth fim) {
+        if (inicio != null && fim != null && inicio.isAfter(fim))
+            throw new IllegalArgumentException(
+                    "Competencia inicial deve ser anterior ou igual a final");
     }
 
     static int validarLimite(Integer limite) {

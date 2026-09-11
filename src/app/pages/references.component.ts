@@ -10,7 +10,7 @@ type Reference = {code:string; title:string; file:string; status:string};
   `],
   template:`<section class="page">
     <div class="page-head"><div><h1>Referências / Imagens</h1><p>Catálogo visual oficial do TRAXUP para implementação e homologação das interfaces.</p></div></div>
-    <div class="card panel intro"><div class="panel-title"><h2>▧ Catálogo Visual</h2><span class="badge">16 telas</span></div><p>As imagens abaixo são referências versionadas em <strong>docs/design</strong>. Clique em qualquer prévia para abrir a imagem completa. Elas orientam a implementação Angular e não representam, por si só, funcionalidade concluída.</p></div>
+    <div class="card panel intro"><div class="panel-title"><h2>▧ Catálogo Visual</h2><span class="badge">{{references.length}} telas</span></div><p>As imagens abaixo são referências versionadas em <strong>docs/design</strong>. Clique em qualquer prévia para abrir a imagem completa. Elas orientam a implementação Angular e não representam, por si só, funcionalidade concluída.</p></div>
     <div class="gallery">
       @for(ref of references; track ref.code){
         <article class="card reference">
@@ -40,7 +40,15 @@ export class ReferencesComponent {
     {code:'UI-013',title:'Aplicativo do vendedor',file:'11-aplicativos/aplicativo-vendedor.webp',status:'Aprovada como direção visual'},
     {code:'UI-014',title:'Captação do trial de 7 dias',file:'12-trial-admin/trial-7-dias.webp',status:'Proposta para revisão funcional'},
     {code:'UI-015',title:'Administração de clientes SaaS',file:'12-trial-admin/admin-clientes-saas.webp',status:'Proposta para revisão funcional'},
-    {code:'UI-016',title:'Login do TraxUp ERP',file:'01-traxup-erp/UI-016-login-traxup-erp.webp',status:'✅ Visual aprovado'}
+    {code:'UI-016',title:'Login do TraxUp ERP',file:'01-traxup-erp/UI-016-login-traxup-erp.webp',status:'✅ Visual aprovado'},
+    {code:'UI-017',title:'Recuperação de senha do TraxUp ERP',file:'01-traxup-erp/UI-017-recuperacao-senha-traxup-erp.webp',status:'✅ Visual aprovado'},
+    {code:'UI-018',title:'Seleção de empresa e filial do TraxUp ERP',file:'01-traxup-erp/UI-018-selecao-empresa-filial-traxup-erp.webp',status:'✅ Visual aprovado'},
+    {code:'UI-019',title:'Boas-vindas e configuração inicial do TraxUp ERP',file:'01-traxup-erp/UI-019-onboarding-traxup-erp.webp',status:'✅ Visual aprovado'},
+    {code:'UI-020',title:'Usuários e permissões do TraxUp ERP',file:'01-traxup-erp/UI-020-usuarios-permissoes-traxup-erp.webp',status:'✅ Visual aprovado'},
+    {code:'UI-021',title:'Cadastro e edição de cliente do TraxUp ERP',file:'02-cadastros/UI-021-cadastro-cliente-traxup-erp.webp',status:'✅ Visual aprovado'},
+    {code:'UI-022',title:'Visão 360º do cliente do TraxUp ERP',file:'02-cadastros/UI-022-visao-360-cliente-traxup-erp.webp',status:'✅ Visual aprovado'},
+    {code:'UI-023',title:'Cadastro e edição de produto do TraxUp ERP',file:'02-cadastros/UI-023-cadastro-produto-traxup-erp.webp',status:'✅ Visual aprovado'},
+    {code:'UI-024',title:'Produto — Preços do TraxUp ERP',file:'02-cadastros/UI-024-produto-precos-traxup-erp.webp',status:'✅ Visual aprovado'}
   ];
   asset(file:string){return `/assets/design/${file}`;}
 }

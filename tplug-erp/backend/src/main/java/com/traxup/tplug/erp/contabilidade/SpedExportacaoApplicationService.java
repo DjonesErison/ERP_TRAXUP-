@@ -47,7 +47,16 @@ public class SpedExportacaoApplicationService {
                     solicitado_por_id
                 )
                 VALUES (?, ?, ?, ?, 'PENDENTE', ?)
-                ON CONFLICT (tenant_id, tipo, competencia) DO NOTHING
+                ON CONFLICT (tenant_id, tipo, competencia) DO UPDATE
+                SET status = 'PENDENTE',
+                    tentativas_processamento = 0,
+                    chave_objeto = NULL,
+                    hash_sha256 = NULL,
+                    versao_layout = NULL,
+                    erro_codigo = NULL,
+                    concluido_em = NULL,
+                    atualizado_em = CURRENT_TIMESTAMP
+                WHERE contabilidade_sped_exportacoes.status = 'CANCELADO'
                 """, id, tenantId, tipoNormalizado,
                 Date.valueOf(competencia.atDay(1)), usuarioId);
 

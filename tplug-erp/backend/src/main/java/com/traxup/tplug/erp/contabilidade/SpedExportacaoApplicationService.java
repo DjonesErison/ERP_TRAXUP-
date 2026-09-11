@@ -19,7 +19,8 @@ public class SpedExportacaoApplicationService {
     private static final Set<String> TIPOS =
             Set.of("EFD_ICMS_IPI", "EFD_CONTRIBUICOES");
     private static final Set<String> STATUS =
-            Set.of("PENDENTE", "PROCESSANDO", "CONCLUIDO", "FALHOU");
+            Set.of("PENDENTE", "PROCESSANDO", "CONCLUIDO", "FALHOU",
+                    "CANCELADO");
     private static final int LIMITE_PADRAO = 100;
     private static final int LIMITE_MAXIMO = 500;
 

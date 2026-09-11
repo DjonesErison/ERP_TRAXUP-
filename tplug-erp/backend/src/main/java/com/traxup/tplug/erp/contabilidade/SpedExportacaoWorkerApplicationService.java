@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Date;
 import java.time.YearMonth;
 import java.util.HexFormat;
 import java.util.List;

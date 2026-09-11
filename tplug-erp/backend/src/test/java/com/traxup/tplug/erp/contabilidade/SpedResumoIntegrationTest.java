@@ -52,5 +52,6 @@ class SpedResumoIntegrationTest {
         assertThat(resumo.processando()).isZero();
         assertThat(resumo.concluidos()).isZero();
         assertThat(resumo.falhas()).isZero();
+        assertThat(resumo.cancelados()).isZero();
     }
 }

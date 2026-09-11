@@ -47,7 +47,10 @@ public class SpedResumoApplicationService {
                        ) AS concluidos,
                        COUNT(*) FILTER (
                            WHERE status = 'FALHOU'
-                       ) AS falhas
+                       ) AS falhas,
+                       COUNT(*) FILTER (
+                           WHERE status = 'CANCELADO'
+                       ) AS cancelados
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ?
                   AND (CAST(? AS VARCHAR) IS NULL OR tipo = ?)
@@ -58,7 +61,8 @@ public class SpedResumoApplicationService {
                         rs.getLong("pendentes"),
                         rs.getLong("processando"),
                         rs.getLong("concluidos"),
-                        rs.getLong("falhas")),
+                        rs.getLong("falhas"),
+                        rs.getLong("cancelados")),
                 tenantId, tipoNormalizado, tipoNormalizado,
                 inicio, inicio, fim, fim);
 
@@ -75,5 +79,6 @@ public class SpedResumoApplicationService {
             long pendentes,
             long processando,
             long concluidos,
-            long falhas) {}
+            long falhas,
+            long cancelados) {}
 }

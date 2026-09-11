@@ -74,6 +74,9 @@ class SpedExportacaoApplicationServiceTest {
                 .getDeclaredMethod("listar", String.class, String.class,
                         YearMonth.class, YearMonth.class, Integer.class)
                 .getAnnotation(PreAuthorize.class);
+        PreAuthorize prontidao = SpedExportacaoController.class
+                .getDeclaredMethod("consultarProntidao")
+                .getAnnotation(PreAuthorize.class);
         PreAuthorize resumo = SpedExportacaoController.class
                 .getDeclaredMethod("resumir", String.class,
                         YearMonth.class, YearMonth.class)
@@ -90,6 +93,7 @@ class SpedExportacaoApplicationServiceTest {
 
         assertEquals(regraSolicitar, post.value());
         assertEquals(regraSolicitar, get.value());
+        assertEquals(regraSolicitar, prontidao.value());
         assertEquals(regraSolicitar, resumo.value());
         assertEquals(regraBaixar, download.value());
         assertEquals(regraCancelar, cancelamento.value());

@@ -4,6 +4,7 @@ import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.contabilidade.SpedDownloadApplicationService;
 import com.traxup.tplug.erp.contabilidade.SpedExportacaoApplicationService;
 import com.traxup.tplug.erp.contabilidade.SpedReprocessamentoApplicationService;
+import com.traxup.tplug.erp.contabilidade.SpedResumoApplicationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -34,16 +35,19 @@ public class SpedExportacaoController {
     private final SpedExportacaoApplicationService service;
     private final SpedDownloadApplicationService downloadService;
     private final SpedReprocessamentoApplicationService reprocessamentoService;
+    private final SpedResumoApplicationService resumoService;
     private final TenantContext tenantContext;
 
     public SpedExportacaoController(
             SpedExportacaoApplicationService service,
             SpedDownloadApplicationService downloadService,
             SpedReprocessamentoApplicationService reprocessamentoService,
+            SpedResumoApplicationService resumoService,
             TenantContext tenantContext) {
         this.service = service;
         this.downloadService = downloadService;
         this.reprocessamentoService = reprocessamentoService;
+        this.resumoService = resumoService;
         this.tenantContext = tenantContext;
     }
 
@@ -72,6 +76,20 @@ public class SpedExportacaoController {
                 tenantContext.tenantId(),
                 tenantContext.usuarioIdOuNulo(),
                 tipo, status, competenciaInicio, competenciaFim, limite);
+    }
+
+    @GetMapping("/resumo")
+    @PreAuthorize("hasAuthority('CONTABILIDADE_SPED_SOLICITAR')")
+    public SpedResumoApplicationService.Resumo resumir(
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM") YearMonth competenciaInicio,
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM") YearMonth competenciaFim) {
+        return resumoService.resumir(
+                tenantContext.tenantId(),
+                tenantContext.usuarioIdOuNulo(),
+                tipo, competenciaInicio, competenciaFim);
     }
 
     @GetMapping("/{id}/arquivo")

@@ -46,5 +46,11 @@ class SpedCancelamentoIntegrationTest {
         assertThrows(RecursoNaoEncontradoException.class,
                 () -> cancelamentoService.cancelar(
                         dono.getId(), null, exportacao.id()));
+
+        var reaberta = exportacaoService.solicitar(
+                dono.getId(), null, "EFD_ICMS_IPI",
+                YearMonth.of(2026, 9));
+        assertThat(reaberta.id()).isEqualTo(exportacao.id());
+        assertThat(reaberta.status()).isEqualTo("PENDENTE");
     }
 }

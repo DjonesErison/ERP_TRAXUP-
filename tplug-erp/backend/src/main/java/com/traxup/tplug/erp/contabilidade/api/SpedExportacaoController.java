@@ -7,6 +7,7 @@ import com.traxup.tplug.erp.contabilidade.SpedReprocessamentoApplicationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -61,11 +62,16 @@ public class SpedExportacaoController {
     @PreAuthorize("hasAuthority('CONTABILIDADE_SPED_SOLICITAR')")
     public List<SpedExportacaoApplicationService.Exportacao> listar(
             @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM") YearMonth competenciaInicio,
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM") YearMonth competenciaFim,
             @RequestParam(required = false) Integer limite) {
         return service.listar(
                 tenantContext.tenantId(),
                 tenantContext.usuarioIdOuNulo(),
-                tipo, limite);
+                tipo, status, competenciaInicio, competenciaFim, limite);
     }
 
     @GetMapping("/{id}/arquivo")

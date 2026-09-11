@@ -4,9 +4,11 @@ import com.traxup.tplug.erp.contabilidade.api.SpedExportacaoController;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.time.YearMonth;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SpedExportacaoApplicationServiceTest {
@@ -21,6 +23,20 @@ class SpedExportacaoApplicationServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> SpedExportacaoApplicationService
                         .normalizarTipo("SPED_DESCONHECIDO"));
+    }
+
+    @Test
+    void validaStatusEIntervaloDeCompetencias() {
+        assertNull(SpedExportacaoApplicationService
+                .normalizarStatusOpcional(" "));
+        assertEquals("CONCLUIDO", SpedExportacaoApplicationService
+                .normalizarStatusOpcional(" concluido "));
+        assertThrows(IllegalArgumentException.class,
+                () -> SpedExportacaoApplicationService
+                        .normalizarStatusOpcional("CANCELADO"));
+        assertThrows(IllegalArgumentException.class,
+                () -> SpedExportacaoApplicationService.validarIntervalo(
+                        YearMonth.of(2026, 9), YearMonth.of(2026, 8)));
     }
 
     @Test
@@ -51,7 +67,8 @@ class SpedExportacaoApplicationServiceTest {
                                 .SolicitarExportacaoRequest.class)
                 .getAnnotation(PreAuthorize.class);
         PreAuthorize get = SpedExportacaoController.class
-                .getDeclaredMethod("listar", String.class, Integer.class)
+                .getDeclaredMethod("listar", String.class, String.class,
+                        YearMonth.class, YearMonth.class, Integer.class)
                 .getAnnotation(PreAuthorize.class);
         PreAuthorize download = SpedExportacaoController.class
                 .getDeclaredMethod("baixar", UUID.class)

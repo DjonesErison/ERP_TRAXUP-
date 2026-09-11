@@ -48,6 +48,7 @@ class FiscalPerfilContabilidadeIntegrationTest {
                 .containsExactly(
                         "CONTABILIDADE_INVENTARIO_LER",
                         "CONTABILIDADE_LIVRO_CAIXA_LER",
+                        "CONTABILIDADE_SPED_BAIXAR",
                         "CONTABILIDADE_SPED_SOLICITAR",
                         "FISCAL_REPOSITORIO_CONTABILIDADE_LER")
                 .doesNotContain("FISCAL_DOCUMENTO_EMITIR");

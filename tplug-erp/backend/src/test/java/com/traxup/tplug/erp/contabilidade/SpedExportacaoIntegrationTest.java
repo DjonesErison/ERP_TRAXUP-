@@ -41,4 +41,29 @@ class SpedExportacaoIntegrationTest {
                 .extracting(SpedExportacaoApplicationService.Exportacao::id)
                 .containsExactly(primeira.id());
     }
+
+    @Test
+    void combinaFiltrosOpcionaisDeStatusTipoECompetencia() {
+        Tenant tenant = tenantRepository.saveAndFlush(
+                new Tenant("Tenant SPED Filtros"));
+        var julho = service.solicitar(
+                tenant.getId(), null, "EFD_ICMS_IPI",
+                YearMonth.of(2026, 7));
+        var agosto = service.solicitar(
+                tenant.getId(), null, "EFD_ICMS_IPI",
+                YearMonth.of(2026, 8));
+        service.solicitar(
+                tenant.getId(), null, "EFD_CONTRIBUICOES",
+                YearMonth.of(2026, 8));
+
+        assertThat(service.listar(
+                tenant.getId(), null, "EFD_ICMS_IPI", "PENDENTE",
+                YearMonth.of(2026, 7), YearMonth.of(2026, 8), 100))
+                .extracting(SpedExportacaoApplicationService.Exportacao::id)
+                .containsExactly(agosto.id(), julho.id());
+        assertThat(service.listar(
+                tenant.getId(), null, null, "CONCLUIDO",
+                null, null, 100))
+                .isEmpty();
+    }
 }

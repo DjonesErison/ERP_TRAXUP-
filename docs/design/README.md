@@ -38,6 +38,7 @@ Este diretório reúne as referências visuais do projeto TraxUp ERP, incluindo 
 | UI-016 | Login do TraxUp ERP | `01-traxup-erp/UI-016-login-traxup-erp.webp` | ✅ Visual aprovado |
 | UI-017 | Recuperação de senha do TraxUp ERP | `01-traxup-erp/UI-017-recuperacao-senha-traxup-erp.webp` | ✅ Visual aprovado |
 | UI-018 | Seleção de empresa e filial do TraxUp ERP | `01-traxup-erp/UI-018-selecao-empresa-filial-traxup-erp.webp` | ✅ Visual aprovado |
+| UI-019 | Boas-vindas e configuração inicial do TraxUp ERP | `01-traxup-erp/UI-019-onboarding-traxup-erp.webp` | ✅ Visual aprovado |
 
 ## Fluxo de aprovação
 

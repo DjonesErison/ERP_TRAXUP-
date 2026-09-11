@@ -43,6 +43,7 @@ Este diretório reúne as referências visuais do projeto TraxUp ERP, incluindo 
 | UI-021 | Cadastro e edição de cliente do TraxUp ERP | `02-cadastros/UI-021-cadastro-cliente-traxup-erp.webp` | ✅ Visual aprovado |
 | UI-022 | Visão 360º do cliente do TraxUp ERP | `02-cadastros/UI-022-visao-360-cliente-traxup-erp.webp` | ✅ Visual aprovado |
 | UI-023 | Cadastro e edição de produto do TraxUp ERP | `02-cadastros/UI-023-cadastro-produto-traxup-erp.webp` | ✅ Visual aprovado |
+| UI-024 | Produto — Preços do TraxUp ERP | `02-cadastros/UI-024-produto-precos-traxup-erp.webp` | ✅ Visual aprovado |
 
 ## Fluxo de aprovação
 

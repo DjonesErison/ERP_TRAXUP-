@@ -3,6 +3,7 @@ package com.traxup.tplug.erp.contabilidade.api;
 import com.traxup.tplug.erp.auth.TenantContext;
 import com.traxup.tplug.erp.contabilidade.SpedDownloadApplicationService;
 import com.traxup.tplug.erp.contabilidade.SpedExportacaoApplicationService;
+import com.traxup.tplug.erp.contabilidade.SpedReprocessamentoApplicationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -31,14 +32,17 @@ import java.util.UUID;
 public class SpedExportacaoController {
     private final SpedExportacaoApplicationService service;
     private final SpedDownloadApplicationService downloadService;
+    private final SpedReprocessamentoApplicationService reprocessamentoService;
     private final TenantContext tenantContext;
 
     public SpedExportacaoController(
             SpedExportacaoApplicationService service,
             SpedDownloadApplicationService downloadService,
+            SpedReprocessamentoApplicationService reprocessamentoService,
             TenantContext tenantContext) {
         this.service = service;
         this.downloadService = downloadService;
+        this.reprocessamentoService = reprocessamentoService;
         this.tenantContext = tenantContext;
     }
 
@@ -79,6 +83,15 @@ public class SpedExportacaoController {
                 .contentLength(download.conteudo().length)
                 .header(HttpHeaders.CONTENT_DISPOSITION, disposition)
                 .body(download.conteudo());
+    }
+
+    @PostMapping("/{id}/reprocessamento")
+    @PreAuthorize("hasAuthority('CONTABILIDADE_SPED_REPROCESSAR')")
+    public SpedReprocessamentoApplicationService.Resultado reprocessar(
+            @PathVariable UUID id) {
+        return reprocessamentoService.reprocessar(
+                tenantContext.tenantId(),
+                tenantContext.usuarioIdOuNulo(), id);
     }
 
     public record SolicitarExportacaoRequest(

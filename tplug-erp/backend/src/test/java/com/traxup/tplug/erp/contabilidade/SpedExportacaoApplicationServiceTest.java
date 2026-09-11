@@ -31,9 +31,11 @@ class SpedExportacaoApplicationServiceTest {
                 .normalizarStatusOpcional(" "));
         assertEquals("CONCLUIDO", SpedExportacaoApplicationService
                 .normalizarStatusOpcional(" concluido "));
+        assertEquals("CANCELADO", SpedExportacaoApplicationService
+                .normalizarStatusOpcional("cancelado"));
         assertThrows(IllegalArgumentException.class,
                 () -> SpedExportacaoApplicationService
-                        .normalizarStatusOpcional("CANCELADO"));
+                        .normalizarStatusOpcional("EXCLUIDO"));
         assertThrows(IllegalArgumentException.class,
                 () -> SpedExportacaoApplicationService.validarIntervalo(
                         YearMonth.of(2026, 9), YearMonth.of(2026, 8)));
@@ -60,6 +62,8 @@ class SpedExportacaoApplicationServiceTest {
                 "hasAuthority('CONTABILIDADE_SPED_BAIXAR')";
         String regraReprocessar =
                 "hasAuthority('CONTABILIDADE_SPED_REPROCESSAR')";
+        String regraCancelar =
+                "hasAuthority('CONTABILIDADE_SPED_CANCELAR')";
 
         PreAuthorize post = SpedExportacaoController.class
                 .getDeclaredMethod("solicitar",
@@ -77,6 +81,9 @@ class SpedExportacaoApplicationServiceTest {
         PreAuthorize download = SpedExportacaoController.class
                 .getDeclaredMethod("baixar", UUID.class)
                 .getAnnotation(PreAuthorize.class);
+        PreAuthorize cancelamento = SpedExportacaoController.class
+                .getDeclaredMethod("cancelar", UUID.class)
+                .getAnnotation(PreAuthorize.class);
         PreAuthorize reprocessamento = SpedExportacaoController.class
                 .getDeclaredMethod("reprocessar", UUID.class)
                 .getAnnotation(PreAuthorize.class);
@@ -85,6 +92,7 @@ class SpedExportacaoApplicationServiceTest {
         assertEquals(regraSolicitar, get.value());
         assertEquals(regraSolicitar, resumo.value());
         assertEquals(regraBaixar, download.value());
+        assertEquals(regraCancelar, cancelamento.value());
         assertEquals(regraReprocessar, reprocessamento.value());
     }
 }

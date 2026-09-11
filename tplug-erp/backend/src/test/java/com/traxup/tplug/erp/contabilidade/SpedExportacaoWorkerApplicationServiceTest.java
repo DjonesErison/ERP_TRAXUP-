@@ -1,0 +1,62 @@
+package com.traxup.tplug.erp.contabilidade;
+
+import org.junit.jupiter.api.Test;
+
+import java.nio.charset.StandardCharsets;
+import java.time.YearMonth;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class SpedExportacaoWorkerApplicationServiceTest {
+    @Test
+    void validaLimitesDeProcessamento() {
+        assertEquals(5,
+                SpedExportacaoWorkerApplicationService.normalizarLimite(null));
+        assertEquals(20,
+                SpedExportacaoWorkerApplicationService.normalizarLimite(20));
+        assertThrows(IllegalArgumentException.class,
+                () -> SpedExportacaoWorkerApplicationService
+                        .normalizarLimite(21));
+
+        assertEquals(5,
+                SpedExportacaoWorkerApplicationService
+                        .normalizarMaxTentativas(5));
+        assertThrows(IllegalArgumentException.class,
+                () -> SpedExportacaoWorkerApplicationService
+                        .normalizarMaxTentativas(0));
+    }
+
+    @Test
+    void calculaHashEChaveDeterministicos() {
+        byte[] conteudo = "SPED-controlado".getBytes(StandardCharsets.UTF_8);
+        assertEquals(
+                "f51d4dc9c24adafebc2019595b150a46ea87d2999183829cad17e71538c24fb3",
+                SpedExportacaoWorkerApplicationService.sha256(conteudo));
+
+        UUID tenantId = UUID.fromString(
+                "10000000-0000-4000-8000-000000000001");
+        var item = new SpedExportacaoWorkerApplicationService.Item(
+                UUID.fromString("20000000-0000-4000-8000-000000000002"),
+                "EFD_ICMS_IPI", YearMonth.of(2026, 8));
+        assertEquals(
+                "tenants/10000000-0000-4000-8000-000000000001/"
+                        + "sped/EFD_ICMS_IPI/2026-08/"
+                        + "20000000-0000-4000-8000-000000000002.txt",
+                SpedExportacaoWorkerApplicationService
+                        .chaveObjeto(tenantId, item));
+    }
+
+    @Test
+    void recusaArtefatoVazioOuSemVersaoDoLayout() {
+        assertThrows(IllegalArgumentException.class,
+                () -> SpedExportacaoWorkerApplicationService
+                        .validarArtefato(new SpedGeradorPort.Artefato(
+                                new byte[0], "019")));
+        assertThrows(IllegalArgumentException.class,
+                () -> SpedExportacaoWorkerApplicationService
+                        .validarArtefato(new SpedGeradorPort.Artefato(
+                                new byte[]{1}, " ")));
+    }
+}

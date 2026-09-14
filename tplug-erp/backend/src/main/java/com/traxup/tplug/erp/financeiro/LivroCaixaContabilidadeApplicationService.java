@@ -34,9 +34,9 @@ public class LivroCaixaContabilidadeApplicationService {
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public Resultado consultar(UUID tenantId, UUID usuarioId,
                                LocalDate inicio, LocalDate fim,
-                               Integer limite, int pagina) {
+                               UUID filialId, Integer limite, int pagina) {
         validarPeriodo(inicio, fim);
-        var escopo = escopoFilial.resolver(tenantId, usuarioId, null);
+        var escopo = escopoFilial.resolver(tenantId, usuarioId, filialId);
         int limiteEfetivo = validarLimite(limite);
         Timestamp instanteInicial = Timestamp.valueOf(inicio.atStartOfDay());
         Timestamp instanteFinal = Timestamp.valueOf(
@@ -55,6 +55,7 @@ public class LivroCaixaContabilidadeApplicationService {
                 WHERE m.tenant_id = ?
                   AND m.ocorrido_em >= ?
                   AND m.ocorrido_em < ?
+                  AND (CAST(? AS UUID) IS NULL OR m.filial_id = ?)
                   AND (CAST(? AS BOOLEAN) = TRUE OR m.filial_id IN (
                       SELECT uf.filial_id
                       FROM usuario_filiais uf
@@ -65,6 +66,7 @@ public class LivroCaixaContabilidadeApplicationService {
                         rs.getBigDecimal("entradas"),
                         rs.getBigDecimal("saidas")),
                 tenantId, instanteInicial, instanteFinal,
+                filialId, filialId,
                 escopo.acessoTotal(), tenantId, usuarioId);
         if (resumo == null)
             resumo = new ResumoPeriodo(
@@ -86,6 +88,7 @@ public class LivroCaixaContabilidadeApplicationService {
                 WHERE m.tenant_id = ?
                   AND m.ocorrido_em >= ?
                   AND m.ocorrido_em < ?
+                  AND (CAST(? AS UUID) IS NULL OR m.filial_id = ?)
                   AND (CAST(? AS BOOLEAN) = TRUE OR m.filial_id IN (
                       SELECT uf.filial_id
                       FROM usuario_filiais uf
@@ -106,12 +109,14 @@ public class LivroCaixaContabilidadeApplicationService {
                         rs.getObject("origem_id", UUID.class),
                         rs.getTimestamp("ocorrido_em").toInstant()),
                 tenantId, instanteInicial, instanteFinal,
+                filialId, filialId,
                 escopo.acessoTotal(), tenantId, usuarioId,
                 limiteEfetivo, deslocamento);
 
-        auditoria.registrar(tenantId, usuarioId, null, null,
+        auditoria.registrar(tenantId, usuarioId, null, filialId,
                 "CONSULTAR_LIVRO_CAIXA", "LIVRO_CAIXA", UUID.randomUUID(),
                 "inicio=" + inicio + ";fim=" + fim
+                        + ";filialId=" + filialId
                         + ";pagina=" + pagina
                         + ";totalPaginas=" + totalPaginas
                         + ";acessoTotal=" + escopo.acessoTotal()

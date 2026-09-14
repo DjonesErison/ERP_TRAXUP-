@@ -2,6 +2,7 @@ package com.traxup.tplug.erp.fiscal;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +33,8 @@ class FiscalExportacaoContabilidadeApplicationServiceTest {
         UUID id = UUID.randomUUID();
         var arquivo = new FiscalExportacaoContabilidadeApplicationService.Arquivo(
                 id, UUID.randomUUID(), "interna", "a".repeat(64),
-                "NF-e/../../", 1, 99L);
+                "NF-e/../../", 1, 99L,
+                Instant.parse("2026-08-15T10:30:00Z"));
 
         String entrada = FiscalExportacaoContabilidadeApplicationService
                 .nomeEntrada(arquivo);
@@ -45,22 +47,24 @@ class FiscalExportacaoContabilidadeApplicationServiceTest {
     }
 
     @Test
-    void geraManifestoVerificavelSemExporChaveDeArmazenamento() {
+    void geraManifestoVerificavelComDataFiscalSemExporChaveDeArmazenamento() {
         UUID arquivoId = UUID.randomUUID();
         UUID documentoId = UUID.randomUUID();
         String hash = "b".repeat(64);
+        Instant dataFiscal = Instant.parse("2026-08-15T10:30:00Z");
         var arquivo = new FiscalExportacaoContabilidadeApplicationService.Arquivo(
                 arquivoId, documentoId, "tenant/secreto/documento.xml", hash,
-                "NF-e", 2, 123L);
+                "NF-e", 2, 123L, dataFiscal);
 
         String manifesto = FiscalExportacaoContabilidadeApplicationService
                 .manifesto(List.of(arquivo));
 
         assertTrue(manifesto.startsWith(
-                "arquivo_id;documento_id;modelo;serie;numero;hash_sha256;"
-                        + "nome_arquivo\n"));
+                "arquivo_id;documento_id;modelo;serie;numero;data_fiscal;"
+                        + "hash_sha256;nome_arquivo\n"));
         assertTrue(manifesto.contains("\"" + arquivoId + "\""));
         assertTrue(manifesto.contains("\"" + documentoId + "\""));
+        assertTrue(manifesto.contains("\"" + dataFiscal + "\""));
         assertTrue(manifesto.contains("\"" + hash + "\""));
         assertTrue(manifesto.contains(
                 "\"NF-E-2-123-" + arquivoId + ".xml\""));

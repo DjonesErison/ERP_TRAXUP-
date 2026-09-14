@@ -3,6 +3,7 @@ package com.traxup.tplug.erp.financeiro;
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -27,11 +28,41 @@ public class LivroCaixaContabilidadeApplicationService {
         this.auditoria = auditoria;
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public Resultado consultar(UUID tenantId, UUID usuarioId,
-                               LocalDate inicio, LocalDate fim, Integer limite) {
+                               LocalDate inicio, LocalDate fim,
+                               Integer limite, int pagina) {
         validarPeriodo(inicio, fim);
         int limiteEfetivo = validarLimite(limite);
+        Timestamp instanteInicial = Timestamp.valueOf(inicio.atStartOfDay());
+        Timestamp instanteFinal = Timestamp.valueOf(
+                fim.plusDays(1).atStartOfDay());
+
+        ResumoPeriodo resumo = jdbc.queryForObject("""
+                SELECT COUNT(*) AS total,
+                       COALESCE(SUM(CASE WHEN m.tipo = 'ENTRADA'
+                           THEN m.valor ELSE 0 END), 0) AS entradas,
+                       COALESCE(SUM(CASE WHEN m.tipo = 'SAIDA'
+                           THEN m.valor ELSE 0 END), 0) AS saidas
+                FROM contas_financeiras_movimentos m
+                JOIN contas_financeiras c
+                  ON c.tenant_id = m.tenant_id
+                 AND c.id = m.conta_financeira_id
+                WHERE m.tenant_id = ?
+                  AND m.ocorrido_em >= ?
+                  AND m.ocorrido_em < ?
+                """, (rs, n) -> new ResumoPeriodo(
+                        rs.getLong("total"),
+                        rs.getBigDecimal("entradas"),
+                        rs.getBigDecimal("saidas")),
+                tenantId, instanteInicial, instanteFinal);
+        if (resumo == null)
+            resumo = new ResumoPeriodo(
+                    0, BigDecimal.ZERO, BigDecimal.ZERO);
+
+        long totalPaginas = totalPaginas(resumo.total(), limiteEfetivo);
+        validarPagina(pagina, totalPaginas);
+        long deslocamento = (pagina - 1L) * limiteEfetivo;
 
         List<Lancamento> lancamentos = jdbc.query("""
                 SELECT m.id, m.filial_id, m.conta_financeira_id,
@@ -46,7 +77,7 @@ public class LivroCaixaContabilidadeApplicationService {
                   AND m.ocorrido_em >= ?
                   AND m.ocorrido_em < ?
                 ORDER BY m.ocorrido_em, m.id
-                LIMIT ?
+                LIMIT ? OFFSET ?
                 """, (rs, n) -> new Lancamento(
                         rs.getObject("id", UUID.class),
                         rs.getObject("filial_id", UUID.class),
@@ -59,23 +90,19 @@ public class LivroCaixaContabilidadeApplicationService {
                         rs.getString("origem_tipo"),
                         rs.getObject("origem_id", UUID.class),
                         rs.getTimestamp("ocorrido_em").toInstant()),
-                tenantId,
-                Timestamp.valueOf(inicio.atStartOfDay()),
-                Timestamp.valueOf(fim.plusDays(1).atStartOfDay()),
-                limiteEfetivo + 1);
+                tenantId, instanteInicial, instanteFinal,
+                limiteEfetivo, deslocamento);
 
-        if (lancamentos.size() > limiteEfetivo)
-            throw new IllegalArgumentException(
-                    "Livro Caixa excede o limite solicitado; reduza o periodo");
-
-        Totais totais = calcularTotais(lancamentos);
         auditoria.registrar(tenantId, usuarioId, null, null,
                 "CONSULTAR_LIVRO_CAIXA", "LIVRO_CAIXA", UUID.randomUUID(),
                 "inicio=" + inicio + ";fim=" + fim
+                        + ";pagina=" + pagina
+                        + ";totalPaginas=" + totalPaginas
                         + ";lancamentos=" + lancamentos.size());
 
         return new Resultado(inicio, fim, lancamentos.size(),
-                totais.entradas(), totais.saidas(), totais.saldo(),
+                resumo.total(), pagina, totalPaginas,
+                resumo.entradas(), resumo.saidas(), resumo.saldo(),
                 lancamentos);
     }
 
@@ -100,6 +127,23 @@ public class LivroCaixaContabilidadeApplicationService {
         return limite;
     }
 
+    static long totalPaginas(long totalDisponivel, int limite) {
+        if (totalDisponivel < 0)
+            throw new IllegalArgumentException(
+                    "Total de lancamentos nao pode ser negativo");
+        if (limite < 1)
+            throw new IllegalArgumentException(
+                    "Limite deve ser positivo");
+        return totalDisponivel == 0 ? 1
+                : 1 + (totalDisponivel - 1) / limite;
+    }
+
+    static void validarPagina(int pagina, long totalPaginas) {
+        if (pagina < 1 || pagina > totalPaginas)
+            throw new IllegalArgumentException(
+                    "Pagina deve estar entre 1 e " + totalPaginas);
+    }
+
     static Totais calcularTotais(List<Lancamento> lancamentos) {
         BigDecimal entradas = BigDecimal.ZERO;
         BigDecimal saidas = BigDecimal.ZERO;
@@ -113,6 +157,12 @@ public class LivroCaixaContabilidadeApplicationService {
     }
 
     record Totais(BigDecimal entradas, BigDecimal saidas, BigDecimal saldo) {}
+
+    record ResumoPeriodo(long total, BigDecimal entradas, BigDecimal saidas) {
+        BigDecimal saldo() {
+            return entradas.subtract(saidas);
+        }
+    }
 
     public record Lancamento(
             UUID id,
@@ -131,6 +181,9 @@ public class LivroCaixaContabilidadeApplicationService {
             LocalDate inicio,
             LocalDate fim,
             int totalLancamentos,
+            long totalDisponivel,
+            int pagina,
+            long totalPaginas,
             BigDecimal totalEntradas,
             BigDecimal totalSaidas,
             BigDecimal saldoPeriodo,

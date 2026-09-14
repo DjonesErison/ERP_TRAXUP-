@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/fiscal/arquivos")
@@ -31,8 +32,12 @@ public class FiscalRepositorioConsultaController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @RequestParam(required = false) UUID filialId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer limite) {
-        return service.listar(tenantContext.tenantId(), inicio, fim, status, limite);
+        return service.listar(
+                tenantContext.tenantId(),
+                tenantContext.usuarioIdOuNulo(),
+                filialId, inicio, fim, status, limite);
     }
 }

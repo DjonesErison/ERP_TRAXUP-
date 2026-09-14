@@ -17,7 +17,7 @@ class FiscalRepositorioContabilidadeSecurityTest {
             throws NoSuchMethodException {
         assertEquals(REGRA, regra(FiscalRepositorioConsultaController.class,
                 "listar", LocalDate.class, LocalDate.class,
-                String.class, Integer.class));
+                UUID.class, String.class, Integer.class));
         assertEquals(REGRA, regra(FiscalArquivoDownloadController.class,
                 "baixar", UUID.class));
         assertEquals(REGRA, regra(FiscalExportacaoContabilidadeController.class,

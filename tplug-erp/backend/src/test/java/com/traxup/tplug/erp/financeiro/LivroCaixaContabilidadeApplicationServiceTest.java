@@ -70,7 +70,7 @@ class LivroCaixaContabilidadeApplicationServiceTest {
     void exigePermissaoDedicadaNoEndpoint() throws NoSuchMethodException {
         PreAuthorize regra = LivroCaixaContabilidadeController.class
                 .getDeclaredMethod("consultar", LocalDate.class,
-                        LocalDate.class, Integer.class, int.class)
+                        LocalDate.class, UUID.class, Integer.class, int.class)
                 .getAnnotation(PreAuthorize.class);
 
         assertEquals(

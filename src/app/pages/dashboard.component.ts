@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
   standalone:true, imports:[RouterLink],
   template:`<section class="page">
     <div class="page-head">
-      <div><h1>TRAXUP — Status da Implementação</h1><p>Visão consolidada do produto · última revisão 09/09/2026</p></div>
+      <div><h1>TRAXUP — Status da Implementação</h1><p>Visão consolidada do produto · última revisão 14/09/2026</p></div>
       <a class="primary" routerLink="/roadmap">Ver roadmap →</a>
     </div>
 
@@ -24,10 +24,10 @@ import { RouterLink } from '@angular/router';
       </div>
       <div class="card panel">
         <h2>Marco atual</h2>
-        <p><b>Foco:</b> núcleo fiscal e integração do perfil fiscal ao fluxo real de emissão NF-e/NFC-e.</p>
+        <p><b>Foco técnico conhecido:</b> núcleo fiscal e integração do perfil fiscal ao fluxo real de emissão NF-e/NFC-e.</p>
         <p><b>Último marco backend conhecido:</b> PR #206 integrada à develop, com 375 testes + migrations + Docker verdes.</p>
-        <p><b>Central:</b> publicada em <b>central.traxup.com.br</b> via Docker/Nginx + Caddy.</p>
-        <p><b>Observação:</b> os percentuais são estimativas consolidadas do projeto e serão refinados à medida que o backend for reconciliado automaticamente com o GitHub.</p>
+        <p><b>Central:</b> Documento Mestre e jornadas funcionais consolidados; catálogo visual publicado até UI-024 e deploy automático ativo em <b>central.traxup.com.br</b>.</p>
+        <p><b>Observação:</b> os percentuais abaixo continuam sendo estimativas consolidadas. Eles não devem ser lidos como medição automática do código até a reconciliação do status com o GitHub/backend ser automatizada.</p>
       </div>
     </div>
 
@@ -71,13 +71,14 @@ export class DashboardComponent {
   next=[
     {code:'FIS-CORE',name:'Integrar Perfil Fiscal ao fluxo de emissão',module:'Fiscal',status:'Em implementação'},
     {code:'FIS-NFE',name:'NF-e/NFC-e → SEFAZ → retorno → XML/DANFE',module:'Fiscal',status:'Próximo marco'},
-    {code:'PDV-SYNC',name:'Sincronização offline PDV ↔ Nuvem',module:'PDV',status:'Planejado'},
-    {code:'FIN-CONC',name:'Conciliação de cartões / recebíveis',module:'Financeiro',status:'Planejado'},
+    {code:'PDV-SYNC',name:'Sincronização offline PDV ↔ Nuvem',module:'PDV',status:'Em implementação'},
+    {code:'FIN-CONC',name:'Conciliação de cartões / recebíveis',module:'Financeiro',status:'Especificada'},
     {code:'PDV-SEG-001',name:'Segunda Tela Interativa do Cliente',module:'PDV',status:'Especificada'}
   ];
   activities=[
-    'Central TRAXUP publicada em central.traxup.com.br',
-    'Pipeline Docker da Central publicado no GHCR',
+    'Central TRAXUP publicada em central.traxup.com.br com deploy automático',
+    'Documento Mestre e jornadas do cliente/produto consolidados na documentação',
+    'Catálogo visual oficial sincronizado na Central até UI-024',
     'API de Perfil Fiscal por Filial implementada',
     'Multi-tenant, RBAC, auditoria e migrations em estágio avançado',
     'Arquitetura PDV offline com SQLite por terminal e série por PDV definida'

@@ -2,8 +2,6 @@ package com.traxup.tplug.erp.contabilidade;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.util.Assert;
-
 import java.util.UUID;
 
 /**
@@ -16,13 +14,12 @@ public final class EscopoFilialContabilidade {
     private final JdbcTemplate jdbc;
 
     public EscopoFilialContabilidade(JdbcTemplate jdbc) {
-        Assert.notNull(jdbc, "JdbcTemplate e obrigatorio");
         this.jdbc = jdbc;
     }
 
     public Escopo resolver(UUID tenantId, UUID usuarioId,
                            UUID filialSolicitada) {
-        if (tenantId == null || usuarioId == null)
+        if (jdbc == null || tenantId == null || usuarioId == null)
             throw new AccessDeniedException(
                     "Usuario autenticado e tenant sao obrigatorios");
 

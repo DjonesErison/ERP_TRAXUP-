@@ -18,8 +18,8 @@
 .brand strong, .brand span { display: block; }
 .brand span { color: #9ca3af; font-size: 12px; margin-top: 2px; }
 nav { display: grid; gap: 7px; }
-nav a { padding: 11px 13px; border-radius: 10px; color: #9ca3af; text-decoration: none; font-size: 14px; }
-nav a.active { color: #fff; background: #1f2937; }
+nav a, nav .nav-link { padding: 11px 13px; border: 0; border-radius: 10px; background: transparent; color: #9ca3af; text-decoration: none; text-align: left; font-size: 14px; font-weight: 400; cursor: pointer; }
+nav a.active, nav .nav-link.active { color: #fff; background: #1f2937; }
 .logout { margin-top: auto; background: transparent; border: 1px solid #374151; color: #d1d5db; }
 main { padding: 32px; overflow: hidden; }
 .topbar { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 24px; }

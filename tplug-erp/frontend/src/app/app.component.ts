@@ -5,11 +5,12 @@ import { AuthService } from './auth.service';
 import { CrmService } from './crm.service';
 import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from './crm.models';
 import { InventarioMobileComponent } from './inventario-mobile.component';
+import { ContabilidadeComponent } from './contabilidade.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, InventarioMobileComponent],
+  imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent],
   template: `
     <div class="login-shell" *ngIf="!autenticado">
       <section class="login-brand">
@@ -53,7 +54,8 @@ import { InventarioMobileComponent } from './inventario-mobile.component';
           <div><strong>TPlug ERP</strong><span>Gestão comercial</span></div>
         </div>
         <nav>
-          <a class="active">CRM</a>
+          <button type="button" class="nav-link" [class.active]="area === 'crm'" (click)="area = 'crm'">CRM</button>
+          <button type="button" class="nav-link" [class.active]="area === 'contabilidade'" (click)="area = 'contabilidade'">Contabilidade</button>
           <a>Vendas</a>
           <a>Compras</a>
           <a href="#inventario">Inventário</a>
@@ -63,6 +65,8 @@ import { InventarioMobileComponent } from './inventario-mobile.component';
       </aside>
 
       <main>
+        <app-contabilidade *ngIf="area === 'contabilidade'"></app-contabilidade>
+        <ng-container *ngIf="area === 'crm'">
         <header class="topbar">
           <div>
             <p class="eyebrow">Fase 5 · CRM</p>
@@ -156,12 +160,14 @@ import { InventarioMobileComponent } from './inventario-mobile.component';
         </section>
 
         <app-inventario-mobile id="inventario"></app-inventario-mobile>
+        </ng-container>
       </main>
     </div>
   `,
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
+  area: 'crm' | 'contabilidade' = 'crm';
   autenticado = false;
   loginTenantId = '';
   loginEmail = '';
@@ -248,6 +254,7 @@ export class AppComponent implements OnInit {
 
   private finalizarLogout(): void {
     this.logoutLoading = false;
+    this.area = 'crm';
     this.autenticado = false;
     this.inativos = [];
     this.rfv = [];

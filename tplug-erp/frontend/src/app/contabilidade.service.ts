@@ -68,6 +68,43 @@ export interface SpedAcaoResultado {
   status: string;
 }
 
+export interface SpedProntidao {
+  workerHabilitado: boolean;
+  geradorHomologadoConfigurado: boolean;
+  repositorioConfigurado: boolean;
+  homologacaoConfigurada: boolean;
+  provedorHomologado: boolean;
+  prontoParaProcessar: boolean;
+  pendenciaCodigo?: string | null;
+}
+
+export interface XmlArquivo {
+  arquivoId: string;
+  documentoId: string;
+  filialId: string;
+  tentativaId?: string | null;
+  modelo?: string | null;
+  serie?: number | null;
+  numero?: number | null;
+  tipo: string;
+  hashSha256?: string | null;
+  status: 'PENDENTE' | 'ARQUIVANDO' | 'ARQUIVADO' | 'FALHOU';
+  tentativasEnvio: number;
+  criadoEm: string;
+  arquivadoEm?: string | null;
+  retencaoAte?: string | null;
+  downloadDisponivel: boolean;
+}
+
+export interface XmlConsultaResultado {
+  inicio: string;
+  fim: string;
+  status?: string | null;
+  limite: number;
+  totalRetornado: number;
+  itens: XmlArquivo[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContabilidadeService {
   private readonly baseUrl = '/api/v1/contabilidade';
@@ -155,6 +192,39 @@ export class ContabilidadeService {
     return this.http.post<SpedAcaoResultado>(
       `${this.baseUrl}/sped/exportacoes/${id}/reprocessamento`,
       {}
+    );
+  }
+
+
+  consultarProntidaoSped(): Observable<SpedProntidao> {
+    return this.http.get<SpedProntidao>(
+      `${this.baseUrl}/sped/exportacoes/prontidao`
+    );
+  }
+
+  listarXml(
+    competencia: string,
+    filialId?: string,
+    status?: string
+  ): Observable<XmlConsultaResultado> {
+    const [ano, mes] = competencia.split('-').map(Number);
+    const ultimoDia = new Date(ano, mes, 0).getDate();
+    let params = new HttpParams()
+      .set('inicio', `${competencia}-01`)
+      .set('fim', `${competencia}-${String(ultimoDia).padStart(2, '0')}`)
+      .set('limite', 200);
+    if (filialId) params = params.set('filialId', filialId);
+    if (status) params = params.set('status', status);
+    return this.http.get<XmlConsultaResultado>(
+      '/api/v1/fiscal/arquivos',
+      { params }
+    );
+  }
+
+  baixarXmlIndividual(arquivoId: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(
+      `/api/v1/fiscal/arquivos/${arquivoId}/download`,
+      { observe: 'response', responseType: 'blob' }
     );
   }
 

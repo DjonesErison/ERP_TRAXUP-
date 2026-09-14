@@ -105,6 +105,54 @@ export interface XmlConsultaResultado {
   itens: XmlArquivo[];
 }
 
+export interface LivroCaixaLancamento {
+  id: string;
+  filialId: string;
+  contaFinanceiraId: string;
+  contaNome: string;
+  contaTipo: string;
+  tipo: 'ENTRADA' | 'SAIDA';
+  valor: number;
+  descricao?: string | null;
+  origemTipo?: string | null;
+  origemId?: string | null;
+  ocorridoEm: string;
+}
+
+export interface LivroCaixaResultado {
+  inicio: string;
+  fim: string;
+  totalLancamentos: number;
+  totalDisponivel: number;
+  pagina: number;
+  totalPaginas: number;
+  totalEntradas: number;
+  totalSaidas: number;
+  saldoPeriodo: number;
+  lancamentos: LivroCaixaLancamento[];
+}
+
+export interface InventarioPosicao {
+  inventarioId: string;
+  filialId: string;
+  descricao: string;
+  concluidoEm: string;
+  ajustadoEm?: string | null;
+  totalItens: number;
+  itensDivergentes: number;
+}
+
+export interface InventarioConsultaResultado {
+  inicio: string;
+  fim: string;
+  filialId?: string | null;
+  totalNaPagina: number;
+  totalDisponivel: number;
+  pagina: number;
+  totalPaginas: number;
+  inventarios: InventarioPosicao[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContabilidadeService {
   private readonly baseUrl = '/api/v1/contabilidade';
@@ -226,6 +274,45 @@ export class ContabilidadeService {
       `/api/v1/fiscal/arquivos/${arquivoId}/download`,
       { observe: 'response', responseType: 'blob' }
     );
+  }
+
+
+  consultarLivroCaixa(
+    competencia: string,
+    filialId?: string,
+    pagina = 1
+  ): Observable<LivroCaixaResultado> {
+    let params = this.parametrosCompetencia(competencia)
+      .set('limite', 50)
+      .set('pagina', pagina);
+    if (filialId) params = params.set('filialId', filialId);
+    return this.http.get<LivroCaixaResultado>(
+      `${this.baseUrl}/livro-caixa`,
+      { params }
+    );
+  }
+
+  consultarInventarios(
+    competencia: string,
+    filialId?: string,
+    pagina = 1
+  ): Observable<InventarioConsultaResultado> {
+    let params = this.parametrosCompetencia(competencia)
+      .set('limite', 50)
+      .set('pagina', pagina);
+    if (filialId) params = params.set('filialId', filialId);
+    return this.http.get<InventarioConsultaResultado>(
+      `${this.baseUrl}/inventarios`,
+      { params }
+    );
+  }
+
+  private parametrosCompetencia(competencia: string): HttpParams {
+    const [ano, mes] = competencia.split('-').map(Number);
+    const ultimoDia = new Date(ano, mes, 0).getDate();
+    return new HttpParams()
+      .set('inicio', `${competencia}-01`)
+      .set('fim', `${competencia}-${String(ultimoDia).padStart(2, '0')}`);
   }
 
 }

@@ -24,18 +24,24 @@ public class SpedProntidaoApplicationService {
     }
 
     public Prontidao consultar() {
+        SpedGeradorPort gerador = geradorProvider.getIfAvailable();
+        boolean geradorConfigurado = gerador != null;
+        boolean provedorHomologado = geradorConfigurado
+                && homologacao.provedorHomologado(gerador.provedorId());
         return calcular(
                 workerHabilitado,
-                geradorProvider.getIfAvailable() != null,
+                geradorConfigurado,
                 storageProvider.getIfAvailable() != null,
-                homologacao.configurada());
+                homologacao.configurada(),
+                provedorHomologado);
     }
 
     static Prontidao calcular(
             boolean workerHabilitado,
             boolean geradorConfigurado,
             boolean repositorioConfigurado,
-            boolean homologacaoConfigurada) {
+            boolean homologacaoConfigurada,
+            boolean provedorHomologado) {
         String pendencia;
         if (!workerHabilitado)
             pendencia = "WORKER_DESABILITADO";
@@ -45,6 +51,8 @@ public class SpedProntidaoApplicationService {
             pendencia = "REPOSITORIO_NAO_CONFIGURADO";
         else if (!homologacaoConfigurada)
             pendencia = "HOMOLOGACAO_NAO_CONFIGURADA";
+        else if (!provedorHomologado)
+            pendencia = "PROVEDOR_NAO_HOMOLOGADO";
         else
             pendencia = null;
 
@@ -53,6 +61,7 @@ public class SpedProntidaoApplicationService {
                 geradorConfigurado,
                 repositorioConfigurado,
                 homologacaoConfigurada,
+                provedorHomologado,
                 pendencia == null,
                 pendencia);
     }
@@ -62,6 +71,7 @@ public class SpedProntidaoApplicationService {
             boolean geradorHomologadoConfigurado,
             boolean repositorioConfigurado,
             boolean homologacaoConfigurada,
+            boolean provedorHomologado,
             boolean prontoParaProcessar,
             String pendenciaCodigo) {}
 }

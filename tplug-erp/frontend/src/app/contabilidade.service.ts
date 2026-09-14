@@ -29,7 +29,7 @@ export interface LivroCaixaResumo {
   lancamentos: number;
   entradas: number;
   saidas: number;
-  saldo: number;
+  saldo?: number;
 }
 
 export interface InventarioResumo {

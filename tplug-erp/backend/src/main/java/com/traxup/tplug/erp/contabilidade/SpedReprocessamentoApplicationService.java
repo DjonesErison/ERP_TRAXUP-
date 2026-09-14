@@ -13,16 +13,19 @@ import java.util.UUID;
 public class SpedReprocessamentoApplicationService {
     private final JdbcTemplate jdbc;
     private final AuditoriaApplicationService auditoria;
+    private final EscopoFilialContabilidade escopoFilial;
 
     public SpedReprocessamentoApplicationService(
             JdbcTemplate jdbc, AuditoriaApplicationService auditoria) {
         this.jdbc = jdbc;
         this.auditoria = auditoria;
+        this.escopoFilial = new EscopoFilialContabilidade(jdbc);
     }
 
     @Transactional
     public Resultado reprocessar(
             UUID tenantId, UUID usuarioId, UUID exportacaoId) {
+        var escopo = escopoFilial.resolver(tenantId, usuarioId, null);
         List<Resultado> atualizados = jdbc.query("""
                 UPDATE contabilidade_sped_exportacoes
                 SET status = 'PENDENTE',
@@ -35,21 +38,29 @@ public class SpedReprocessamentoApplicationService {
                     atualizado_em = CURRENT_TIMESTAMP
                 WHERE tenant_id = ?
                   AND id = ?
+                  AND (CAST(? AS BOOLEAN) = TRUE OR filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                   AND status = 'FALHOU'
-                RETURNING id, status
+                RETURNING id, filial_id, status
                 """, (rs, n) -> new Resultado(
                         rs.getObject("id", UUID.class),
+                        rs.getObject("filial_id", UUID.class),
                         rs.getString("status")),
-                tenantId, exportacaoId);
+                tenantId, exportacaoId,
+                escopo.acessoTotal(), tenantId, usuarioId);
         if (atualizados.isEmpty())
             throw new RecursoNaoEncontradoException(
                     "Exportacao SPED com falha nao encontrada");
 
-        auditoria.registrar(tenantId, usuarioId, null, null,
+        auditoria.registrar(tenantId, usuarioId, null,
+                atualizados.getFirst().filialId(),
                 "REPROCESSAR_SPED", "SPED_EXPORTACAO", exportacaoId,
                 "status_anterior=FALHOU");
         return atualizados.getFirst();
     }
 
-    public record Resultado(UUID id, String status) {}
+    public record Resultado(UUID id, UUID filialId, String status) {}
 }

@@ -86,13 +86,21 @@ public class FechamentoMensalContabilidadeApplicationService {
                            AS cancelados
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ? AND competencia = ?
+                  AND (CAST(? AS UUID) IS NULL OR filial_id = ?)
+                  AND (CAST(? AS BOOLEAN) = TRUE OR filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 """, (rs, n) -> new SpedResumo(
                         rs.getLong("total"),
                         rs.getLong("concluidos"),
                         rs.getLong("pendentes"),
                         rs.getLong("falhas"),
                         rs.getLong("cancelados")),
-                tenantId, Date.valueOf(inicio));
+                tenantId, Date.valueOf(inicio),
+                filialId, filialId,
+                escopo.acessoTotal(), tenantId, usuarioId);
 
         LivroCaixaResumo livroCaixa = jdbc.queryForObject("""
                 SELECT COUNT(*) AS lancamentos,

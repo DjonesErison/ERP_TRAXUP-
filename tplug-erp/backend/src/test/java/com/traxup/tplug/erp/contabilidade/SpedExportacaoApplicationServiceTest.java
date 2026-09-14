@@ -71,14 +71,15 @@ class SpedExportacaoApplicationServiceTest {
                                 .SolicitarExportacaoRequest.class)
                 .getAnnotation(PreAuthorize.class);
         PreAuthorize get = SpedExportacaoController.class
-                .getDeclaredMethod("listar", String.class, String.class,
-                        YearMonth.class, YearMonth.class, Integer.class)
+                .getDeclaredMethod("listar", UUID.class,
+                        String.class, String.class, YearMonth.class,
+                        YearMonth.class, Integer.class)
                 .getAnnotation(PreAuthorize.class);
         PreAuthorize prontidao = SpedExportacaoController.class
                 .getDeclaredMethod("consultarProntidao")
                 .getAnnotation(PreAuthorize.class);
         PreAuthorize resumo = SpedExportacaoController.class
-                .getDeclaredMethod("resumir", String.class,
+                .getDeclaredMethod("resumir", UUID.class, String.class,
                         YearMonth.class, YearMonth.class)
                 .getAnnotation(PreAuthorize.class);
         PreAuthorize download = SpedExportacaoController.class

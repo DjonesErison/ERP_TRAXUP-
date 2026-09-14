@@ -5,6 +5,7 @@ import com.traxup.tplug.erp.tenant.TenantRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.YearMonth;
@@ -23,28 +24,40 @@ class SpedResumoIntegrationTest {
     @Autowired
     private SpedResumoApplicationService resumoService;
 
+    @Autowired
+    private JdbcTemplate jdbc;
+
     @Test
     void agregaSomenteExportacoesDoTenantEPeriodoInformados() {
         Tenant tenant = tenantRepository.saveAndFlush(
                 new Tenant("Tenant SPED Resumo"));
         Tenant outro = tenantRepository.saveAndFlush(
                 new Tenant("Outro Tenant SPED Resumo"));
+        var contexto = SpedFilialTestFixture.criar(
+                jdbc, tenant.getId(), "Resumo");
+        var contextoOutro = SpedFilialTestFixture.criar(
+                jdbc, outro.getId(), "Resumo outro");
 
         exportacaoService.solicitar(
-                tenant.getId(), null, "EFD_ICMS_IPI",
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                "EFD_ICMS_IPI",
                 YearMonth.of(2026, 7));
         exportacaoService.solicitar(
-                tenant.getId(), null, "EFD_ICMS_IPI",
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                "EFD_ICMS_IPI",
                 YearMonth.of(2026, 8));
         exportacaoService.solicitar(
-                tenant.getId(), null, "EFD_CONTRIBUICOES",
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                "EFD_CONTRIBUICOES",
                 YearMonth.of(2026, 8));
         exportacaoService.solicitar(
-                outro.getId(), null, "EFD_ICMS_IPI",
+                outro.getId(), contextoOutro.usuarioId(),
+                contextoOutro.filialId(), "EFD_ICMS_IPI",
                 YearMonth.of(2026, 8));
 
         var resumo = resumoService.resumir(
-                tenant.getId(), null, "EFD_ICMS_IPI",
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                "EFD_ICMS_IPI",
                 YearMonth.of(2026, 8), YearMonth.of(2026, 8));
 
         assertThat(resumo.total()).isEqualTo(1);

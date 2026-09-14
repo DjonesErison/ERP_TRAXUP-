@@ -4,7 +4,8 @@ import java.time.YearMonth;
 import java.util.UUID;
 
 public interface SpedGeradorPort {
-    Artefato gerar(UUID tenantId, String tipo, YearMonth competencia);
+    Artefato gerar(UUID tenantId, UUID filialId,
+                   String tipo, YearMonth competencia);
 
     default String provedorId() {
         return "";

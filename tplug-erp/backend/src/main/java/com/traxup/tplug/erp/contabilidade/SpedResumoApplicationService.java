@@ -13,17 +13,20 @@ import java.util.UUID;
 public class SpedResumoApplicationService {
     private final JdbcTemplate jdbc;
     private final AuditoriaApplicationService auditoria;
+    private final EscopoFilialContabilidade escopoFilial;
 
     public SpedResumoApplicationService(
             JdbcTemplate jdbc, AuditoriaApplicationService auditoria) {
         this.jdbc = jdbc;
         this.auditoria = auditoria;
+        this.escopoFilial = new EscopoFilialContabilidade(jdbc);
     }
 
     @Transactional
     public Resumo resumir(
-            UUID tenantId, UUID usuarioId, String tipo,
-            YearMonth competenciaInicio, YearMonth competenciaFim) {
+            UUID tenantId, UUID usuarioId, UUID filialId,
+            String tipo, YearMonth competenciaInicio,
+            YearMonth competenciaFim) {
         String tipoNormalizado = tipo == null || tipo.isBlank()
                 ? null
                 : SpedExportacaoApplicationService.normalizarTipo(tipo);
@@ -33,6 +36,8 @@ public class SpedResumoApplicationService {
                 : Date.valueOf(competenciaInicio.atDay(1));
         Date fim = competenciaFim == null ? null
                 : Date.valueOf(competenciaFim.atDay(1));
+        var escopo = escopoFilial.resolver(
+                tenantId, usuarioId, filialId);
 
         Resumo resumo = jdbc.queryForObject("""
                 SELECT COUNT(*) AS total,
@@ -53,6 +58,12 @@ public class SpedResumoApplicationService {
                        ) AS cancelados
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ?
+                  AND (CAST(? AS UUID) IS NULL OR filial_id = ?)
+                  AND (CAST(? AS BOOLEAN) = TRUE OR filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                   AND (CAST(? AS VARCHAR) IS NULL OR tipo = ?)
                   AND (CAST(? AS DATE) IS NULL OR competencia >= ?)
                   AND (CAST(? AS DATE) IS NULL OR competencia <= ?)
@@ -63,14 +74,17 @@ public class SpedResumoApplicationService {
                         rs.getLong("concluidos"),
                         rs.getLong("falhas"),
                         rs.getLong("cancelados")),
-                tenantId, tipoNormalizado, tipoNormalizado,
+                tenantId, filialId, filialId,
+                escopo.acessoTotal(), tenantId, usuarioId,
+                tipoNormalizado, tipoNormalizado,
                 inicio, inicio, fim, fim);
 
-        auditoria.registrar(tenantId, usuarioId, null, null,
+        auditoria.registrar(tenantId, usuarioId, null, filialId,
                 "RESUMIR_EXPORTACOES_SPED", "SPED_EXPORTACAO",
                 UUID.randomUUID(), "tipo=" + tipoNormalizado
                         + ";inicio=" + competenciaInicio
-                        + ";fim=" + competenciaFim);
+                        + ";fim=" + competenciaFim
+                        + ";filialId=" + filialId);
         return resumo;
     }
 

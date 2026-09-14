@@ -52,9 +52,10 @@ public class SpedExportacaoWorkerApplicationService {
                     "Repositorio SPED nao configurado neste ambiente");
 
         List<Item> itens = jdbc.query("""
-                SELECT id, tipo, competencia
+                SELECT id, filial_id, tipo, competencia
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ?
+                  AND filial_id IS NOT NULL
                   AND tentativas_processamento < ?
                   AND (
                       status IN ('PENDENTE', 'FALHOU')
@@ -69,6 +70,7 @@ public class SpedExportacaoWorkerApplicationService {
                 LIMIT ?
                 """, (rs, n) -> new Item(
                         rs.getObject("id", UUID.class),
+                        rs.getObject("filial_id", UUID.class),
                         rs.getString("tipo"),
                         YearMonth.from(
                                 rs.getDate("competencia").toLocalDate())),
@@ -93,7 +95,8 @@ public class SpedExportacaoWorkerApplicationService {
                     """, tenantId, item.id());
             try {
                 SpedGeradorPort.Artefato artefato = gerador.gerar(
-                        tenantId, item.tipo(), item.competencia());
+                        tenantId, item.filialId(),
+                        item.tipo(), item.competencia());
                 validarArtefato(artefato);
                 homologacao.validar(artefato);
                 String hash = sha256(artefato.conteudo());
@@ -174,11 +177,13 @@ public class SpedExportacaoWorkerApplicationService {
     }
 
     static String chaveObjeto(UUID tenantId, Item item) {
-        return "tenants/" + tenantId + "/sped/" + item.tipo() + "/"
-                + item.competencia() + "/" + item.id() + ".txt";
+        return "tenants/" + tenantId + "/filiais/" + item.filialId()
+                + "/sped/" + item.tipo() + "/" + item.competencia()
+                + "/" + item.id() + ".txt";
     }
 
-    record Item(UUID id, String tipo, YearMonth competencia) {}
+    record Item(UUID id, UUID filialId,
+                String tipo, YearMonth competencia) {}
 
     public record Resultado(int processados, int concluidos, int falhas) {}
 }

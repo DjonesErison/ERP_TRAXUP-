@@ -67,12 +67,13 @@ public class SpedExportacaoController {
         return service.solicitar(
                 tenantContext.tenantId(),
                 tenantContext.usuarioIdOuNulo(),
-                request.tipo(), request.competencia());
+                request.filialId(), request.tipo(), request.competencia());
     }
 
     @GetMapping
     @PreAuthorize("hasAuthority('CONTABILIDADE_SPED_SOLICITAR')")
     public List<SpedExportacaoApplicationService.Exportacao> listar(
+            @RequestParam(required = false) UUID filialId,
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) String status,
             @RequestParam(required = false)
@@ -82,7 +83,7 @@ public class SpedExportacaoController {
             @RequestParam(required = false) Integer limite) {
         return service.listar(
                 tenantContext.tenantId(),
-                tenantContext.usuarioIdOuNulo(),
+                tenantContext.usuarioIdOuNulo(), filialId,
                 tipo, status, competenciaInicio, competenciaFim, limite);
     }
 
@@ -95,6 +96,7 @@ public class SpedExportacaoController {
     @GetMapping("/resumo")
     @PreAuthorize("hasAuthority('CONTABILIDADE_SPED_SOLICITAR')")
     public SpedResumoApplicationService.Resumo resumir(
+            @RequestParam(required = false) UUID filialId,
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false)
             @DateTimeFormat(pattern = "yyyy-MM") YearMonth competenciaInicio,
@@ -102,7 +104,7 @@ public class SpedExportacaoController {
             @DateTimeFormat(pattern = "yyyy-MM") YearMonth competenciaFim) {
         return resumoService.resumir(
                 tenantContext.tenantId(),
-                tenantContext.usuarioIdOuNulo(),
+                tenantContext.usuarioIdOuNulo(), filialId,
                 tipo, competenciaInicio, competenciaFim);
     }
 
@@ -142,6 +144,7 @@ public class SpedExportacaoController {
     }
 
     public record SolicitarExportacaoRequest(
+            @NotNull UUID filialId,
             @NotBlank String tipo,
             @NotNull YearMonth competencia) {}
 }

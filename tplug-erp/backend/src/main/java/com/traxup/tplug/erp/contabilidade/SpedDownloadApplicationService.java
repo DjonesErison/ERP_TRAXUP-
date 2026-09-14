@@ -20,6 +20,7 @@ public class SpedDownloadApplicationService {
     private final JdbcTemplate jdbc;
     private final ObjectProvider<SpedArquivoStoragePort> storageProvider;
     private final AuditoriaApplicationService auditoria;
+    private final EscopoFilialContabilidade escopoFilial;
 
     public SpedDownloadApplicationService(
             JdbcTemplate jdbc,
@@ -28,6 +29,7 @@ public class SpedDownloadApplicationService {
         this.jdbc = jdbc;
         this.storageProvider = storageProvider;
         this.auditoria = auditoria;
+        this.escopoFilial = new EscopoFilialContabilidade(jdbc);
     }
 
     @Transactional
@@ -36,19 +38,27 @@ public class SpedDownloadApplicationService {
         if (storage == null)
             throw new IllegalStateException(
                     "Repositorio SPED nao configurado neste ambiente");
+        var escopo = escopoFilial.resolver(tenantId, usuarioId, null);
 
         List<Arquivo> encontrados = jdbc.query("""
-                SELECT chave_objeto, hash_sha256, tipo, competencia
+                SELECT filial_id, chave_objeto, hash_sha256, tipo, competencia
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ?
                   AND id = ?
                   AND status = 'CONCLUIDO'
+                  AND (CAST(? AS BOOLEAN) = TRUE OR filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 """, (rs, n) -> new Arquivo(
+                        rs.getObject("filial_id", UUID.class),
                         rs.getString("chave_objeto"),
                         rs.getString("hash_sha256"),
                         rs.getString("tipo"),
                         rs.getDate("competencia")),
-                tenantId, exportacaoId);
+                tenantId, exportacaoId,
+                escopo.acessoTotal(), tenantId, usuarioId);
         if (encontrados.isEmpty())
             throw new RecursoNaoEncontradoException(
                     "Exportacao SPED concluida nao encontrada");
@@ -61,9 +71,10 @@ public class SpedDownloadApplicationService {
 
         YearMonth competencia = YearMonth.from(
                 arquivo.competencia().toLocalDate());
-        auditoria.registrar(tenantId, usuarioId, null, null,
+        auditoria.registrar(tenantId, usuarioId, null, arquivo.filialId(),
                 "BAIXAR_SPED", "SPED_EXPORTACAO", exportacaoId,
-                "tipo=" + arquivo.tipo() + ";competencia=" + competencia);
+                "tipo=" + arquivo.tipo() + ";competencia=" + competencia
+                        + ";filialId=" + arquivo.filialId());
         return new Download(conteudo,
                 nomeArquivo(arquivo.tipo(), competencia, exportacaoId));
     }
@@ -85,7 +96,8 @@ public class SpedDownloadApplicationService {
     }
 
     record Arquivo(
-            String chave, String hashSha256, String tipo, Date competencia) {}
+            UUID filialId, String chave, String hashSha256,
+            String tipo, Date competencia) {}
 
     public record Download(byte[] conteudo, String nomeArquivo) {}
 }

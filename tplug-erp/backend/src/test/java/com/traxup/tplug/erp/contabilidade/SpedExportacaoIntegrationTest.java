@@ -34,18 +34,26 @@ class SpedExportacaoIntegrationTest {
                 new Tenant("Tenant SPED A"));
         Tenant tenantB = tenantRepository.saveAndFlush(
                 new Tenant("Tenant SPED B"));
+        var contextoA = SpedFilialTestFixture.criar(
+                jdbc, tenantA.getId(), "A");
+        var contextoB = SpedFilialTestFixture.criar(
+                jdbc, tenantB.getId(), "B");
         YearMonth competencia = YearMonth.of(2026, 9);
 
         var primeira = service.solicitar(
-                tenantA.getId(), null, "EFD_ICMS_IPI", competencia);
+                tenantA.getId(), contextoA.usuarioId(),
+                contextoA.filialId(), "EFD_ICMS_IPI", competencia);
         var repetida = service.solicitar(
-                tenantA.getId(), null, "EFD_ICMS_IPI", competencia);
+                tenantA.getId(), contextoA.usuarioId(),
+                contextoA.filialId(), "EFD_ICMS_IPI", competencia);
         var outroTenant = service.solicitar(
-                tenantB.getId(), null, "EFD_ICMS_IPI", competencia);
+                tenantB.getId(), contextoB.usuarioId(),
+                contextoB.filialId(), "EFD_ICMS_IPI", competencia);
 
         assertThat(repetida.id()).isEqualTo(primeira.id());
         assertThat(outroTenant.id()).isNotEqualTo(primeira.id());
-        assertThat(service.listar(tenantA.getId(), null, null, 100))
+        assertThat(service.listar(
+                tenantA.getId(), contextoA.usuarioId(), null, 100))
                 .extracting(SpedExportacaoApplicationService.Exportacao::id)
                 .containsExactly(primeira.id());
     }
@@ -54,32 +62,41 @@ class SpedExportacaoIntegrationTest {
     void combinaFiltrosOpcionaisDeStatusTipoECompetencia() {
         Tenant tenant = tenantRepository.saveAndFlush(
                 new Tenant("Tenant SPED Filtros"));
+        var contexto = SpedFilialTestFixture.criar(
+                jdbc, tenant.getId(), "Filtros");
         var julho = service.solicitar(
-                tenant.getId(), null, "EFD_ICMS_IPI",
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                "EFD_ICMS_IPI",
                 YearMonth.of(2026, 7));
         var agosto = service.solicitar(
-                tenant.getId(), null, "EFD_ICMS_IPI",
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                "EFD_ICMS_IPI",
                 YearMonth.of(2026, 8));
         service.solicitar(
-                tenant.getId(), null, "EFD_CONTRIBUICOES",
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                "EFD_CONTRIBUICOES",
                 YearMonth.of(2026, 8));
 
         assertThat(service.listar(
-                tenant.getId(), null, "EFD_ICMS_IPI", "PENDENTE",
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                "EFD_ICMS_IPI", "PENDENTE",
                 YearMonth.of(2026, 7), YearMonth.of(2026, 8), 100))
                 .extracting(SpedExportacaoApplicationService.Exportacao::id)
                 .containsExactly(agosto.id(), julho.id());
         assertThat(service.listar(
-                tenant.getId(), null, null, "CONCLUIDO",
-                null, null, 100))
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                null, "CONCLUIDO", null, null, 100))
                 .isEmpty();
     }
     @Test
     void protegeArquivoConcluidoPorNoMinimoCincoAnos() {
         Tenant tenant = tenantRepository.saveAndFlush(
                 new Tenant("Tenant SPED Retencao"));
+        var contexto = SpedFilialTestFixture.criar(
+                jdbc, tenant.getId(), "Retencao");
         var exportacao = service.solicitar(
-                tenant.getId(), null, "EFD_ICMS_IPI",
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                "EFD_ICMS_IPI",
                 YearMonth.of(2026, 9));
 
         jdbc.update("""
@@ -95,8 +112,8 @@ class SpedExportacaoIntegrationTest {
                 """, tenant.getId(), exportacao.id());
 
         var concluida = service.listar(
-                tenant.getId(), null, null, "CONCLUIDO",
-                null, null, 10).getFirst();
+                tenant.getId(), contexto.usuarioId(), contexto.filialId(),
+                null, "CONCLUIDO", null, null, 10).getFirst();
         assertThat(concluida.retencaoAte()).isAfter(
                 Instant.now().plus(4 * 365L, ChronoUnit.DAYS));
 

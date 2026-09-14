@@ -34,9 +34,10 @@ public class FiscalExportacaoContabilidadeController {
             @RequestParam
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @RequestParam(defaultValue = "1") int parte) {
         var resultado = service.exportar(tenantContext.tenantId(),
-                tenantContext.usuarioIdOuNulo(), inicio, fim);
+                tenantContext.usuarioIdOuNulo(), inicio, fim, parte);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/zip"))
                 .contentLength(resultado.conteudo().length)
@@ -45,6 +46,11 @@ public class FiscalExportacaoContabilidadeController {
                                 .filename(resultado.nomeArquivo()).build().toString())
                 .header("X-Content-SHA256", resultado.hashSha256())
                 .header("X-Total-XML", Integer.toString(resultado.totalXml()))
+                .header("X-Total-XML-Disponivel",
+                        Long.toString(resultado.totalDisponivel()))
+                .header("X-Parte", Integer.toString(resultado.parte()))
+                .header("X-Total-Partes",
+                        Long.toString(resultado.totalPartes()))
                 .body(resultado.conteudo());
     }
 }

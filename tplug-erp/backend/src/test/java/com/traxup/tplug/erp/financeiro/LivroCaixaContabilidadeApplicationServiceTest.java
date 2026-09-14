@@ -29,26 +29,48 @@ class LivroCaixaContabilidadeApplicationServiceTest {
     }
 
     @Test
-    void limitaPeriodoEQuantidadeDaConsulta() {
+    void mantemSaldoConsolidadoIndependenteDaPagina() {
+        var resumo = new LivroCaixaContabilidadeApplicationService.ResumoPeriodo(
+                1501, new BigDecimal("9876.50"),
+                new BigDecimal("4321.25"));
+
+        assertEquals(1501, resumo.total());
+        assertEquals(new BigDecimal("5555.25"), resumo.saldo());
+        assertEquals(4, LivroCaixaContabilidadeApplicationService
+                .totalPaginas(resumo.total(), 500));
+    }
+
+    @Test
+    void limitaPeriodoQuantidadeEPaginaDaConsulta() {
         LocalDate inicio = LocalDate.of(2026, 1, 1);
 
         LivroCaixaContabilidadeApplicationService
                 .validarPeriodo(inicio, inicio.plusDays(365));
         assertEquals(500, LivroCaixaContabilidadeApplicationService
                 .validarLimite(null));
+        assertEquals(1, LivroCaixaContabilidadeApplicationService
+                .totalPaginas(0, 500));
+        LivroCaixaContabilidadeApplicationService.validarPagina(2, 3);
+
         assertThrows(IllegalArgumentException.class,
                 () -> LivroCaixaContabilidadeApplicationService
                         .validarPeriodo(inicio, inicio.plusDays(366)));
         assertThrows(IllegalArgumentException.class,
                 () -> LivroCaixaContabilidadeApplicationService
                         .validarLimite(1001));
+        assertThrows(IllegalArgumentException.class,
+                () -> LivroCaixaContabilidadeApplicationService
+                        .validarPagina(0, 3));
+        assertThrows(IllegalArgumentException.class,
+                () -> LivroCaixaContabilidadeApplicationService
+                        .validarPagina(4, 3));
     }
 
     @Test
     void exigePermissaoDedicadaNoEndpoint() throws NoSuchMethodException {
         PreAuthorize regra = LivroCaixaContabilidadeController.class
                 .getDeclaredMethod("consultar", LocalDate.class,
-                        LocalDate.class, Integer.class)
+                        LocalDate.class, Integer.class, int.class)
                 .getAnnotation(PreAuthorize.class);
 
         assertEquals(

@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.fiscal;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.contabilidade.EscopoFilialContabilidade;
 import com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,6 +19,7 @@ public class FiscalArquivoDownloadApplicationService {
     private final JdbcTemplate jdbc;
     private final ObjectProvider<FiscalArquivoStoragePort> storageProvider;
     private final AuditoriaApplicationService auditoria;
+    private final EscopoFilialContabilidade escopoFilial;
 
     public FiscalArquivoDownloadApplicationService(
             JdbcTemplate jdbc,
@@ -26,10 +28,12 @@ public class FiscalArquivoDownloadApplicationService {
         this.jdbc = jdbc;
         this.storageProvider = storageProvider;
         this.auditoria = auditoria;
+        this.escopoFilial = new EscopoFilialContabilidade(jdbc);
     }
 
     @Transactional
     public Resultado baixar(UUID tenantId, UUID usuarioId, UUID arquivoId) {
+        var escopo = escopoFilial.resolver(tenantId, usuarioId, null);
         Origem origem = jdbc.query("""
                 SELECT a.id, a.documento_id, a.chave_objeto, a.hash_sha256,
                        a.status, d.filial_id
@@ -37,13 +41,20 @@ public class FiscalArquivoDownloadApplicationService {
                 JOIN fiscal_documentos d
                   ON d.tenant_id = a.tenant_id AND d.id = a.documento_id
                 WHERE a.tenant_id = ? AND a.id = ?
+                  AND (CAST(? AS BOOLEAN) = TRUE OR d.filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 """, (rs, n) -> new Origem(
                         rs.getObject("id", UUID.class),
                         rs.getObject("documento_id", UUID.class),
                         rs.getString("chave_objeto"),
                         rs.getString("hash_sha256"), rs.getString("status"),
                         rs.getObject("filial_id", UUID.class)),
-                tenantId, arquivoId).stream().findFirst()
+                tenantId, arquivoId,
+                escopo.acessoTotal(), tenantId, usuarioId)
+                .stream().findFirst()
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Arquivo fiscal nao encontrado para o tenant"));
 

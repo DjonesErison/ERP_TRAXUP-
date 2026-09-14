@@ -46,6 +46,7 @@ public class SpedExportacaoWorkerApplicationService {
         if (gerador == null)
             throw new IllegalStateException(
                     "Gerador SPED homologado nao configurado neste ambiente");
+        homologacao.validarGerador(gerador);
         if (storage == null)
             throw new IllegalStateException(
                     "Repositorio SPED nao configurado neste ambiente");

@@ -87,6 +87,7 @@ public class SpedExportacaoWorkerApplicationService {
                         versao_layout = NULL,
                         erro_codigo = NULL,
                         concluido_em = NULL,
+                        retencao_ate = NULL,
                         atualizado_em = CURRENT_TIMESTAMP
                     WHERE tenant_id = ? AND id = ?
                     """, tenantId, item.id());
@@ -106,6 +107,8 @@ public class SpedExportacaoWorkerApplicationService {
                             versao_layout = ?,
                             erro_codigo = NULL,
                             concluido_em = CURRENT_TIMESTAMP,
+                            retencao_ate =
+                                CURRENT_TIMESTAMP + INTERVAL '5 years',
                             atualizado_em = CURRENT_TIMESTAMP
                         WHERE tenant_id = ? AND id = ?
                         """, chave, hash, artefato.versaoLayout().trim(),

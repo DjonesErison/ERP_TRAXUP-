@@ -45,9 +45,9 @@ public class FiscalExportacaoContabilidadeApplicationService {
 
     @Transactional
     public Resultado exportar(UUID tenantId, UUID usuarioId,
-                              LocalDate inicio, LocalDate fim, int parte) {
+                              LocalDate inicio, LocalDate fim, UUID filialId, int parte) {
         validarPeriodo(inicio, fim);
-        var escopo = escopoFilial.resolver(tenantId, usuarioId, null);
+        var escopo = escopoFilial.resolver(tenantId, usuarioId, filialId);
         FiscalArquivoStoragePort storage = storageProvider.getIfAvailable();
         if (storage == null)
             throw new IllegalStateException(
@@ -65,6 +65,7 @@ public class FiscalExportacaoContabilidadeApplicationService {
                 WHERE a.tenant_id = ? AND a.status = 'ARQUIVADO'
                   AND t.transmitido_em >= ?
                   AND t.transmitido_em < ?
+                  AND (CAST(? AS UUID) IS NULL OR d.filial_id = ?)
                   AND (CAST(? AS BOOLEAN) = TRUE OR d.filial_id IN (
                       SELECT uf.filial_id
                       FROM usuario_filiais uf
@@ -73,6 +74,7 @@ public class FiscalExportacaoContabilidadeApplicationService {
                 """, Long.class, tenantId,
                 Timestamp.valueOf(inicio.atStartOfDay()),
                 Timestamp.valueOf(fim.plusDays(1).atStartOfDay()),
+                filialId, filialId,
                 escopo.acessoTotal(), tenantId, usuarioId);
         long totalDisponivel = contagem == null ? 0 : contagem;
         long totalPartes = totalPartes(totalDisponivel);
@@ -93,6 +95,7 @@ public class FiscalExportacaoContabilidadeApplicationService {
                 WHERE a.tenant_id = ? AND a.status = 'ARQUIVADO'
                   AND t.transmitido_em >= ?
                   AND t.transmitido_em < ?
+                  AND (CAST(? AS UUID) IS NULL OR d.filial_id = ?)
                   AND (CAST(? AS BOOLEAN) = TRUE OR d.filial_id IN (
                       SELECT uf.filial_id
                       FROM usuario_filiais uf
@@ -110,16 +113,18 @@ public class FiscalExportacaoContabilidadeApplicationService {
                         rs.getTimestamp("data_fiscal").toInstant()),
                 tenantId, Timestamp.valueOf(inicio.atStartOfDay()),
                 Timestamp.valueOf(fim.plusDays(1).atStartOfDay()),
+                filialId, filialId,
                 escopo.acessoTotal(), tenantId, usuarioId,
                 LIMITE_ARQUIVOS, deslocamento);
 
         byte[] zip = compactar(storage, arquivos);
         UUID exportacaoId = UUID.randomUUID();
         String hash = sha256(zip);
-        auditoria.registrar(tenantId, usuarioId, null, null,
+        auditoria.registrar(tenantId, usuarioId, null, filialId,
                 "EXPORTAR_XML_CONTABILIDADE", "FISCAL_EXPORTACAO",
                 exportacaoId, "inicio=" + inicio + ";fim=" + fim
                         + ";parte=" + parte + ";totalPartes=" + totalPartes
+                        + ";filialId=" + filialId
                         + ";acessoTotal=" + escopo.acessoTotal()
                         + ";arquivos=" + arquivos.size() + ";hash=" + hash);
         return new Resultado(exportacaoId, inicio, fim,

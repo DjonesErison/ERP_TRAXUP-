@@ -20,30 +20,49 @@ class SpedHomologacaoApplicationServiceTest {
     }
 
     @Test
-    void bloqueiaProvedorOuVersaoNaoHomologados() {
+    void bloqueiaConfiguracaoAusente() {
         var semProvedor = new SpedHomologacaoApplicationService(
                 " ", "019");
         assertFalse(semProvedor.configurada());
         assertThrows(IllegalStateException.class,
                 () -> semProvedor.validar(
-                        new SpedGeradorPort.Artefato(
-                                new byte[]{1}, "019")));
-
-        var homologacao = new SpedHomologacaoApplicationService(
-                "PROVEDOR_HOMOLOGADO", "019");
-        assertTrue(homologacao.configurada());
-        assertThrows(IllegalStateException.class,
-                () -> homologacao.validar(
-                        new SpedGeradorPort.Artefato(
-                                new byte[]{1}, "020")));
+                        artefato("PROVEDOR_HOMOLOGADO", "019")));
     }
 
     @Test
-    void aceitaSomenteVersaoExplicitamenteHomologada() {
+    void bloqueiaProvedorNaoHomologado() {
+        var homologacao = new SpedHomologacaoApplicationService(
+                "PROVEDOR_HOMOLOGADO", "019");
+
+        assertThrows(IllegalStateException.class,
+                () -> homologacao.validar(
+                        artefato("OUTRO_PROVEDOR", "019")));
+    }
+
+    @Test
+    void bloqueiaVersaoNaoHomologada() {
+        var homologacao = new SpedHomologacaoApplicationService(
+                "PROVEDOR_HOMOLOGADO", "019");
+        assertTrue(homologacao.configurada());
+
+        assertThrows(IllegalStateException.class,
+                () -> homologacao.validar(
+                        artefato("PROVEDOR_HOMOLOGADO", "020")));
+    }
+
+    @Test
+    void aceitaSomenteProvedorEVersaoExplicitamenteHomologados() {
         var homologacao = new SpedHomologacaoApplicationService(
                 "PROVEDOR_HOMOLOGADO", "019,020");
 
-        homologacao.validar(new SpedGeradorPort.Artefato(
-                new byte[]{1}, " 020 "));
+        homologacao.validar(
+                artefato(" PROVEDOR_HOMOLOGADO ", " 020 "));
+    }
+
+    private static SpedGeradorPort.Artefato artefato(
+            String provedorId,
+            String versaoLayout) {
+        return new SpedGeradorPort.Artefato(
+                new byte[]{1}, provedorId, versaoLayout);
     }
 }

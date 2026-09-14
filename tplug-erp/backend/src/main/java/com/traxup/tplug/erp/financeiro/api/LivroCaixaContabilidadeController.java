@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/contabilidade/livro-caixa")
@@ -31,11 +32,12 @@ public class LivroCaixaContabilidadeController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @RequestParam(required = false) UUID filialId,
             @RequestParam(required = false) Integer limite,
             @RequestParam(defaultValue = "1") int pagina) {
         return service.consultar(
                 tenantContext.tenantId(),
                 tenantContext.usuarioIdOuNulo(),
-                inicio, fim, limite, pagina);
+                inicio, fim, filialId, limite, pagina);
     }
 }

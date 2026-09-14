@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   packages: write
 
 jobs:
@@ -17,6 +18,39 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Aguardar CI do mesmo commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CI_RUN_ID=""
+          CI_STATUS=""
+          CI_CONCLUSION=""
+
+          for attempt in {1..60}; do
+            CI_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${GITHUB_SHA}&event=push&per_page=5")
+            CI_RUN_ID=$(echo "$CI_JSON" | jq -r '.workflow_runs[0].id // empty')
+            CI_STATUS=$(echo "$CI_JSON" | jq -r '.workflow_runs[0].status // empty')
+            CI_CONCLUSION=$(echo "$CI_JSON" | jq -r '.workflow_runs[0].conclusion // empty')
+
+            if [ "$CI_STATUS" = "completed" ]; then
+              if [ "$CI_CONCLUSION" = "success" ]; then
+                echo "CI ${CI_RUN_ID} concluído com sucesso para ${GITHUB_SHA}."
+                echo "CI_RUN_ID=${CI_RUN_ID}" >> "$GITHUB_ENV"
+                break
+              fi
+              echo "CI ${CI_RUN_ID} concluiu com resultado ${CI_CONCLUSION}. Build Docker bloqueado."
+              exit 1
+            fi
+
+            echo "Aguardando CI do commit ${GITHUB_SHA} (tentativa ${attempt}/60)..."
+            sleep 10
+          done
+
+          if [ -z "$CI_RUN_ID" ] || [ "$CI_STATUS" != "completed" ] || [ "$CI_CONCLUSION" != "success" ]; then
+            echo "CI não ficou verde dentro do tempo limite."
+            exit 1
+          fi
 
       - name: Gerar metadados públicos do build
         run: |
@@ -29,6 +63,8 @@ jobs:
             "repository": "${GITHUB_REPOSITORY}",
             "runId": "${GITHUB_RUN_ID}",
             "runNumber": "${GITHUB_RUN_NUMBER}",
+            "ci": "success",
+            "ciRunId": "${CI_RUN_ID}",
             "builtAt": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           }
           EOF

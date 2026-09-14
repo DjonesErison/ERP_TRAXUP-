@@ -93,7 +93,7 @@ public class SpedExportacaoApplicationService {
         List<Exportacao> exportacoes = jdbc.query("""
                 SELECT id, tipo, competencia, status, hash_sha256,
                        versao_layout, erro_codigo, criado_em, atualizado_em,
-                       concluido_em
+                       concluido_em, retencao_ate
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ?
                   AND (CAST(? AS VARCHAR) IS NULL OR tipo = ?)
@@ -113,7 +113,9 @@ public class SpedExportacaoApplicationService {
                         rs.getTimestamp("criado_em").toInstant(),
                         rs.getTimestamp("atualizado_em").toInstant(),
                         rs.getTimestamp("concluido_em") == null ? null
-                                : rs.getTimestamp("concluido_em").toInstant()),
+                                : rs.getTimestamp("concluido_em").toInstant(),
+                        rs.getTimestamp("retencao_ate") == null ? null
+                                : rs.getTimestamp("retencao_ate").toInstant()),
                 tenantId,
                 tipoNormalizado, tipoNormalizado,
                 statusNormalizado, statusNormalizado,
@@ -134,7 +136,7 @@ public class SpedExportacaoApplicationService {
         List<Exportacao> encontrados = jdbc.query("""
                 SELECT id, tipo, competencia, status, hash_sha256,
                        versao_layout, erro_codigo, criado_em, atualizado_em,
-                       concluido_em
+                       concluido_em, retencao_ate
                 FROM contabilidade_sped_exportacoes
                 WHERE tenant_id = ?
                   AND tipo = ?
@@ -150,7 +152,9 @@ public class SpedExportacaoApplicationService {
                         rs.getTimestamp("criado_em").toInstant(),
                         rs.getTimestamp("atualizado_em").toInstant(),
                         rs.getTimestamp("concluido_em") == null ? null
-                                : rs.getTimestamp("concluido_em").toInstant()),
+                                : rs.getTimestamp("concluido_em").toInstant(),
+                        rs.getTimestamp("retencao_ate") == null ? null
+                                : rs.getTimestamp("retencao_ate").toInstant()),
                 tenantId, tipo, Date.valueOf(competencia.atDay(1)));
         if (encontrados.isEmpty())
             throw new RecursoNaoEncontradoException(
@@ -161,11 +165,12 @@ public class SpedExportacaoApplicationService {
     private static Exportacao mapear(
             UUID id, String tipo, Date competencia, String status,
             String hash, String versaoLayout, String erroCodigo,
-            Instant criadoEm, Instant atualizadoEm, Instant concluidoEm) {
+            Instant criadoEm, Instant atualizadoEm, Instant concluidoEm,
+            Instant retencaoAte) {
         return new Exportacao(id, tipo,
                 YearMonth.from(competencia.toLocalDate()), status,
                 hash, versaoLayout, erroCodigo, criadoEm, atualizadoEm,
-                concluidoEm);
+                concluidoEm, retencaoAte);
     }
 
     static String normalizarTipo(String tipo) {
@@ -211,5 +216,6 @@ public class SpedExportacaoApplicationService {
             String erroCodigo,
             Instant criadoEm,
             Instant atualizadoEm,
-            Instant concluidoEm) {}
+            Instant concluidoEm,
+            Instant retencaoAte) {}
 }

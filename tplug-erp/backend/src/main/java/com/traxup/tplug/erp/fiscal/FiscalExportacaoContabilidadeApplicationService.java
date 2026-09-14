@@ -45,7 +45,14 @@ public class FiscalExportacaoContabilidadeApplicationService {
 
     @Transactional
     public Resultado exportar(UUID tenantId, UUID usuarioId,
-                              LocalDate inicio, LocalDate fim, UUID filialId, int parte) {
+                              LocalDate inicio, LocalDate fim, int parte) {
+        return exportar(tenantId, usuarioId, inicio, fim, null, parte);
+    }
+
+    @Transactional
+    public Resultado exportar(UUID tenantId, UUID usuarioId,
+                              LocalDate inicio, LocalDate fim,
+                              UUID filialId, int parte) {
         validarPeriodo(inicio, fim);
         var escopo = escopoFilial.resolver(tenantId, usuarioId, filialId);
         FiscalArquivoStoragePort storage = storageProvider.getIfAvailable();

@@ -40,10 +40,12 @@ class EscopoFilialContabilidadeIntegrationTest {
         inserirUsuario(administradorId, tenantId, "Administrador");
         inserirUsuario(contadorId, tenantId, "Contador");
 
-        UUID perfilAdminId = jdbc.queryForObject("""
-                SELECT id FROM perfis
-                WHERE tenant_id = ? AND UPPER(nome) = 'ADMIN'
-                """, UUID.class, tenantId);
+        UUID perfilAdminId = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO perfis
+                    (id, tenant_id, nome, descricao, ativo)
+                VALUES (?, ?, 'ADMIN', 'Administrador de teste', TRUE)
+                """, perfilAdminId, tenantId);
         jdbc.update("""
                 INSERT INTO usuario_perfis
                     (tenant_id, usuario_id, perfil_id)

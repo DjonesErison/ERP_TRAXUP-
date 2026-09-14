@@ -21,7 +21,8 @@ class FiscalRepositorioContabilidadeSecurityTest {
         assertEquals(REGRA, regra(FiscalArquivoDownloadController.class,
                 "baixar", UUID.class));
         assertEquals(REGRA, regra(FiscalExportacaoContabilidadeController.class,
-                "exportar", LocalDate.class, LocalDate.class, int.class));
+                "exportar", LocalDate.class, LocalDate.class,
+                UUID.class, int.class));
     }
 
     private String regra(Class<?> controller, String metodo,

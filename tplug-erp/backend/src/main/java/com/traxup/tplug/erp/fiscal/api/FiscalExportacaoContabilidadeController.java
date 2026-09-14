@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/fiscal/arquivos")
@@ -35,9 +36,10 @@ public class FiscalExportacaoContabilidadeController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            @RequestParam(required = false) UUID filialId,
             @RequestParam(defaultValue = "1") int parte) {
         var resultado = service.exportar(tenantContext.tenantId(),
-                tenantContext.usuarioIdOuNulo(), inicio, fim, parte);
+                tenantContext.usuarioIdOuNulo(), inicio, fim, filialId, parte);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/zip"))
                 .contentLength(resultado.conteudo().length)

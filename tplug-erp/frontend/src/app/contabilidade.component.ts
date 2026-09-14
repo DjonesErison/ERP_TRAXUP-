@@ -6,11 +6,12 @@ import {
   FechamentoMensal,
   FilialContabilidade
 } from './contabilidade.service';
+import { ContabilidadeArquivosComponent } from './contabilidade-arquivos.component';
 
 @Component({
   selector: 'app-contabilidade',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ContabilidadeArquivosComponent],
   template: `
     <section class="accounting-page">
       <header class="accounting-head">
@@ -108,6 +109,11 @@ import {
           </article>
         </section>
       </ng-container>
+
+      <app-contabilidade-arquivos
+        [competencia]="competencia"
+        [filialId]="filialId">
+      </app-contabilidade-arquivos>
     </section>
   `,
   styleUrl: './contabilidade.component.css'

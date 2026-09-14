@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.inventario;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.contabilidade.EscopoFilialContabilidade;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -20,11 +21,13 @@ public class InventarioContabilidadeApplicationService {
 
     private final JdbcTemplate jdbc;
     private final AuditoriaApplicationService auditoria;
+    private final EscopoFilialContabilidade escopoFilial;
 
     public InventarioContabilidadeApplicationService(
             JdbcTemplate jdbc, AuditoriaApplicationService auditoria) {
         this.jdbc = jdbc;
         this.auditoria = auditoria;
+        this.escopoFilial = new EscopoFilialContabilidade(jdbc);
     }
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -32,6 +35,8 @@ public class InventarioContabilidadeApplicationService {
                                LocalDate inicio, LocalDate fim,
                                UUID filialId, Integer limite, int pagina) {
         validarPeriodo(inicio, fim);
+        var escopo = escopoFilial.resolver(
+                tenantId, usuarioId, filialId);
         int limiteEfetivo = validarLimite(limite);
         Timestamp instanteInicial = Timestamp.valueOf(inicio.atStartOfDay());
         Timestamp instanteFinal = Timestamp.valueOf(
@@ -45,8 +50,14 @@ public class InventarioContabilidadeApplicationService {
                   AND s.concluido_em >= ?
                   AND s.concluido_em < ?
                   AND (CAST(? AS UUID) IS NULL OR s.filial_id = ?)
+                  AND (CAST(? AS BOOLEAN) = TRUE OR s.filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 """, Long.class, tenantId, instanteInicial, instanteFinal,
-                filialId, filialId);
+                filialId, filialId,
+                escopo.acessoTotal(), tenantId, usuarioId);
         long totalDisponivel = contagem == null ? 0 : contagem;
         long totalPaginas = totalPaginas(totalDisponivel, limiteEfetivo);
         validarPagina(pagina, totalPaginas);
@@ -67,6 +78,11 @@ public class InventarioContabilidadeApplicationService {
                   AND s.concluido_em >= ?
                   AND s.concluido_em < ?
                   AND (CAST(? AS UUID) IS NULL OR s.filial_id = ?)
+                  AND (CAST(? AS BOOLEAN) = TRUE OR s.filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 GROUP BY s.id, s.filial_id, s.descricao,
                          s.concluido_em, s.ajustado_em
                 ORDER BY s.concluido_em DESC, s.id
@@ -81,13 +97,16 @@ public class InventarioContabilidadeApplicationService {
                         rs.getLong("total_itens"),
                         rs.getLong("itens_divergentes")),
                 tenantId, instanteInicial, instanteFinal,
-                filialId, filialId, limiteEfetivo, deslocamento);
+                filialId, filialId,
+                escopo.acessoTotal(), tenantId, usuarioId,
+                limiteEfetivo, deslocamento);
 
         auditoria.registrar(tenantId, usuarioId, null, filialId,
                 "CONSULTAR_INVENTARIO_CONTABIL", "INVENTARIO_SESSAO",
                 UUID.randomUUID(), "inicio=" + inicio + ";fim=" + fim
                         + ";pagina=" + pagina
                         + ";totalPaginas=" + totalPaginas
+                        + ";acessoTotal=" + escopo.acessoTotal()
                         + ";inventarios=" + posicoes.size());
 
         return new Resultado(inicio, fim, filialId, posicoes.size(),

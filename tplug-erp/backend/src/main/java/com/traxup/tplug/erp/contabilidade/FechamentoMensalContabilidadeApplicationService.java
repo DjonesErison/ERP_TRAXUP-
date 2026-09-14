@@ -17,11 +17,13 @@ import java.util.UUID;
 public class FechamentoMensalContabilidadeApplicationService {
     private final JdbcTemplate jdbc;
     private final AuditoriaApplicationService auditoria;
+    private final EscopoFilialContabilidade escopoFilial;
 
     public FechamentoMensalContabilidadeApplicationService(
             JdbcTemplate jdbc, AuditoriaApplicationService auditoria) {
         this.jdbc = jdbc;
         this.auditoria = auditoria;
+        this.escopoFilial = new EscopoFilialContabilidade(jdbc);
     }
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -29,6 +31,8 @@ public class FechamentoMensalContabilidadeApplicationService {
                             YearMonth competencia, UUID filialId) {
         if (competencia == null)
             throw new IllegalArgumentException("Competencia e obrigatoria");
+        var escopo = escopoFilial.resolver(
+                tenantId, usuarioId, filialId);
         LocalDate inicio = competencia.atDay(1);
         LocalDate fimExclusivo = competencia.plusMonths(1).atDay(1);
         Timestamp instanteInicial = Timestamp.valueOf(inicio.atStartOfDay());
@@ -55,13 +59,19 @@ public class FechamentoMensalContabilidadeApplicationService {
                   AND t.transmitido_em >= ?
                   AND t.transmitido_em < ?
                   AND (CAST(? AS UUID) IS NULL OR d.filial_id = ?)
+                  AND (CAST(? AS BOOLEAN) = TRUE OR d.filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 """, (rs, n) -> new XmlResumo(
                         rs.getLong("total"),
                         rs.getLong("arquivados"),
                         rs.getLong("pendentes"),
                         rs.getLong("falhas")),
                 tenantId, instanteInicial, instanteFinal,
-                filialId, filialId);
+                filialId, filialId,
+                escopo.acessoTotal(), tenantId, usuarioId);
 
         SpedResumo sped = jdbc.queryForObject("""
                 SELECT COUNT(*) AS total,
@@ -98,12 +108,18 @@ public class FechamentoMensalContabilidadeApplicationService {
                   AND m.ocorrido_em >= ?
                   AND m.ocorrido_em < ?
                   AND (CAST(? AS UUID) IS NULL OR m.filial_id = ?)
+                  AND (CAST(? AS BOOLEAN) = TRUE OR m.filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 """, (rs, n) -> new LivroCaixaResumo(
                         rs.getLong("lancamentos"),
                         rs.getBigDecimal("entradas"),
                         rs.getBigDecimal("saidas")),
                 tenantId, instanteInicial, instanteFinal,
-                filialId, filialId);
+                filialId, filialId,
+                escopo.acessoTotal(), tenantId, usuarioId);
 
         InventarioResumo inventario = jdbc.queryForObject("""
                 SELECT COUNT(*) AS concluidos,
@@ -122,17 +138,24 @@ public class FechamentoMensalContabilidadeApplicationService {
                   AND s.concluido_em >= ?
                   AND s.concluido_em < ?
                   AND (CAST(? AS UUID) IS NULL OR s.filial_id = ?)
+                  AND (CAST(? AS BOOLEAN) = TRUE OR s.filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 """, (rs, n) -> new InventarioResumo(
                         rs.getLong("concluidos"),
                         rs.getLong("ajustados"),
                         rs.getLong("com_divergencias")),
                 tenantId, instanteInicial, instanteFinal,
-                filialId, filialId);
+                filialId, filialId,
+                escopo.acessoTotal(), tenantId, usuarioId);
 
         auditoria.registrar(tenantId, usuarioId, null, filialId,
                 "CONSULTAR_FECHAMENTO_MENSAL", "FECHAMENTO_CONTABIL",
                 UUID.randomUUID(), "competencia=" + competencia
-                        + ";filialId=" + filialId);
+                        + ";filialId=" + filialId
+                        + ";acessoTotal=" + escopo.acessoTotal());
         return new Resumo(competencia, filialId,
                 xml, sped, livroCaixa, inventario);
     }

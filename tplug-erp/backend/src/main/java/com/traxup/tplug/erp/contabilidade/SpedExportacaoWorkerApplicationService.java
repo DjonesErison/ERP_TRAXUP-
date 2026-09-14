@@ -148,6 +148,11 @@ public class SpedExportacaoWorkerApplicationService {
                 || artefato.conteudo().length == 0)
             throw new IllegalArgumentException(
                     "Gerador SPED retornou conteudo vazio");
+        if (artefato.provedorId() == null
+                || artefato.provedorId().isBlank()
+                || artefato.provedorId().trim().length() > 100)
+            throw new IllegalArgumentException(
+                    "Gerador SPED retornou identificador de provedor invalido");
         if (artefato.versaoLayout() == null
                 || artefato.versaoLayout().isBlank()
                 || artefato.versaoLayout().trim().length() > 40)

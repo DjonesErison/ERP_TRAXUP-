@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpResponse } from '@angular/common/http';
 import { Component, Input, OnChanges } from '@angular/core';
 import {
   ContabilidadeService,
@@ -19,11 +20,17 @@ import {
           <p class="eyebrow">Movimentação da competência</p>
           <h2>Livro-caixa</h2>
         </div>
-        <button class="secondary compact" (click)="carregarLivroCaixa()" [disabled]="loadingLivro">
-          {{ loadingLivro ? 'Atualizando...' : 'Atualizar' }}
-        </button>
+        <div class="heading-actions">
+          <button class="secondary compact" (click)="carregarLivroCaixa()" [disabled]="loadingLivro">
+            {{ loadingLivro ? 'Atualizando...' : 'Atualizar' }}
+          </button>
+          <button class="compact" (click)="exportarLivroCaixa()" [disabled]="exportandoLivro || !competencia">
+            {{ exportandoLivro ? 'Gerando CSV...' : 'Exportar CSV' }}
+          </button>
+        </div>
       </div>
 
+      <div class="movement-alert success" *ngIf="feedback">{{ feedback }}</div>
       <div class="movement-alert" *ngIf="erroLivro">{{ erroLivro }}</div>
 
       <ng-container *ngIf="livro as dados">
@@ -80,9 +87,14 @@ import {
           <p class="eyebrow">Posição de estoque</p>
           <h2>Inventários concluídos</h2>
         </div>
-        <button class="secondary compact" (click)="carregarInventarios()" [disabled]="loadingInventarios">
-          {{ loadingInventarios ? 'Atualizando...' : 'Atualizar' }}
-        </button>
+        <div class="heading-actions">
+          <button class="secondary compact" (click)="carregarInventarios()" [disabled]="loadingInventarios">
+            {{ loadingInventarios ? 'Atualizando...' : 'Atualizar' }}
+          </button>
+          <button class="compact" (click)="exportarInventarios()" [disabled]="exportandoInventarios || !competencia">
+            {{ exportandoInventarios ? 'Gerando CSV...' : 'Exportar CSV' }}
+          </button>
+        </div>
       </div>
 
       <div class="movement-alert" *ngIf="erroInventarios">{{ erroInventarios }}</div>
@@ -135,6 +147,9 @@ export class ContabilidadeMovimentosComponent implements OnChanges {
   inventarios?: InventarioConsultaResultado;
   loadingLivro = false;
   loadingInventarios = false;
+  exportandoLivro = false;
+  exportandoInventarios = false;
+  feedback = '';
   erroLivro = '';
   erroInventarios = '';
   private paginaLivro = 1;
@@ -203,6 +218,61 @@ export class ContabilidadeMovimentosComponent implements OnChanges {
     this.carregarInventarios();
   }
 
+
+  exportarLivroCaixa(): void {
+    if (!this.competencia) return;
+    this.exportandoLivro = true;
+    this.feedback = '';
+    this.erroLivro = '';
+    this.contabilidade.exportarLivroCaixaCsv(
+      this.competencia,
+      this.filialId || undefined
+    ).subscribe({
+      next: (response) => {
+        this.exportandoLivro = false;
+        this.salvarArquivo(
+          response,
+          `traxup-livro-caixa-${this.competencia}.csv`
+        );
+        this.feedback = 'Livro-caixa exportado com sucesso.';
+      },
+      error: (err) => {
+        this.exportandoLivro = false;
+        this.erroLivro = this.mensagemErro(
+          err,
+          'Não foi possível exportar o livro-caixa.'
+        );
+      }
+    });
+  }
+
+  exportarInventarios(): void {
+    if (!this.competencia) return;
+    this.exportandoInventarios = true;
+    this.feedback = '';
+    this.erroInventarios = '';
+    this.contabilidade.exportarInventariosCsv(
+      this.competencia,
+      this.filialId || undefined
+    ).subscribe({
+      next: (response) => {
+        this.exportandoInventarios = false;
+        this.salvarArquivo(
+          response,
+          `traxup-inventarios-${this.competencia}.csv`
+        );
+        this.feedback = 'Inventários exportados com sucesso.';
+      },
+      error: (err) => {
+        this.exportandoInventarios = false;
+        this.erroInventarios = this.mensagemErro(
+          err,
+          'Não foi possível exportar os inventários.'
+        );
+      }
+    });
+  }
+
   nomeOrigem(origem?: string | null): string {
     if (!origem) return 'Manual';
     return origem.replaceAll('_', ' ');
@@ -210,6 +280,32 @@ export class ContabilidadeMovimentosComponent implements OnChanges {
 
   trackLancamento(_: number, item: LivroCaixaLancamento): string { return item.id; }
   trackInventario(_: number, item: InventarioPosicao): string { return item.inventarioId; }
+
+
+  private salvarArquivo(response: HttpResponse<Blob>, fallback: string): void {
+    if (!response.body) return;
+    const url = URL.createObjectURL(response.body);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = this.nomeArquivo(
+      response.headers.get('Content-Disposition')
+    ) || fallback;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  private nomeArquivo(disposition: string | null): string {
+    if (!disposition) return '';
+    const match = disposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
+    if (!match) return '';
+    try {
+      return decodeURIComponent(match[1].replace(/"$/, ''));
+    } catch {
+      return match[1].replace(/"$/, '');
+    }
+  }
 
   private mensagemErro(err: { status?: number }, fallback: string): string {
     if (err?.status === 403) return 'Seu perfil não possui acesso à filial selecionada.';

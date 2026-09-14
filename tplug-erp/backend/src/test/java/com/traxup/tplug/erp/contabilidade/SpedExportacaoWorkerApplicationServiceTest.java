@@ -39,9 +39,11 @@ class SpedExportacaoWorkerApplicationServiceTest {
                 "10000000-0000-4000-8000-000000000001");
         var item = new SpedExportacaoWorkerApplicationService.Item(
                 UUID.fromString("20000000-0000-4000-8000-000000000002"),
+                UUID.fromString("30000000-0000-4000-8000-000000000003"),
                 "EFD_ICMS_IPI", YearMonth.of(2026, 8));
         assertEquals(
                 "tenants/10000000-0000-4000-8000-000000000001/"
+                        + "filiais/30000000-0000-4000-8000-000000000003/"
                         + "sped/EFD_ICMS_IPI/2026-08/"
                         + "20000000-0000-4000-8000-000000000002.txt",
                 SpedExportacaoWorkerApplicationService

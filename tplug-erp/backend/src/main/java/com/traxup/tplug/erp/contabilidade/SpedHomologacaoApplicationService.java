@@ -25,12 +25,26 @@ public class SpedHomologacaoApplicationService {
         return !provedorId.isBlank() && !versoesPermitidas.isEmpty();
     }
 
+    public boolean provedorHomologado(String identificador) {
+        return configurada()
+                && identificador != null
+                && provedorId.equals(identificador.trim());
+    }
+
+    public void validarGerador(SpedGeradorPort gerador) {
+        if (!configurada())
+            throw new IllegalStateException(
+                    "Homologacao SPED nao configurada");
+        if (gerador == null || !provedorHomologado(gerador.provedorId()))
+            throw new IllegalStateException(
+                    "Provedor SPED nao homologado");
+    }
+
     public void validar(SpedGeradorPort.Artefato artefato) {
         if (!configurada())
             throw new IllegalStateException(
                     "Homologacao SPED nao configurada");
-        String provedorArtefato = artefato.provedorId().trim();
-        if (!provedorId.equals(provedorArtefato))
+        if (!provedorHomologado(artefato.provedorId()))
             throw new IllegalStateException(
                     "Provedor SPED nao homologado");
         String versao = artefato.versaoLayout().trim();

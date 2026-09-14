@@ -49,14 +49,18 @@ class SpedExportacaoWorkerApplicationServiceTest {
     }
 
     @Test
-    void recusaArtefatoVazioOuSemVersaoDoLayout() {
+    void recusaArtefatoVazioSemProvedorOuSemVersaoDoLayout() {
         assertThrows(IllegalArgumentException.class,
                 () -> SpedExportacaoWorkerApplicationService
                         .validarArtefato(new SpedGeradorPort.Artefato(
-                                new byte[0], "019")));
+                                new byte[0], "PROVEDOR", "019")));
         assertThrows(IllegalArgumentException.class,
                 () -> SpedExportacaoWorkerApplicationService
                         .validarArtefato(new SpedGeradorPort.Artefato(
-                                new byte[]{1}, " ")));
+                                new byte[]{1}, " ", "019")));
+        assertThrows(IllegalArgumentException.class,
+                () -> SpedExportacaoWorkerApplicationService
+                        .validarArtefato(new SpedGeradorPort.Artefato(
+                                new byte[]{1}, "PROVEDOR", " ")));
     }
 }

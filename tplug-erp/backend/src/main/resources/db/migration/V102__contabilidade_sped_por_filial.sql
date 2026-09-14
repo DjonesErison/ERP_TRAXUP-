@@ -5,7 +5,7 @@ ALTER TABLE contabilidade_sped_exportacoes
 UPDATE contabilidade_sped_exportacoes e
 SET filial_id = unica.filial_id
 FROM (
-    SELECT tenant_id, MIN(id) AS filial_id
+    SELECT tenant_id, (ARRAY_AGG(id ORDER BY id))[1] AS filial_id
     FROM filiais
     WHERE ativo = TRUE
     GROUP BY tenant_id

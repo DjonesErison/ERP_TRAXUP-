@@ -67,7 +67,7 @@ class SpedHomologacaoApplicationServiceTest {
         var homologacao = new SpedHomologacaoApplicationService(
                 "PROVEDOR_HOMOLOGADO", "019");
         SpedGeradorPort semIdentidade =
-                (tenantId, tipo, competencia) ->
+                (tenantId, filialId, tipo, competencia) ->
                         artefato("PROVEDOR_HOMOLOGADO", "019");
 
         assertThrows(IllegalStateException.class,

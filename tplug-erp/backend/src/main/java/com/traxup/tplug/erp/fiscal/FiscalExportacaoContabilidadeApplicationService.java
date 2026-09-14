@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.fiscal;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.contabilidade.EscopoFilialContabilidade;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class FiscalExportacaoContabilidadeApplicationService {
     private final JdbcTemplate jdbc;
     private final ObjectProvider<FiscalArquivoStoragePort> storageProvider;
     private final AuditoriaApplicationService auditoria;
+    private final EscopoFilialContabilidade escopoFilial;
 
     public FiscalExportacaoContabilidadeApplicationService(
             JdbcTemplate jdbc,
@@ -38,12 +40,14 @@ public class FiscalExportacaoContabilidadeApplicationService {
         this.jdbc = jdbc;
         this.storageProvider = storageProvider;
         this.auditoria = auditoria;
+        this.escopoFilial = new EscopoFilialContabilidade(jdbc);
     }
 
     @Transactional
     public Resultado exportar(UUID tenantId, UUID usuarioId,
                               LocalDate inicio, LocalDate fim, int parte) {
         validarPeriodo(inicio, fim);
+        var escopo = escopoFilial.resolver(tenantId, usuarioId, null);
         FiscalArquivoStoragePort storage = storageProvider.getIfAvailable();
         if (storage == null)
             throw new IllegalStateException(
@@ -52,6 +56,8 @@ public class FiscalExportacaoContabilidadeApplicationService {
         Long contagem = jdbc.queryForObject("""
                 SELECT COUNT(*)
                 FROM fiscal_arquivos a
+                JOIN fiscal_documentos d
+                  ON d.tenant_id = a.tenant_id AND d.id = a.documento_id
                 JOIN fiscal_documentos_processados p
                   ON p.tenant_id = a.tenant_id AND p.id = a.processado_id
                 JOIN fiscal_transmissoes t
@@ -59,9 +65,15 @@ public class FiscalExportacaoContabilidadeApplicationService {
                 WHERE a.tenant_id = ? AND a.status = 'ARQUIVADO'
                   AND t.transmitido_em >= ?
                   AND t.transmitido_em < ?
+                  AND (CAST(? AS BOOLEAN) = TRUE OR d.filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 """, Long.class, tenantId,
                 Timestamp.valueOf(inicio.atStartOfDay()),
-                Timestamp.valueOf(fim.plusDays(1).atStartOfDay()));
+                Timestamp.valueOf(fim.plusDays(1).atStartOfDay()),
+                escopo.acessoTotal(), tenantId, usuarioId);
         long totalDisponivel = contagem == null ? 0 : contagem;
         long totalPartes = totalPartes(totalDisponivel);
         validarParte(parte, totalPartes);
@@ -81,6 +93,11 @@ public class FiscalExportacaoContabilidadeApplicationService {
                 WHERE a.tenant_id = ? AND a.status = 'ARQUIVADO'
                   AND t.transmitido_em >= ?
                   AND t.transmitido_em < ?
+                  AND (CAST(? AS BOOLEAN) = TRUE OR d.filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 ORDER BY t.transmitido_em, a.id
                 LIMIT ? OFFSET ?
                 """, (rs, n) -> new Arquivo(
@@ -93,6 +110,7 @@ public class FiscalExportacaoContabilidadeApplicationService {
                         rs.getTimestamp("data_fiscal").toInstant()),
                 tenantId, Timestamp.valueOf(inicio.atStartOfDay()),
                 Timestamp.valueOf(fim.plusDays(1).atStartOfDay()),
+                escopo.acessoTotal(), tenantId, usuarioId,
                 LIMITE_ARQUIVOS, deslocamento);
 
         byte[] zip = compactar(storage, arquivos);
@@ -102,6 +120,7 @@ public class FiscalExportacaoContabilidadeApplicationService {
                 "EXPORTAR_XML_CONTABILIDADE", "FISCAL_EXPORTACAO",
                 exportacaoId, "inicio=" + inicio + ";fim=" + fim
                         + ";parte=" + parte + ";totalPartes=" + totalPartes
+                        + ";acessoTotal=" + escopo.acessoTotal()
                         + ";arquivos=" + arquivos.size() + ";hash=" + hash);
         return new Resultado(exportacaoId, inicio, fim,
                 nomeZip(inicio, fim, parte, totalPartes), arquivos.size(),

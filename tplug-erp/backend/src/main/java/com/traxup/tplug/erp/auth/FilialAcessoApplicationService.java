@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -91,7 +92,9 @@ public class FilialAcessoApplicationService {
         if (unicas.size() != filialIds.size())
             throw new RegraNegocioException(
                     "Lista de filiais possui valores duplicados");
-        return unicas.stream().sorted().toList();
+        return unicas.stream()
+                .sorted(Comparator.comparing(UUID::toString))
+                .toList();
     }
 
     private void validarUsuario(UUID tenantId, UUID usuarioId) {

@@ -7,11 +7,17 @@ import {
   FilialContabilidade
 } from './contabilidade.service';
 import { ContabilidadeArquivosComponent } from './contabilidade-arquivos.component';
+import { ContabilidadeMovimentosComponent } from './contabilidade-movimentos.component';
 
 @Component({
   selector: 'app-contabilidade',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContabilidadeArquivosComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ContabilidadeArquivosComponent,
+    ContabilidadeMovimentosComponent
+  ],
   template: `
     <section class="accounting-page">
       <header class="accounting-head">
@@ -109,6 +115,11 @@ import { ContabilidadeArquivosComponent } from './contabilidade-arquivos.compone
           </article>
         </section>
       </ng-container>
+
+      <app-contabilidade-movimentos
+        [competencia]="competencia"
+        [filialId]="filialId">
+      </app-contabilidade-movimentos>
 
       <app-contabilidade-arquivos
         [competencia]="competencia"

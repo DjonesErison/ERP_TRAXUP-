@@ -6,5 +6,8 @@ import java.util.UUID;
 public interface SpedGeradorPort {
     Artefato gerar(UUID tenantId, String tipo, YearMonth competencia);
 
-    record Artefato(byte[] conteudo, String versaoLayout) {}
+    record Artefato(
+            byte[] conteudo,
+            String provedorId,
+            String versaoLayout) {}
 }

@@ -11,31 +11,36 @@ class SpedProntidaoApplicationServiceTest {
     @Test
     void informaCadaPendenciaSemExporConfiguracaoInterna() {
         var desabilitado = SpedProntidaoApplicationService
-                .calcular(false, false, false);
+                .calcular(false, false, false, false);
         assertFalse(desabilitado.prontoParaProcessar());
         assertEquals("WORKER_DESABILITADO",
                 desabilitado.pendenciaCodigo());
 
         var semGerador = SpedProntidaoApplicationService
-                .calcular(true, false, true);
+                .calcular(true, false, true, true);
         assertEquals("GERADOR_HOMOLOGADO_NAO_CONFIGURADO",
                 semGerador.pendenciaCodigo());
 
         var semRepositorio = SpedProntidaoApplicationService
-                .calcular(true, true, false);
+                .calcular(true, true, false, true);
         assertEquals("REPOSITORIO_NAO_CONFIGURADO",
                 semRepositorio.pendenciaCodigo());
+        var semHomologacao = SpedProntidaoApplicationService
+                .calcular(true, true, true, false);
+        assertEquals("HOMOLOGACAO_NAO_CONFIGURADA",
+                semHomologacao.pendenciaCodigo());
     }
 
     @Test
     void ficaProntoSomenteComTodosOsComponentesAtivos() {
         var prontidao = SpedProntidaoApplicationService
-                .calcular(true, true, true);
+                .calcular(true, true, true, true);
 
         assertTrue(prontidao.prontoParaProcessar());
         assertTrue(prontidao.workerHabilitado());
         assertTrue(prontidao.geradorHomologadoConfigurado());
         assertTrue(prontidao.repositorioConfigurado());
+        assertTrue(prontidao.homologacaoConfigurada());
         assertNull(prontidao.pendenciaCodigo());
     }
 }

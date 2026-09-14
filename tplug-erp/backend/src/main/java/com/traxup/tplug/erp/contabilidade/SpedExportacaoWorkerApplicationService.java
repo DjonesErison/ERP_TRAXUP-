@@ -21,17 +21,20 @@ public class SpedExportacaoWorkerApplicationService {
     private final JdbcTemplate jdbc;
     private final ObjectProvider<SpedGeradorPort> geradorProvider;
     private final ObjectProvider<SpedArquivoStoragePort> storageProvider;
+    private final SpedHomologacaoApplicationService homologacao;
     private final int maxTentativas;
 
     public SpedExportacaoWorkerApplicationService(
             JdbcTemplate jdbc,
             ObjectProvider<SpedGeradorPort> geradorProvider,
             ObjectProvider<SpedArquivoStoragePort> storageProvider,
+            SpedHomologacaoApplicationService homologacao,
             @Value("${contabilidade.sped.worker.max-tentativas:5}")
             int maxTentativas) {
         this.jdbc = jdbc;
         this.geradorProvider = geradorProvider;
         this.storageProvider = storageProvider;
+        this.homologacao = homologacao;
         this.maxTentativas = normalizarMaxTentativas(maxTentativas);
     }
 
@@ -90,6 +93,7 @@ public class SpedExportacaoWorkerApplicationService {
                 SpedGeradorPort.Artefato artefato = gerador.gerar(
                         tenantId, item.tipo(), item.competencia());
                 validarArtefato(artefato);
+                homologacao.validar(artefato);
                 String hash = sha256(artefato.conteudo());
                 String chave = chaveObjeto(tenantId, item);
                 storage.armazenar(chave, artefato.conteudo(), hash);
@@ -144,6 +148,11 @@ public class SpedExportacaoWorkerApplicationService {
                 || artefato.conteudo().length == 0)
             throw new IllegalArgumentException(
                     "Gerador SPED retornou conteudo vazio");
+        if (artefato.provedorId() == null
+                || artefato.provedorId().isBlank()
+                || artefato.provedorId().trim().length() > 100)
+            throw new IllegalArgumentException(
+                    "Gerador SPED retornou identificador de provedor invalido");
         if (artefato.versaoLayout() == null
                 || artefato.versaoLayout().isBlank()
                 || artefato.versaoLayout().trim().length() > 40)

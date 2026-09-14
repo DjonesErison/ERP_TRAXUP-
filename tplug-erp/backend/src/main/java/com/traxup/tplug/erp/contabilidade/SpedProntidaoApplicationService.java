@@ -38,7 +38,7 @@ public class SpedProntidaoApplicationService {
 
     static Prontidao calcular(
             boolean workerHabilitado,
-            boolean geradorHomologadoConfigurado,
+            boolean geradorConfigurado,
             boolean repositorioConfigurado,
             boolean homologacaoConfigurada,
             boolean provedorHomologado) {
@@ -68,7 +68,7 @@ public class SpedProntidaoApplicationService {
 
     public record Prontidao(
             boolean workerHabilitado,
-            boolean geradorConfigurado,
+            boolean geradorHomologadoConfigurado,
             boolean repositorioConfigurado,
             boolean homologacaoConfigurada,
             boolean provedorHomologado,

@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
@@ -25,7 +26,7 @@ import java.util.zip.ZipOutputStream;
 public class FiscalExportacaoContabilidadeApplicationService {
     private static final int LIMITE_ARQUIVOS = 500;
     private static final String CABECALHO_MANIFESTO =
-            "arquivo_id;documento_id;modelo;serie;numero;hash_sha256;nome_arquivo\n";
+            "arquivo_id;documento_id;modelo;serie;numero;data_fiscal;hash_sha256;nome_arquivo\n";
     private final JdbcTemplate jdbc;
     private final ObjectProvider<FiscalArquivoStoragePort> storageProvider;
     private final AuditoriaApplicationService auditoria;
@@ -50,14 +51,19 @@ public class FiscalExportacaoContabilidadeApplicationService {
 
         List<Arquivo> arquivos = jdbc.query("""
                 SELECT a.id, a.documento_id, a.chave_objeto, a.hash_sha256,
-                       d.modelo, d.serie, d.numero
+                       d.modelo, d.serie, d.numero,
+                       t.transmitido_em AS data_fiscal
                 FROM fiscal_arquivos a
                 JOIN fiscal_documentos d
                   ON d.tenant_id = a.tenant_id AND d.id = a.documento_id
+                JOIN fiscal_documentos_processados p
+                  ON p.tenant_id = a.tenant_id AND p.id = a.processado_id
+                JOIN fiscal_transmissoes t
+                  ON t.tenant_id = p.tenant_id AND t.id = p.transmissao_id
                 WHERE a.tenant_id = ? AND a.status = 'ARQUIVADO'
-                  AND a.arquivado_em >= ?
-                  AND a.arquivado_em < ?
-                ORDER BY a.arquivado_em, a.id
+                  AND t.transmitido_em >= ?
+                  AND t.transmitido_em < ?
+                ORDER BY t.transmitido_em, a.id
                 LIMIT 501
                 """, (rs, n) -> new Arquivo(
                         rs.getObject("id", UUID.class),
@@ -65,7 +71,8 @@ public class FiscalExportacaoContabilidadeApplicationService {
                         rs.getString("chave_objeto"),
                         rs.getString("hash_sha256"), rs.getString("modelo"),
                         rs.getObject("serie", Integer.class),
-                        rs.getObject("numero", Long.class)),
+                        rs.getObject("numero", Long.class),
+                        rs.getTimestamp("data_fiscal").toInstant()),
                 tenantId, Timestamp.valueOf(inicio.atStartOfDay()),
                 Timestamp.valueOf(fim.plusDays(1).atStartOfDay()));
         if (arquivos.size() > LIMITE_ARQUIVOS)
@@ -119,6 +126,7 @@ public class FiscalExportacaoContabilidadeApplicationService {
                     .append(campoCsv(modeloSeguro(arquivo.modelo()))).append(';')
                     .append(campoCsv(arquivo.serie())).append(';')
                     .append(campoCsv(arquivo.numero())).append(';')
+                    .append(campoCsv(arquivo.dataFiscal())).append(';')
                     .append(campoCsv(arquivo.hash())).append(';')
                     .append(campoCsv(nomeEntrada(arquivo))).append('\n');
         }
@@ -178,7 +186,8 @@ public class FiscalExportacaoContabilidadeApplicationService {
     }
 
     record Arquivo(UUID id, UUID documentoId, String chave, String hash,
-                   String modelo, Integer serie, Long numero) {}
+                   String modelo, Integer serie, Long numero,
+                   Instant dataFiscal) {}
 
     public record Resultado(UUID exportacaoId, LocalDate inicio, LocalDate fim,
                             String nomeArquivo, int totalXml,

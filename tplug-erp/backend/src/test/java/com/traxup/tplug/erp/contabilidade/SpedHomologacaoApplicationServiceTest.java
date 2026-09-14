@@ -55,8 +55,23 @@ class SpedHomologacaoApplicationServiceTest {
         var homologacao = new SpedHomologacaoApplicationService(
                 "PROVEDOR_HOMOLOGADO", "019,020");
 
+        assertTrue(homologacao.provedorHomologado(
+                " PROVEDOR_HOMOLOGADO "));
+        assertFalse(homologacao.provedorHomologado("OUTRO_PROVEDOR"));
         homologacao.validar(
                 artefato(" PROVEDOR_HOMOLOGADO ", " 020 "));
+    }
+
+    @Test
+    void bloqueiaGeradorQueNaoDeclaraProvedorHomologado() {
+        var homologacao = new SpedHomologacaoApplicationService(
+                "PROVEDOR_HOMOLOGADO", "019");
+        SpedGeradorPort semIdentidade =
+                (tenantId, tipo, competencia) ->
+                        artefato("PROVEDOR_HOMOLOGADO", "019");
+
+        assertThrows(IllegalStateException.class,
+                () -> homologacao.validarGerador(semIdentidade));
     }
 
     private static SpedGeradorPort.Artefato artefato(

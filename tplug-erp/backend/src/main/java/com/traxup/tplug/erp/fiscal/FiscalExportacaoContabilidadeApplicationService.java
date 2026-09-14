@@ -42,12 +42,30 @@ public class FiscalExportacaoContabilidadeApplicationService {
 
     @Transactional
     public Resultado exportar(UUID tenantId, UUID usuarioId,
-                              LocalDate inicio, LocalDate fim) {
+                              LocalDate inicio, LocalDate fim, int parte) {
         validarPeriodo(inicio, fim);
         FiscalArquivoStoragePort storage = storageProvider.getIfAvailable();
         if (storage == null)
             throw new IllegalStateException(
                     "Repositorio fiscal nao configurado neste ambiente");
+
+        Long contagem = jdbc.queryForObject("""
+                SELECT COUNT(*)
+                FROM fiscal_arquivos a
+                JOIN fiscal_documentos_processados p
+                  ON p.tenant_id = a.tenant_id AND p.id = a.processado_id
+                JOIN fiscal_transmissoes t
+                  ON t.tenant_id = p.tenant_id AND t.id = p.transmissao_id
+                WHERE a.tenant_id = ? AND a.status = 'ARQUIVADO'
+                  AND t.transmitido_em >= ?
+                  AND t.transmitido_em < ?
+                """, Long.class, tenantId,
+                Timestamp.valueOf(inicio.atStartOfDay()),
+                Timestamp.valueOf(fim.plusDays(1).atStartOfDay()));
+        long totalDisponivel = contagem == null ? 0 : contagem;
+        long totalPartes = totalPartes(totalDisponivel);
+        validarParte(parte, totalPartes);
+        long deslocamento = (parte - 1L) * LIMITE_ARQUIVOS;
 
         List<Arquivo> arquivos = jdbc.query("""
                 SELECT a.id, a.documento_id, a.chave_objeto, a.hash_sha256,
@@ -64,7 +82,7 @@ public class FiscalExportacaoContabilidadeApplicationService {
                   AND t.transmitido_em >= ?
                   AND t.transmitido_em < ?
                 ORDER BY t.transmitido_em, a.id
-                LIMIT 501
+                LIMIT ? OFFSET ?
                 """, (rs, n) -> new Arquivo(
                         rs.getObject("id", UUID.class),
                         rs.getObject("documento_id", UUID.class),
@@ -74,10 +92,8 @@ public class FiscalExportacaoContabilidadeApplicationService {
                         rs.getObject("numero", Long.class),
                         rs.getTimestamp("data_fiscal").toInstant()),
                 tenantId, Timestamp.valueOf(inicio.atStartOfDay()),
-                Timestamp.valueOf(fim.plusDays(1).atStartOfDay()));
-        if (arquivos.size() > LIMITE_ARQUIVOS)
-            throw new IllegalArgumentException(
-                    "Periodo possui mais de 500 XMLs; reduza o intervalo");
+                Timestamp.valueOf(fim.plusDays(1).atStartOfDay()),
+                LIMITE_ARQUIVOS, deslocamento);
 
         byte[] zip = compactar(storage, arquivos);
         UUID exportacaoId = UUID.randomUUID();
@@ -85,9 +101,11 @@ public class FiscalExportacaoContabilidadeApplicationService {
         auditoria.registrar(tenantId, usuarioId, null, null,
                 "EXPORTAR_XML_CONTABILIDADE", "FISCAL_EXPORTACAO",
                 exportacaoId, "inicio=" + inicio + ";fim=" + fim
+                        + ";parte=" + parte + ";totalPartes=" + totalPartes
                         + ";arquivos=" + arquivos.size() + ";hash=" + hash);
         return new Resultado(exportacaoId, inicio, fim,
-                nomeZip(inicio, fim), arquivos.size(), hash, zip);
+                nomeZip(inicio, fim, parte, totalPartes), arquivos.size(),
+                totalDisponivel, parte, totalPartes, hash, zip);
     }
 
     private byte[] compactar(FiscalArquivoStoragePort storage,
@@ -157,6 +175,20 @@ public class FiscalExportacaoContabilidadeApplicationService {
                     "Exportacao permite no maximo 32 dias consecutivos");
     }
 
+    static long totalPartes(long totalDisponivel) {
+        if (totalDisponivel < 0)
+            throw new IllegalArgumentException(
+                    "Total de XMLs nao pode ser negativo");
+        return totalDisponivel == 0 ? 1
+                : 1 + (totalDisponivel - 1) / LIMITE_ARQUIVOS;
+    }
+
+    static void validarParte(int parte, long totalPartes) {
+        if (parte < 1 || parte > totalPartes)
+            throw new IllegalArgumentException(
+                    "Parte deve estar entre 1 e " + totalPartes);
+    }
+
     private static String modeloSeguro(String modelo) {
         return modelo == null ? "FISCAL"
                 : modelo.toUpperCase(Locale.ROOT)
@@ -173,7 +205,14 @@ public class FiscalExportacaoContabilidadeApplicationService {
     }
 
     static String nomeZip(LocalDate inicio, LocalDate fim) {
-        return "traxup-xml-" + inicio + "-a-" + fim + ".zip";
+        return nomeZip(inicio, fim, 1, 1);
+    }
+
+    static String nomeZip(LocalDate inicio, LocalDate fim,
+                          int parte, long totalPartes) {
+        String sufixo = totalPartes > 1
+                ? "-parte-" + parte + "-de-" + totalPartes : "";
+        return "traxup-xml-" + inicio + "-a-" + fim + sufixo + ".zip";
     }
 
     private static String sha256(byte[] conteudo) {
@@ -191,5 +230,6 @@ public class FiscalExportacaoContabilidadeApplicationService {
 
     public record Resultado(UUID exportacaoId, LocalDate inicio, LocalDate fim,
                             String nomeArquivo, int totalXml,
+                            long totalDisponivel, int parte, long totalPartes,
                             String hashSha256, byte[] conteudo) {}
 }

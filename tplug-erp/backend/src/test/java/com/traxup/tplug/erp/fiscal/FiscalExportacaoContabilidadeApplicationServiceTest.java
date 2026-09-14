@@ -29,6 +29,25 @@ class FiscalExportacaoContabilidadeApplicationServiceTest {
     }
 
     @Test
+    void divideCompetenciaEmPartesDeAteQuinhentosXmls() {
+        assertEquals(1, FiscalExportacaoContabilidadeApplicationService
+                .totalPartes(0));
+        assertEquals(1, FiscalExportacaoContabilidadeApplicationService
+                .totalPartes(500));
+        assertEquals(2, FiscalExportacaoContabilidadeApplicationService
+                .totalPartes(501));
+
+        FiscalExportacaoContabilidadeApplicationService
+                .validarParte(2, 2);
+        assertThrows(IllegalArgumentException.class,
+                () -> FiscalExportacaoContabilidadeApplicationService
+                        .validarParte(0, 2));
+        assertThrows(IllegalArgumentException.class,
+                () -> FiscalExportacaoContabilidadeApplicationService
+                        .validarParte(3, 2));
+    }
+
+    @Test
     void geraNomesControladosParaZipEXml() {
         UUID id = UUID.randomUUID();
         var arquivo = new FiscalExportacaoContabilidadeApplicationService.Arquivo(
@@ -44,6 +63,11 @@ class FiscalExportacaoContabilidadeApplicationServiceTest {
                 FiscalExportacaoContabilidadeApplicationService.nomeZip(
                         LocalDate.of(2026, 8, 1),
                         LocalDate.of(2026, 8, 31)));
+        assertEquals(
+                "traxup-xml-2026-08-01-a-2026-08-31-parte-2-de-3.zip",
+                FiscalExportacaoContabilidadeApplicationService.nomeZip(
+                        LocalDate.of(2026, 8, 1),
+                        LocalDate.of(2026, 8, 31), 2, 3));
     }
 
     @Test

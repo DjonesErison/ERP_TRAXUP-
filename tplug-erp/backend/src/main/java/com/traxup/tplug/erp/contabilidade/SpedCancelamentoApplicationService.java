@@ -13,16 +13,19 @@ import java.util.UUID;
 public class SpedCancelamentoApplicationService {
     private final JdbcTemplate jdbc;
     private final AuditoriaApplicationService auditoria;
+    private final EscopoFilialContabilidade escopoFilial;
 
     public SpedCancelamentoApplicationService(
             JdbcTemplate jdbc, AuditoriaApplicationService auditoria) {
         this.jdbc = jdbc;
         this.auditoria = auditoria;
+        this.escopoFilial = new EscopoFilialContabilidade(jdbc);
     }
 
     @Transactional
     public Resultado cancelar(
             UUID tenantId, UUID usuarioId, UUID exportacaoId) {
+        var escopo = escopoFilial.resolver(tenantId, usuarioId, null);
         List<Resultado> cancelados = jdbc.query("""
                 UPDATE contabilidade_sped_exportacoes
                 SET status = 'CANCELADO',
@@ -34,21 +37,29 @@ public class SpedCancelamentoApplicationService {
                     atualizado_em = CURRENT_TIMESTAMP
                 WHERE tenant_id = ?
                   AND id = ?
+                  AND (CAST(? AS BOOLEAN) = TRUE OR filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                   AND status IN ('PENDENTE', 'FALHOU')
-                RETURNING id, status
+                RETURNING id, filial_id, status
                 """, (rs, n) -> new Resultado(
                         rs.getObject("id", UUID.class),
+                        rs.getObject("filial_id", UUID.class),
                         rs.getString("status")),
-                tenantId, exportacaoId);
+                tenantId, exportacaoId,
+                escopo.acessoTotal(), tenantId, usuarioId);
         if (cancelados.isEmpty())
             throw new RecursoNaoEncontradoException(
                     "Exportacao SPED cancelavel nao encontrada");
 
-        auditoria.registrar(tenantId, usuarioId, null, null,
+        auditoria.registrar(tenantId, usuarioId, null,
+                cancelados.getFirst().filialId(),
                 "CANCELAR_SPED", "SPED_EXPORTACAO", exportacaoId,
                 "status=CANCELADO");
         return cancelados.getFirst();
     }
 
-    public record Resultado(UUID id, String status) {}
+    public record Resultado(UUID id, UUID filialId, String status) {}
 }

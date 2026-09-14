@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import {
+  ChecklistFechamento,
   ContabilidadeService,
   FechamentoMensal,
   FilialContabilidade
@@ -58,6 +60,34 @@ import { ContabilidadeMovimentosComponent } from './contabilidade-movimentos.com
 
       <section class="accounting-loading card" *ngIf="loading && !resumo">
         Carregando dados da competência...
+      </section>
+
+
+      <section class="checklist card" *ngIf="checklist as lista">
+        <div class="checklist-head">
+          <div>
+            <p class="eyebrow">Conferência da competência</p>
+            <h2>Checklist do fechamento</h2>
+            <p>{{ mensagemChecklist }}</p>
+          </div>
+          <span class="checklist-status" [ngClass]="classeChecklist(lista.statusGeral)">
+            {{ nomeStatusChecklist(lista.statusGeral) }}
+          </span>
+        </div>
+        <div class="checklist-items">
+          <article *ngFor="let item of lista.itens">
+            <span class="item-state" [ngClass]="classeChecklist(item.status)"></span>
+            <div>
+              <strong>{{ item.titulo }}</strong>
+              <small>{{ item.mensagem }}</small>
+            </div>
+            <span class="item-total">{{ item.total }}</span>
+          </article>
+        </div>
+        <div class="checklist-foot" [class.available]="lista.podeGerarPacote">
+          <strong>{{ lista.podeGerarPacote ? 'Competência elegível para o pacote contábil' : 'Pacote bloqueado por pendências' }}</strong>
+          <span>{{ lista.totalPendencias }} pendência(s) identificada(s)</span>
+        </div>
       </section>
 
       <ng-container *ngIf="resumo as dados">
@@ -134,6 +164,7 @@ export class ContabilidadeComponent implements OnInit {
   filialId = '';
   filiais: FilialContabilidade[] = [];
   resumo?: FechamentoMensal;
+  checklist?: ChecklistFechamento;
   loadingFiliais = false;
   loading = false;
   error = '';
@@ -177,12 +208,20 @@ export class ContabilidadeComponent implements OnInit {
     if (!this.competencia || this.loadingFiliais) return;
     this.loading = true;
     this.error = '';
-    this.contabilidade.consultarFechamento(
-      this.competencia,
-      this.filialId || undefined
-    ).subscribe({
-      next: (resumo) => {
-        this.resumo = resumo;
+    const filial = this.filialId || undefined;
+    forkJoin({
+      resumo: this.contabilidade.consultarFechamento(
+        this.competencia,
+        filial
+      ),
+      checklist: this.contabilidade.consultarChecklist(
+        this.competencia,
+        filial
+      )
+    }).subscribe({
+      next: (dados) => {
+        this.resumo = dados.resumo;
+        this.checklist = dados.checklist;
         this.loading = false;
       },
       error: (err) => {
@@ -192,6 +231,33 @@ export class ContabilidadeComponent implements OnInit {
           : 'Não foi possível carregar o fechamento desta competência.';
       }
     });
+  }
+
+
+  get mensagemChecklist(): string {
+    const status = this.checklist?.statusGeral;
+    if (status === 'PRONTO') return 'Todos os itens da competência foram conferidos.';
+    if (status === 'ATENCAO') return 'A competência pode seguir, mas contém pontos para revisão.';
+    if (status === 'PENDENTE') return 'Existem arquivos ainda em processamento.';
+    return 'Existem falhas que impedem a geração do pacote contábil.';
+  }
+
+  nomeStatusChecklist(status: string): string {
+    const nomes: Record<string, string> = {
+      PRONTO: 'Pronto',
+      ATENCAO: 'Atenção',
+      PENDENTE: 'Pendente',
+      FALHA: 'Falha',
+      BLOQUEADO: 'Bloqueado'
+    };
+    return nomes[status] ?? status;
+  }
+
+  classeChecklist(status: string): string {
+    if (status === 'PRONTO') return 'ready';
+    if (status === 'ATENCAO') return 'attention';
+    if (status === 'PENDENTE') return 'pending';
+    return 'blocked';
   }
 
   trackFilial(_: number, filial: FilialContabilidade): string {

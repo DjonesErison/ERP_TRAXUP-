@@ -307,6 +307,32 @@ export class ContabilidadeService {
     );
   }
 
+
+
+  exportarLivroCaixaCsv(
+    competencia: string,
+    filialId?: string
+  ): Observable<HttpResponse<Blob>> {
+    let params = this.parametrosCompetencia(competencia);
+    if (filialId) params = params.set('filialId', filialId);
+    return this.http.get(
+      `${this.baseUrl}/exportacoes/livro-caixa.csv`,
+      { params, observe: 'response', responseType: 'blob' }
+    );
+  }
+
+  exportarInventariosCsv(
+    competencia: string,
+    filialId?: string
+  ): Observable<HttpResponse<Blob>> {
+    let params = this.parametrosCompetencia(competencia);
+    if (filialId) params = params.set('filialId', filialId);
+    return this.http.get(
+      `${this.baseUrl}/exportacoes/inventarios.csv`,
+      { params, observe: 'response', responseType: 'blob' }
+    );
+  }
+
   private parametrosCompetencia(competencia: string): HttpParams {
     const [ano, mes] = competencia.split('-').map(Number);
     const ultimoDia = new Date(ano, mes, 0).getDate();

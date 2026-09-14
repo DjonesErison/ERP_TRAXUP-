@@ -153,6 +153,24 @@ export interface InventarioConsultaResultado {
   inventarios: InventarioPosicao[];
 }
 
+export interface ChecklistFechamentoItem {
+  codigo: 'XML' | 'SPED' | 'LIVRO_CAIXA' | 'INVENTARIO';
+  titulo: string;
+  status: 'PRONTO' | 'ATENCAO' | 'PENDENTE' | 'FALHA';
+  total: number;
+  pendencias: number;
+  mensagem: string;
+}
+
+export interface ChecklistFechamento {
+  competencia: string;
+  filialId?: string | null;
+  statusGeral: 'PRONTO' | 'ATENCAO' | 'PENDENTE' | 'BLOQUEADO';
+  podeGerarPacote: boolean;
+  totalPendencias: number;
+  itens: ChecklistFechamentoItem[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContabilidadeService {
   private readonly baseUrl = '/api/v1/contabilidade';
@@ -162,6 +180,20 @@ export class ContabilidadeService {
   listarFiliais(): Observable<FilialContabilidade[]> {
     return this.http.get<FilialContabilidade[]>(
       `${this.baseUrl}/filiais`
+    );
+  }
+
+
+
+  consultarChecklist(
+    competencia: string,
+    filialId?: string
+  ): Observable<ChecklistFechamento> {
+    let params = new HttpParams().set('competencia', competencia);
+    if (filialId) params = params.set('filialId', filialId);
+    return this.http.get<ChecklistFechamento>(
+      `${this.baseUrl}/checklist-mensal`,
+      { params }
     );
   }
 

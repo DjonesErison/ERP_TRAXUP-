@@ -38,7 +38,7 @@ public class SpedProntidaoApplicationService {
 
     static Prontidao calcular(
             boolean workerHabilitado,
-            boolean geradorConfigurado,
+            boolean geradorHomologadoConfigurado,
             boolean repositorioConfigurado,
             boolean homologacaoConfigurada,
             boolean provedorHomologado) {
@@ -46,7 +46,7 @@ public class SpedProntidaoApplicationService {
         if (!workerHabilitado)
             pendencia = "WORKER_DESABILITADO";
         else if (!geradorConfigurado)
-            pendencia = "GERADOR_NAO_CONFIGURADO";
+            pendencia = "GERADOR_HOMOLOGADO_NAO_CONFIGURADO";
         else if (!repositorioConfigurado)
             pendencia = "REPOSITORIO_NAO_CONFIGURADO";
         else if (!homologacaoConfigurada)

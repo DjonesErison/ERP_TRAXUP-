@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.financeiro;
 
 import com.traxup.tplug.erp.auditoria.AuditoriaApplicationService;
+import com.traxup.tplug.erp.contabilidade.EscopoFilialContabilidade;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -21,11 +22,13 @@ public class LivroCaixaContabilidadeApplicationService {
 
     private final JdbcTemplate jdbc;
     private final AuditoriaApplicationService auditoria;
+    private final EscopoFilialContabilidade escopoFilial;
 
     public LivroCaixaContabilidadeApplicationService(
             JdbcTemplate jdbc, AuditoriaApplicationService auditoria) {
         this.jdbc = jdbc;
         this.auditoria = auditoria;
+        this.escopoFilial = new EscopoFilialContabilidade(jdbc);
     }
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -33,6 +36,7 @@ public class LivroCaixaContabilidadeApplicationService {
                                LocalDate inicio, LocalDate fim,
                                Integer limite, int pagina) {
         validarPeriodo(inicio, fim);
+        var escopo = escopoFilial.resolver(tenantId, usuarioId, null);
         int limiteEfetivo = validarLimite(limite);
         Timestamp instanteInicial = Timestamp.valueOf(inicio.atStartOfDay());
         Timestamp instanteFinal = Timestamp.valueOf(
@@ -51,11 +55,17 @@ public class LivroCaixaContabilidadeApplicationService {
                 WHERE m.tenant_id = ?
                   AND m.ocorrido_em >= ?
                   AND m.ocorrido_em < ?
+                  AND (CAST(? AS BOOLEAN) = TRUE OR m.filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 """, (rs, n) -> new ResumoPeriodo(
                         rs.getLong("total"),
                         rs.getBigDecimal("entradas"),
                         rs.getBigDecimal("saidas")),
-                tenantId, instanteInicial, instanteFinal);
+                tenantId, instanteInicial, instanteFinal,
+                escopo.acessoTotal(), tenantId, usuarioId);
         if (resumo == null)
             resumo = new ResumoPeriodo(
                     0, BigDecimal.ZERO, BigDecimal.ZERO);
@@ -76,6 +86,11 @@ public class LivroCaixaContabilidadeApplicationService {
                 WHERE m.tenant_id = ?
                   AND m.ocorrido_em >= ?
                   AND m.ocorrido_em < ?
+                  AND (CAST(? AS BOOLEAN) = TRUE OR m.filial_id IN (
+                      SELECT uf.filial_id
+                      FROM usuario_filiais uf
+                      WHERE uf.tenant_id = ? AND uf.usuario_id = ?
+                  ))
                 ORDER BY m.ocorrido_em, m.id
                 LIMIT ? OFFSET ?
                 """, (rs, n) -> new Lancamento(
@@ -91,6 +106,7 @@ public class LivroCaixaContabilidadeApplicationService {
                         rs.getObject("origem_id", UUID.class),
                         rs.getTimestamp("ocorrido_em").toInstant()),
                 tenantId, instanteInicial, instanteFinal,
+                escopo.acessoTotal(), tenantId, usuarioId,
                 limiteEfetivo, deslocamento);
 
         auditoria.registrar(tenantId, usuarioId, null, null,
@@ -98,6 +114,7 @@ public class LivroCaixaContabilidadeApplicationService {
                 "inicio=" + inicio + ";fim=" + fim
                         + ";pagina=" + pagina
                         + ";totalPaginas=" + totalPaginas
+                        + ";acessoTotal=" + escopo.acessoTotal()
                         + ";lancamentos=" + lancamentos.size());
 
         return new Resultado(inicio, fim, lancamentos.size(),

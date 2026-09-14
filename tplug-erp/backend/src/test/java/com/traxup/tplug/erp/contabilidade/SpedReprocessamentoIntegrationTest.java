@@ -34,23 +34,27 @@ class SpedReprocessamentoIntegrationTest {
                 new Tenant("Tenant SPED Reprocessamento"));
         Tenant outro = tenantRepository.saveAndFlush(
                 new Tenant("Outro Tenant SPED Reprocessamento"));
+        var contextoDono = SpedFilialTestFixture.criar(
+                jdbc, dono.getId(), "Reprocessamento");
+        var contextoOutro = SpedFilialTestFixture.criar(
+                jdbc, outro.getId(), "Reprocessamento outro");
         UUID exportacaoId = UUID.randomUUID();
         jdbc.update("""
                 INSERT INTO contabilidade_sped_exportacoes (
-                    id, tenant_id, tipo, competencia, status,
+                    id, tenant_id, filial_id, tipo, competencia, status,
                     tentativas_processamento, erro_codigo
                 )
-                VALUES (?, ?, 'EFD_ICMS_IPI', ?, 'FALHOU', 5, ?)
-                """, exportacaoId, dono.getId(),
+                VALUES (?, ?, ?, 'EFD_ICMS_IPI', ?, 'FALHOU', 5, ?)
+                """, exportacaoId, dono.getId(), contextoDono.filialId(),
                 Date.valueOf(YearMonth.of(2026, 8).atDay(1)),
                 "GERACAO_OU_ARQUIVAMENTO");
 
         assertThrows(RecursoNaoEncontradoException.class,
                 () -> service.reprocessar(
-                        outro.getId(), null, exportacaoId));
+                        outro.getId(), contextoOutro.usuarioId(), exportacaoId));
 
         var resultado = service.reprocessar(
-                dono.getId(), null, exportacaoId);
+                dono.getId(), contextoDono.usuarioId(), exportacaoId);
 
         assertEquals(exportacaoId, resultado.id());
         assertEquals("PENDENTE", resultado.status());

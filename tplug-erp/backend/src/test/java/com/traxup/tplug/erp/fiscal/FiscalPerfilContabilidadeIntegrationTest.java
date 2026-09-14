@@ -46,6 +46,7 @@ class FiscalPerfilContabilidadeIntegrationTest {
 
         assertThat(permissoes)
                 .containsExactly(
+                        "CONTABILIDADE_FECHAMENTO_LER",
                         "CONTABILIDADE_INVENTARIO_LER",
                         "CONTABILIDADE_LIVRO_CAIXA_LER",
                         "CONTABILIDADE_SPED_BAIXAR",

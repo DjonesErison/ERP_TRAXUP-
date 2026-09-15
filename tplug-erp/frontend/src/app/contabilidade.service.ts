@@ -365,6 +365,19 @@ export class ContabilidadeService {
     );
   }
 
+  baixarPacoteMensal(
+    competencia: string,
+    filialId: string
+  ): Observable<HttpResponse<Blob>> {
+    const params = new HttpParams()
+      .set('competencia', competencia)
+      .set('filialId', filialId);
+    return this.http.get(
+      `${this.baseUrl}/pacote-mensal`,
+      { params, observe: 'response', responseType: 'blob' }
+    );
+  }
+
   private parametrosCompetencia(competencia: string): HttpParams {
     const [ano, mes] = competencia.split('-').map(Number);
     const ultimoDia = new Date(ano, mes, 0).getDate();

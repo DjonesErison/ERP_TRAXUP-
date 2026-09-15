@@ -10,11 +10,12 @@ import {
   ContaFinanceira,
   MovimentoFinanceiro
 } from './conciliacao-financeira.service';
+import { IntegracoesFinanceirasComponent } from './integracoes-financeiras.component';
 
 @Component({
   selector: 'app-conciliacao-financeira',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, IntegracoesFinanceirasComponent],
   template: `
     <section class="reconciliation-page">
       <header class="reconciliation-head">
@@ -77,6 +78,11 @@ import {
           {{ importandoOfx ? 'Importando...' : 'Importar extrato' }}
         </button>
       </section>
+
+      <app-integracoes-financeiras
+        [contaId]="contaId"
+        (sincronizada)="carregar()">
+      </app-integracoes-financeiras>
 
       <div class="alert" *ngIf="error">{{ error }}</div>
       <div class="feedback" *ngIf="feedback">{{ feedback }}</div>

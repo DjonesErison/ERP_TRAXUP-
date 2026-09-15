@@ -1,0 +1,302 @@
+:host {
+  display: block;
+  color: #172033;
+}
+
+.sales-page {
+  display: grid;
+  gap: 20px;
+}
+
+.sales-head,
+.panel-head,
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sales-head h1,
+.panel-head h2 {
+  margin: 2px 0 6px;
+}
+
+.sales-head p,
+.panel-head p {
+  margin: 0;
+}
+
+.sales-head > div > p:last-child {
+  color: #64748b;
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 16px;
+  background: #176b5b;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr)) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 16px;
+}
+
+.filters label {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+input,
+select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 10px 11px;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+}
+
+.secondary,
+.detail-button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+}
+
+.alert {
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.metrics article {
+  display: grid;
+  gap: 5px;
+  padding: 18px;
+}
+
+.metrics span,
+.metrics small,
+td small {
+  color: #64748b;
+}
+
+.metrics strong {
+  font-size: 24px;
+}
+
+.eyebrow {
+  color: #0f766e;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.sales-list,
+.sale-detail,
+.loading-detail {
+  padding: 20px;
+}
+
+.panel-head > span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid #eef2f7;
+  padding: 13px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  color: #64748b;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+td {
+  font-size: 14px;
+}
+
+td small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+}
+
+.status {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.status.invoiced {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status.open {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status.cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status.draft {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.detail-button {
+  padding: 8px 11px;
+  font-size: 12px;
+}
+
+.empty {
+  padding: 24px;
+  color: #64748b;
+  text-align: center;
+}
+
+.pagination {
+  margin-top: 16px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.detail-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.detail-summary span {
+  display: grid;
+  gap: 5px;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.detail-summary strong {
+  color: #172033;
+  font-size: 17px;
+}
+
+.items {
+  display: grid;
+  gap: 8px;
+}
+
+.items article {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  align-items: center;
+  gap: 20px;
+  border-top: 1px solid #eef2f7;
+  padding: 13px 4px;
+}
+
+.items article div {
+  display: grid;
+  gap: 3px;
+}
+
+.items small {
+  color: #64748b;
+}
+
+.observation {
+  border-left: 3px solid #0f766e;
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  background: #f0fdfa;
+  color: #334155;
+}
+
+@media (max-width: 1050px) {
+  .filters {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .metrics,
+  .detail-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .sales-head,
+  .panel-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .filters,
+  .metrics,
+  .detail-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .items article {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}

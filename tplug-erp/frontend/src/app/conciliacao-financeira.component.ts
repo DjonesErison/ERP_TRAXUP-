@@ -212,9 +212,9 @@ export class ConciliacaoFinanceiraComponent implements OnInit {
     this.service.conciliar(this.selecionado.id, movimento.id).subscribe({
       next: () => {
         this.conciliando = false;
-        this.feedback = 'Lançamento conciliado com sucesso.';
         this.fecharSugestoes();
         this.carregar();
+        this.feedback = 'Lançamento conciliado com sucesso.';
       },
       error: (err) => {
         this.conciliando = false;

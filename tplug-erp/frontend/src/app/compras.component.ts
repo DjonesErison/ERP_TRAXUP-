@@ -127,8 +127,9 @@ import {
                 <td><span class="status" [ngClass]="classeStatus(pedido.status)">{{ nomeStatus(pedido.status) }}</span></td>
                 <td>
                   <div class="row-actions">
-                    <button class="detail-button" (click)="abrirDetalhe(pedido)">Ver itens</button>
+                    <button type="button" class="detail-button" (click)="abrirDetalhe(pedido)">Ver itens</button>
                     <button
+                      type="button"
                       class="action-button"
                       *ngIf="pedido.status === 'RASCUNHO'"
                       (click)="executarAcaoPedido(pedido, 'abrir')"
@@ -136,6 +137,7 @@ import {
                       {{ acaoPedidoId === pedido.id ? 'Processando...' : 'Abrir pedido' }}
                     </button>
                     <button
+                      type="button"
                       class="danger-button"
                       *ngIf="pedido.status === 'RASCUNHO' || pedido.status === 'ABERTO'"
                       (click)="executarAcaoPedido(pedido, 'cancelar')"
@@ -175,8 +177,9 @@ import {
                 <td><span class="status" [ngClass]="classeStatusRecebimento(recebimento.status)">{{ nomeStatusRecebimento(recebimento.status) }}</span></td>
                 <td>
                   <div class="row-actions">
-                    <button class="detail-button" (click)="abrirDetalheRecebimento(recebimento)">Conferir itens</button>
+                    <button type="button" class="detail-button" (click)="abrirDetalheRecebimento(recebimento)">Conferir itens</button>
                     <button
+                      type="button"
                       class="action-button"
                       *ngIf="recebimento.status === 'CONFERIDO'"
                       (click)="integrarEstoque(recebimento)"
@@ -201,7 +204,7 @@ import {
       <section class="card receipt-detail" *ngIf="recebimentoSelecionado as recebimento">
         <div class="panel-head">
           <div><p class="eyebrow">Recebimento {{ recebimento.documento || abreviar(recebimento.id) }}</p><h2>Conferência recebida</h2></div>
-          <button class="secondary" (click)="fecharDetalheRecebimento()">Fechar</button>
+          <button type="button" class="secondary" (click)="fecharDetalheRecebimento()">Fechar</button>
         </div>
 
         <div class="detail-summary">
@@ -230,7 +233,7 @@ import {
       <section class="card purchase-detail" *ngIf="pedidoSelecionado as pedido">
         <div class="panel-head">
           <div><p class="eyebrow">Pedido {{ pedido.numero }}</p><h2>Itens do pedido</h2></div>
-          <button class="secondary" (click)="fecharDetalhe()">Fechar</button>
+          <button type="button" class="secondary" (click)="fecharDetalhe()">Fechar</button>
         </div>
 
         <div class="detail-summary">

@@ -41,6 +41,30 @@ export interface OpcoesPedidoCompra {
   fornecedores: FornecedorCompraOpcao[];
 }
 
+export interface ProdutoCompraOpcao {
+  id: string;
+  codigo: string;
+  descricao: string;
+  compraPrc: number;
+  unidade: string;
+  ativo: boolean;
+}
+
+export interface GradeCompraOpcao {
+  id: string;
+  produtoId: string;
+  codigoGrade: string;
+  descricaoGrade: string;
+  ativo: boolean;
+}
+
+export interface AdicionarPedidoCompraItem {
+  produtoId: string;
+  gradeId?: string;
+  quantidade: number;
+  precoUnitario: number;
+}
+
 export interface PedidoCompraItem {
   id: string;
   pedidoCompraId: string;
@@ -100,6 +124,26 @@ export class ComprasService {
 
   criarPedido(request: CriarPedidoCompra): Observable<PedidoCompra> {
     return this.http.post<PedidoCompra>(this.pedidosUrl, request);
+  }
+
+  listarProdutos(): Observable<ProdutoCompraOpcao[]> {
+    return this.http.get<ProdutoCompraOpcao[]>('/api/v1/produtos');
+  }
+
+  listarGrades(produtoId: string): Observable<GradeCompraOpcao[]> {
+    return this.http.get<GradeCompraOpcao[]>(
+      `/api/v1/produtos/${produtoId}/grades`
+    );
+  }
+
+  adicionarItem(
+    pedidoId: string,
+    request: AdicionarPedidoCompraItem
+  ): Observable<PedidoCompraItem> {
+    return this.http.post<PedidoCompraItem>(
+      `${this.pedidosUrl}/${pedidoId}/itens`,
+      request
+    );
   }
 
   abrirPedido(pedidoId: string): Observable<PedidoCompra> {

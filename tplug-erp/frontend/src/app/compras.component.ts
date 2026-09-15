@@ -88,6 +88,7 @@ import {
           <span>{{ recebimentos.length }} registro(s)</span>
         </div>
         <div class="inline-alert" *ngIf="errorRecebimentos">{{ errorRecebimentos }}</div>
+        <div class="success-alert" *ngIf="sucessoRecebimento">{{ sucessoRecebimento }}</div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -100,7 +101,18 @@ import {
                 <td>{{ numeroPedido(recebimento.pedidoCompraId) }}</td>
                 <td>{{ abreviar(recebimento.fornecedorId) }}</td>
                 <td><span class="status" [ngClass]="classeStatusRecebimento(recebimento.status)">{{ nomeStatusRecebimento(recebimento.status) }}</span></td>
-                <td><button class="detail-button" (click)="abrirDetalheRecebimento(recebimento)">Conferir itens</button></td>
+                <td>
+                  <div class="row-actions">
+                    <button class="detail-button" (click)="abrirDetalheRecebimento(recebimento)">Conferir itens</button>
+                    <button
+                      class="action-button"
+                      *ngIf="recebimento.status === 'CONFERIDO'"
+                      (click)="integrarEstoque(recebimento)"
+                      [disabled]="integrandoId === recebimento.id">
+                      {{ integrandoId === recebimento.id ? 'Integrando...' : 'Integrar estoque' }}
+                    </button>
+                  </div>
+                </td>
               </tr>
               <tr *ngIf="!loadingRecebimentos && recebimentos.length === 0">
                 <td colspan="6" class="empty">Nenhum recebimento registrado.</td>
@@ -192,6 +204,8 @@ export class ComprasComponent implements OnInit {
   acessoRecebimentos = true;
   error = '';
   errorRecebimentos = '';
+  sucessoRecebimento = '';
+  integrandoId = '';
 
   constructor(private readonly service: ComprasService) {}
 
@@ -249,6 +263,7 @@ export class ComprasComponent implements OnInit {
   carregarRecebimentos(): void {
     this.loadingRecebimentos = true;
     this.errorRecebimentos = '';
+    this.sucessoRecebimento = '';
     this.service.listarRecebimentos().subscribe({
       next: (recebimentos) => {
         this.recebimentos = recebimentos;
@@ -299,6 +314,47 @@ export class ComprasComponent implements OnInit {
         this.error = err?.status === 403
           ? 'Seu perfil não possui acesso aos itens deste pedido.'
           : 'Não foi possível carregar os itens deste pedido.';
+      }
+    });
+  }
+
+  integrarEstoque(recebimento: RecebimentoCompra): void {
+    if (recebimento.status !== 'CONFERIDO' || this.integrandoId) return;
+    const confirmado = window.confirm(
+      'Integrar este recebimento ao estoque? Esta operação movimentará os saldos e não poderá ser repetida.'
+    );
+    if (!confirmado) return;
+
+    this.integrandoId = recebimento.id;
+    this.errorRecebimentos = '';
+    this.sucessoRecebimento = '';
+    this.service.integrarRecebimentoEstoque(recebimento.id).subscribe({
+      next: (atualizado) => {
+        this.integrandoId = '';
+        this.recebimentos = this.recebimentos.map(item =>
+          item.id === atualizado.id ? atualizado : item
+        );
+        if (this.recebimentoSelecionado?.id === atualizado.id) {
+          this.recebimentoSelecionado = atualizado;
+        }
+        this.sucessoRecebimento =
+          'Recebimento integrado ao estoque com sucesso.';
+        this.carregar();
+      },
+      error: (err) => {
+        this.integrandoId = '';
+        if (err?.status === 403) {
+          this.errorRecebimentos =
+            'Seu perfil não possui permissão para integrar recebimentos ao estoque.';
+          return;
+        }
+        if (err?.status === 409 || err?.status === 422) {
+          this.errorRecebimentos =
+            'O recebimento não pode ser integrado no estado atual. Atualize a consulta e tente novamente.';
+          return;
+        }
+        this.errorRecebimentos =
+          'Não foi possível integrar o recebimento ao estoque.';
       }
     });
   }

@@ -7,11 +7,12 @@ import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from '.
 import { InventarioMobileComponent } from './inventario-mobile.component';
 import { ContabilidadeComponent } from './contabilidade.component';
 import { ConciliacaoFinanceiraComponent } from './conciliacao-financeira.component';
+import { VendasComponent } from './vendas.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent],
+  imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent],
   template: `
     <div class="login-shell" *ngIf="!autenticado">
       <section class="login-brand">
@@ -58,7 +59,7 @@ import { ConciliacaoFinanceiraComponent } from './conciliacao-financeira.compone
           <button type="button" class="nav-link" [class.active]="area === 'crm'" (click)="area = 'crm'">CRM</button>
           <button type="button" class="nav-link" [class.active]="area === 'contabilidade'" (click)="area = 'contabilidade'">Contabilidade</button>
           <button type="button" class="nav-link" [class.active]="area === 'financeiro'" (click)="area = 'financeiro'">Financeiro</button>
-          <a>Vendas</a>
+          <button type="button" class="nav-link" [class.active]="area === 'vendas'" (click)="area = 'vendas'">Vendas</button>
           <a>Compras</a>
           <a href="#inventario">Inventário</a>
         </nav>
@@ -68,6 +69,7 @@ import { ConciliacaoFinanceiraComponent } from './conciliacao-financeira.compone
       <main>
         <app-contabilidade *ngIf="area === 'contabilidade'"></app-contabilidade>
         <app-conciliacao-financeira *ngIf="area === 'financeiro'"></app-conciliacao-financeira>
+        <app-vendas *ngIf="area === 'vendas'"></app-vendas>
         <ng-container *ngIf="area === 'crm'">
         <header class="topbar">
           <div>
@@ -169,7 +171,7 @@ import { ConciliacaoFinanceiraComponent } from './conciliacao-financeira.compone
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
-  area: 'crm' | 'contabilidade' | 'financeiro' = 'crm';
+  area: 'crm' | 'contabilidade' | 'financeiro' | 'vendas' = 'crm';
   autenticado = false;
   loginTenantId = '';
   loginEmail = '';

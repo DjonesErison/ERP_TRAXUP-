@@ -147,7 +147,7 @@ jobs:
   deploy:
     name: Homologacao - deploy
     needs: publish
-    if: github.ref == 'refs/heads/homologacao' && vars.HOMOLOGACAO_DEPLOY_ENABLED == 'true'
+    if: github.ref == 'refs/heads/homologacao'
     runs-on: ubuntu-latest
     environment:
       name: homologacao

@@ -211,17 +211,36 @@ td small {
   color: #475569;
 }
 
-.detail-button {
+.detail-button,
+.action-button {
   padding: 8px 11px;
   font-size: 12px;
 }
 
-.inline-alert {
+.action-button {
+  background: #0f766e;
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.inline-alert,
+.success-alert {
   margin-top: 14px;
   border-radius: 9px;
   padding: 10px 12px;
+}
+
+.inline-alert {
   background: #fff7ed;
   color: #c2410c;
+}
+
+.success-alert {
+  background: #ecfdf5;
+  color: #047857;
 }
 
 .permission-note {

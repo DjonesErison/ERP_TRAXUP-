@@ -64,6 +64,15 @@ export class ComprasService {
     return this.http.get<RecebimentoCompra[]>(this.recebimentosUrl);
   }
 
+  integrarRecebimentoEstoque(
+    recebimentoId: string
+  ): Observable<RecebimentoCompra> {
+    return this.http.post<RecebimentoCompra>(
+      `${this.recebimentosUrl}/${recebimentoId}/integrar-estoque`,
+      {}
+    );
+  }
+
   listarItensRecebimento(
     recebimentoId: string
   ): Observable<RecebimentoCompraItem[]> {

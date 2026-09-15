@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 
 export interface PedidoCompra {
   id: string;
@@ -11,6 +11,34 @@ export interface PedidoCompra {
   observacao?: string | null;
   criadoEm: string;
   atualizadoEm: string;
+}
+
+export interface CriarPedidoCompra {
+  filialId: string;
+  fornecedorId: string;
+  numero: string;
+  observacao?: string;
+}
+
+export interface FilialCompraOpcao {
+  id: string;
+  nome: string;
+  cnpj: string;
+  ativo: boolean;
+}
+
+export interface FornecedorCompraOpcao {
+  id: string;
+  nomeRazaoSocial: string;
+  nomeFantasia?: string | null;
+  cpfCnpj: string;
+  fornecedor: boolean;
+  ativo: boolean;
+}
+
+export interface OpcoesPedidoCompra {
+  filiais: FilialCompraOpcao[];
+  fornecedores: FornecedorCompraOpcao[];
 }
 
 export interface PedidoCompraItem {
@@ -58,6 +86,20 @@ export class ComprasService {
 
   listarPedidos(): Observable<PedidoCompra[]> {
     return this.http.get<PedidoCompra[]>(this.pedidosUrl);
+  }
+
+  carregarOpcoesPedido(): Observable<OpcoesPedidoCompra> {
+    return forkJoin({
+      filiais: this.http.get<FilialCompraOpcao[]>('/api/v1/filiais'),
+      fornecedores: this.http.get<FornecedorCompraOpcao[]>(
+        '/api/v1/pessoas',
+        { params: { papel: 'FORNECEDOR' } }
+      )
+    });
+  }
+
+  criarPedido(request: CriarPedidoCompra): Observable<PedidoCompra> {
+    return this.http.post<PedidoCompra>(this.pedidosUrl, request);
   }
 
   abrirPedido(pedidoId: string): Observable<PedidoCompra> {

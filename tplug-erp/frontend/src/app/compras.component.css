@@ -133,7 +133,9 @@ td small {
 }
 
 .purchase-list,
-.purchase-detail {
+.receipts-list,
+.purchase-detail,
+.receipt-detail {
   padding: 20px;
 }
 
@@ -189,6 +191,11 @@ td small {
   color: #166534;
 }
 
+.status.checked {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .status.open {
   background: #dbeafe;
   color: #1d4ed8;
@@ -207,6 +214,23 @@ td small {
 .detail-button {
   padding: 8px 11px;
   font-size: 12px;
+}
+
+.inline-alert {
+  margin-top: 14px;
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.permission-note {
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 13px;
 }
 
 .empty,

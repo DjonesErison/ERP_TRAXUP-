@@ -3,6 +3,9 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ComprasService,
+  CriarPedidoCompra,
+  FilialCompraOpcao,
+  FornecedorCompraOpcao,
   PedidoCompra,
   PedidoCompraItem,
   RecebimentoCompra,
@@ -21,10 +24,57 @@ import {
           <h1>Pedidos de compra</h1>
           <p>Acompanhe pedidos e confira seus itens sem alterar o fluxo de recebimento.</p>
         </div>
-        <button (click)="carregarTudo()" [disabled]="loading || loadingRecebimentos">
-          {{ loading || loadingRecebimentos ? 'Atualizando...' : 'Atualizar compras' }}
-        </button>
+        <div class="header-actions">
+          <button class="secondary" type="button" (click)="alternarNovoPedido()" *ngIf="cadastrosDisponiveis">
+            {{ novoPedidoAberto ? 'Fechar cadastro' : 'Novo pedido' }}
+          </button>
+          <button type="button" (click)="carregarTudo()" [disabled]="loading || loadingRecebimentos">
+            {{ loading || loadingRecebimentos ? 'Atualizando...' : 'Atualizar compras' }}
+          </button>
+        </div>
       </header>
+
+
+      <form class="card create-panel" *ngIf="novoPedidoAberto" (ngSubmit)="criarPedido()">
+        <div class="panel-head">
+          <div><p class="eyebrow">Novo pedido</p><h2>Dados da compra</h2></div>
+          <span>O pedido será criado como rascunho</span>
+        </div>
+        <div class="create-grid">
+          <label>
+            Filial
+            <select name="filialId" [(ngModel)]="novoPedido.filialId" required>
+              <option value="">Selecione a filial</option>
+              <option *ngFor="let filial of filiaisAtivas" [value]="filial.id">
+                {{ filial.nome }} · {{ filial.cnpj }}
+              </option>
+            </select>
+          </label>
+          <label>
+            Fornecedor
+            <select name="fornecedorId" [(ngModel)]="novoPedido.fornecedorId" required>
+              <option value="">Selecione o fornecedor</option>
+              <option *ngFor="let fornecedor of fornecedoresAtivos" [value]="fornecedor.id">
+                {{ nomeFornecedor(fornecedor) }} · {{ fornecedor.cpfCnpj }}
+              </option>
+            </select>
+          </label>
+          <label>
+            Número do pedido
+            <input name="numero" [(ngModel)]="novoPedido.numero" required maxlength="40" placeholder="Ex.: PC-2026-001">
+          </label>
+          <label class="observation-field">
+            Observação
+            <textarea name="observacao" [(ngModel)]="novoPedido.observacao" maxlength="500" placeholder="Informações opcionais da compra"></textarea>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="secondary" (click)="alternarNovoPedido()">Cancelar</button>
+          <button type="submit" [disabled]="criandoPedido || !novoPedido.filialId || !novoPedido.fornecedorId || !novoPedido.numero.trim()">
+            {{ criandoPedido ? 'Criando...' : 'Criar pedido' }}
+          </button>
+        </div>
+      </form>
 
       <section class="filters card">
         <label>
@@ -211,6 +261,14 @@ export class ComprasComponent implements OnInit {
   pedidosFiltrados: PedidoCompra[] = [];
   pedidoSelecionado?: PedidoCompra;
   itens: PedidoCompraItem[] = [];
+  filiais: FilialCompraOpcao[] = [];
+  fornecedores: FornecedorCompraOpcao[] = [];
+  novoPedido: CriarPedidoCompra = {
+    filialId: '',
+    fornecedorId: '',
+    numero: '',
+    observacao: ''
+  };
   recebimentos: RecebimentoCompra[] = [];
   recebimentoSelecionado?: RecebimentoCompra;
   itensRecebimento: RecebimentoCompraItem[] = [];
@@ -218,6 +276,9 @@ export class ComprasComponent implements OnInit {
   status = '';
   loading = false;
   loadingItens = false;
+  criandoPedido = false;
+  novoPedidoAberto = false;
+  cadastrosDisponiveis = false;
   loadingRecebimentos = false;
   loadingItensRecebimento = false;
   acessoRecebimentos = true;
@@ -232,11 +293,22 @@ export class ComprasComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregarTudo();
+    this.carregarOpcoesPedido();
   }
 
   carregarTudo(): void {
     this.carregar();
     this.carregarRecebimentos();
+  }
+
+  get filiaisAtivas(): FilialCompraOpcao[] {
+    return this.filiais.filter(filial => filial.ativo);
+  }
+
+  get fornecedoresAtivos(): FornecedorCompraOpcao[] {
+    return this.fornecedores.filter(
+      fornecedor => fornecedor.ativo && fornecedor.fornecedor
+    );
   }
 
   get quantidadeTotal(): number {
@@ -261,6 +333,68 @@ export class ComprasComponent implements OnInit {
     return this.itensRecebimento.reduce(
       (total, item) => total + this.valorItemRecebido(item), 0
     );
+  }
+
+  carregarOpcoesPedido(): void {
+    this.service.carregarOpcoesPedido().subscribe({
+      next: (opcoes) => {
+        this.filiais = opcoes.filiais;
+        this.fornecedores = opcoes.fornecedores;
+        this.cadastrosDisponiveis =
+          this.filiaisAtivas.length > 0 && this.fornecedoresAtivos.length > 0;
+      },
+      error: () => {
+        this.cadastrosDisponiveis = false;
+        this.novoPedidoAberto = false;
+      }
+    });
+  }
+
+  alternarNovoPedido(): void {
+    this.novoPedidoAberto = !this.novoPedidoAberto;
+    this.error = '';
+    if (!this.novoPedidoAberto) this.limparNovoPedido();
+  }
+
+  criarPedido(): void {
+    if (this.criandoPedido
+        || !this.novoPedido.filialId
+        || !this.novoPedido.fornecedorId
+        || !this.novoPedido.numero.trim()) return;
+
+    this.criandoPedido = true;
+    this.error = '';
+    this.sucessoPedido = '';
+    const request: CriarPedidoCompra = {
+      ...this.novoPedido,
+      numero: this.novoPedido.numero.trim(),
+      observacao: this.novoPedido.observacao?.trim() || undefined
+    };
+    this.service.criarPedido(request).subscribe({
+      next: (pedido) => {
+        this.criandoPedido = false;
+        this.pedidos = [pedido, ...this.pedidos];
+        this.aplicarFiltros();
+        this.limparNovoPedido();
+        this.novoPedidoAberto = false;
+        this.sucessoPedido =
+          'Pedido criado como rascunho. Adicione os itens antes de abri-lo.';
+      },
+      error: (err) => {
+        this.criandoPedido = false;
+        if (err?.status === 403) {
+          this.error = 'Seu perfil não possui permissão para criar pedidos de compra.';
+          return;
+        }
+        if (err?.status === 409) {
+          this.error = 'Já existe um pedido de compra com este número.';
+          return;
+        }
+        this.error = err?.status === 400
+          ? 'Revise a filial, o fornecedor e o número informados.'
+          : 'Não foi possível criar o pedido de compra.';
+      }
+    });
   }
 
   carregar(): void {
@@ -475,6 +609,20 @@ export class ComprasComponent implements OnInit {
     if (status === 'CANCELADO') return 'cancelled';
     if (status === 'ABERTO') return 'open';
     return 'draft';
+  }
+
+  nomeFornecedor(fornecedor: FornecedorCompraOpcao): string {
+    return fornecedor.nomeFantasia?.trim()
+      || fornecedor.nomeRazaoSocial;
+  }
+
+  private limparNovoPedido(): void {
+    this.novoPedido = {
+      filialId: '',
+      fornecedorId: '',
+      numero: '',
+      observacao: ''
+    };
   }
 
   nomeStatusRecebimento(status: string): string {

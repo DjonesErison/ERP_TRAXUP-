@@ -30,6 +30,13 @@
   color: #64748b;
 }
 
+.header-actions,
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 button {
   border: 0;
   border-radius: 10px;
@@ -61,7 +68,8 @@ button:disabled {
   padding: 16px;
 }
 
-.filters label {
+.filters label,
+.create-grid label {
   display: grid;
   gap: 6px;
   color: #475569;
@@ -70,7 +78,8 @@ button:disabled {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -80,6 +89,31 @@ select {
   background: #fff;
   color: #172033;
   font: inherit;
+}
+
+textarea {
+  min-height: 82px;
+  resize: vertical;
+}
+
+.create-panel {
+  padding: 20px;
+}
+
+.create-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.observation-field {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 .secondary,
@@ -329,6 +363,7 @@ td small {
 
 @media (max-width: 900px) {
   .filters,
+  .create-grid,
   .metrics,
   .detail-summary {
     grid-template-columns: repeat(2, 1fr);
@@ -342,7 +377,17 @@ td small {
     flex-direction: column;
   }
 
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .header-actions button {
+    flex: 1;
+  }
+
   .filters,
+  .create-grid,
   .metrics,
   .detail-summary {
     grid-template-columns: 1fr;

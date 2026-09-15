@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -85,8 +86,19 @@ import { ContabilidadeMovimentosComponent } from './contabilidade-movimentos.com
           </article>
         </div>
         <div class="checklist-foot" [class.available]="lista.podeGerarPacote">
-          <strong>{{ lista.podeGerarPacote ? 'Competência elegível para o pacote contábil' : 'Pacote bloqueado por pendências' }}</strong>
-          <span>{{ lista.totalPendencias }} pendência(s) identificada(s)</span>
+          <div>
+            <strong>{{ lista.podeGerarPacote ? 'Competência elegível para o pacote contábil' : 'Pacote bloqueado por pendências' }}</strong>
+            <span>{{ lista.totalPendencias }} pendência(s) identificada(s)</span>
+            <small *ngIf="lista.podeGerarPacote && !filialId">Selecione uma filial para gerar o pacote consolidado.</small>
+            <small class="package-feedback" *ngIf="pacoteFeedback">{{ pacoteFeedback }}</small>
+          </div>
+          <button
+            class="package-button"
+            *ngIf="lista.podeGerarPacote"
+            (click)="baixarPacote()"
+            [disabled]="gerandoPacote || !filialId">
+            {{ gerandoPacote ? 'Gerando pacote...' : 'Baixar pacote contábil' }}
+          </button>
         </div>
       </section>
 
@@ -167,6 +179,8 @@ export class ContabilidadeComponent implements OnInit {
   checklist?: ChecklistFechamento;
   loadingFiliais = false;
   loading = false;
+  gerandoPacote = false;
+  pacoteFeedback = '';
   error = '';
 
   constructor(private readonly contabilidade: ContabilidadeService) {}
@@ -207,6 +221,7 @@ export class ContabilidadeComponent implements OnInit {
   carregarFechamento(): void {
     if (!this.competencia || this.loadingFiliais) return;
     this.loading = true;
+    this.pacoteFeedback = '';
     this.error = '';
     const filial = this.filialId || undefined;
     forkJoin({
@@ -233,6 +248,56 @@ export class ContabilidadeComponent implements OnInit {
     });
   }
 
+
+  baixarPacote(): void {
+    if (!this.filialId || !this.competencia || !this.checklist?.podeGerarPacote) return;
+    this.gerandoPacote = true;
+    this.pacoteFeedback = '';
+    this.contabilidade.baixarPacoteMensal(
+      this.competencia,
+      this.filialId
+    ).subscribe({
+      next: (response) => {
+        this.gerandoPacote = false;
+        this.salvarArquivo(
+          response,
+          `traxup-pacote-contabil-${this.competencia}.zip`
+        );
+        this.pacoteFeedback = 'Pacote contábil gerado com sucesso.';
+      },
+      error: (err) => {
+        this.gerandoPacote = false;
+        this.pacoteFeedback = err?.status === 403
+          ? 'Seu perfil não reúne todas as permissões necessárias.'
+          : 'Não foi possível gerar o pacote. Atualize o checklist e tente novamente.';
+      }
+    });
+  }
+
+  private salvarArquivo(response: HttpResponse<Blob>, fallback: string): void {
+    if (!response.body) return;
+    const url = URL.createObjectURL(response.body);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = this.nomeArquivo(
+      response.headers.get('Content-Disposition')
+    ) || fallback;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  private nomeArquivo(disposition: string | null): string {
+    if (!disposition) return '';
+    const match = disposition.match(/filename\\*?=(?:UTF-8''|")?([^";]+)/i);
+    if (!match) return '';
+    try {
+      return decodeURIComponent(match[1].replace(/"$/, ''));
+    } catch {
+      return match[1].replace(/"$/, '');
+    }
+  }
 
   get mensagemChecklist(): string {
     const status = this.checklist?.statusGeral;

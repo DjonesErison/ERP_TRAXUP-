@@ -7,17 +7,19 @@ import {
   Output,
   SimpleChanges
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import {
   ConciliacaoFinanceiraService,
   IntegracaoFinanceiraPainel,
-  IntegracaoFinanceiraResumo
+  IntegracaoFinanceiraResumo,
+  IntegracaoFinanceiraTentativa
 } from './conciliacao-financeira.service';
 
 @Component({
   selector: 'app-integracoes-financeiras',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <section class="integrations card" *ngIf="contaId">
       <header class="integrations-head">
@@ -26,10 +28,33 @@ import {
           <h2>Saúde das integrações</h2>
           <p>Monitoramento operacional sem exposição de credenciais ou checkpoints.</p>
         </div>
-        <button class="secondary" (click)="carregar()" [disabled]="loading">
-          {{ loading ? 'Atualizando...' : 'Atualizar integrações' }}
-        </button>
+        <div class="header-actions">
+          <button class="secondary" (click)="mostrarCadastro = !mostrarCadastro">
+            {{ mostrarCadastro ? 'Cancelar cadastro' : 'Nova integração' }}
+          </button>
+          <button class="secondary" (click)="carregar()" [disabled]="loading">
+            {{ loading ? 'Atualizando...' : 'Atualizar integrações' }}
+          </button>
+        </div>
       </header>
+
+      <form class="integration-form" *ngIf="mostrarCadastro" (ngSubmit)="criarIntegracao()">
+        <div>
+          <strong>Adicionar conexão operacional</strong>
+          <small>Informe somente o provedor e o identificador público da conta. Não cole tokens, senhas ou chaves.</small>
+        </div>
+        <label>
+          Provedor
+          <input name="provedor" [(ngModel)]="novoProvedor" maxlength="40" required placeholder="Ex.: CIELO, REDE, BANCO_X">
+        </label>
+        <label>
+          Identificador externo
+          <input name="identificador" [(ngModel)]="novoIdentificador" maxlength="120" placeholder="Código público da conta">
+        </label>
+        <button type="submit" [disabled]="criando || !novoProvedor.trim()">
+          {{ criando ? 'Adicionando...' : 'Adicionar integração' }}
+        </button>
+      </form>
 
       <div class="alert" *ngIf="error">{{ error }}</div>
       <div class="feedback" *ngIf="feedback">{{ feedback }}</div>
@@ -61,17 +86,60 @@ import {
             <span>Falhas seguidas<strong>{{ item.saude.falhasConsecutivas }}</strong></span>
             <span>Duração média<strong>{{ item.saude.duracaoMediaMs == null ? '—' : item.saude.duracaoMediaMs + ' ms' }}</strong></span>
           </div>
-          <button
-            (click)="sincronizar(item)"
-            [disabled]="!item.integracao.ativo || sincronizandoId === item.integracao.id">
-            {{ sincronizandoId === item.integracao.id ? 'Sincronizando...' : 'Sincronizar agora' }}
-          </button>
+          <div class="row-actions">
+            <button class="secondary" (click)="abrirHistorico(item)">
+              Histórico
+            </button>
+            <button
+              (click)="sincronizar(item)"
+              [disabled]="!item.integracao.ativo || sincronizandoId === item.integracao.id">
+              {{ sincronizandoId === item.integracao.id ? 'Sincronizando...' : 'Sincronizar' }}
+            </button>
+            <button
+              class="danger-button"
+              *ngIf="item.integracao.ativo"
+              (click)="desativar(item)"
+              [disabled]="desativandoId === item.integracao.id">
+              {{ desativandoId === item.integracao.id ? 'Desativando...' : 'Desativar' }}
+            </button>
+          </div>
         </article>
 
         <div class="empty" *ngIf="!loading && itens.length === 0">
           Nenhuma integração está configurada para esta conta.
         </div>
       </div>
+
+      <section class="attempts" *ngIf="historicoIntegracao as integracao">
+        <div class="attempts-head">
+          <div>
+            <p class="eyebrow">Auditoria operacional</p>
+            <h3>Tentativas de {{ integracao.integracao.provedor }}</h3>
+          </div>
+          <div class="attempt-filters">
+            <select [(ngModel)]="historicoStatus" (change)="carregarHistorico()">
+              <option value="">Todas</option><option value="SUCESSO">Sucesso</option><option value="FALHA">Falha</option>
+            </select>
+            <input type="date" [(ngModel)]="historicoInicio" (change)="carregarHistorico()">
+            <input type="date" [(ngModel)]="historicoFim" (change)="carregarHistorico()">
+            <button class="secondary" (click)="fecharHistorico()">Fechar</button>
+          </div>
+        </div>
+        <div class="attempt-list">
+          <article *ngFor="let tentativa of tentativas; trackBy: trackTentativa">
+            <span class="attempt-status" [class.failure]="tentativa.status === 'FALHA'">
+              {{ tentativa.status === 'SUCESSO' ? 'Sucesso' : 'Falha' }}
+            </span>
+            <div>
+              <strong>{{ tentativa.quantidadeLancamentos }} lançamento(s)</strong>
+              <small>{{ tentativa.iniciadoEm | date:'dd/MM/yyyy HH:mm:ss' }} · {{ tentativa.duracaoMs }} ms</small>
+            </div>
+            <code *ngIf="tentativa.erroCodigo">{{ tentativa.erroCodigo }}</code>
+          </article>
+          <div class="empty" *ngIf="!loadingHistorico && tentativas.length === 0">Nenhuma tentativa encontrada.</div>
+          <div class="empty" *ngIf="loadingHistorico">Carregando até 50 tentativas...</div>
+        </div>
+      </section>
     </section>
   `,
   styleUrl: './integracoes-financeiras.component.css'
@@ -84,6 +152,17 @@ export class IntegracoesFinanceirasComponent implements OnChanges {
   resumo?: IntegracaoFinanceiraResumo;
   loading = false;
   sincronizandoId = '';
+  desativandoId = '';
+  criando = false;
+  mostrarCadastro = false;
+  novoProvedor = '';
+  novoIdentificador = '';
+  historicoIntegracao?: IntegracaoFinanceiraPainel;
+  tentativas: IntegracaoFinanceiraTentativa[] = [];
+  historicoStatus = '';
+  historicoInicio = '';
+  historicoFim = '';
+  loadingHistorico = false;
   error = '';
   feedback = '';
 
@@ -119,6 +198,104 @@ export class IntegracoesFinanceirasComponent implements OnChanges {
           : 'Não foi possível carregar a saúde das integrações.';
       }
     });
+  }
+
+  criarIntegracao(): void {
+    const provedor = this.novoProvedor.trim();
+    if (!this.contaId || !provedor || this.criando) return;
+    this.criando = true;
+    this.error = '';
+    this.feedback = '';
+    this.service.criarIntegracao(
+      this.contaId,
+      provedor,
+      this.novoIdentificador
+    ).subscribe({
+      next: () => {
+        this.criando = false;
+        this.mostrarCadastro = false;
+        this.novoProvedor = '';
+        this.novoIdentificador = '';
+        this.feedback = 'Integração adicionada com sucesso.';
+        this.carregar(false);
+      },
+      error: (err) => {
+        this.criando = false;
+        this.error = err?.status === 403
+          ? 'Seu perfil não possui permissão para adicionar integrações.'
+          : err?.status === 409
+            ? 'Este provedor já está configurado ou a conta está inativa.'
+            : 'Não foi possível adicionar a integração.';
+      }
+    });
+  }
+
+  desativar(item: IntegracaoFinanceiraPainel): void {
+    if (!item.integracao.ativo || this.desativandoId) return;
+    if (!window.confirm(
+      'Desativar a integração ' + item.integracao.provedor
+      + '? Novas sincronizações serão bloqueadas.'
+    )) return;
+    this.desativandoId = item.integracao.id;
+    this.error = '';
+    this.feedback = '';
+    this.service.desativarIntegracao(item.integracao.id).subscribe({
+      next: () => {
+        this.desativandoId = '';
+        if (this.historicoIntegracao?.integracao.id === item.integracao.id)
+          this.fecharHistorico();
+        this.feedback = 'Integração desativada com sucesso.';
+        this.carregar(false);
+      },
+      error: (err) => {
+        this.desativandoId = '';
+        this.error = err?.status === 403
+          ? 'Seu perfil não possui permissão para desativar integrações.'
+          : 'Não foi possível desativar a integração.';
+      }
+    });
+  }
+
+  abrirHistorico(item: IntegracaoFinanceiraPainel): void {
+    this.historicoIntegracao = item;
+    this.historicoStatus = '';
+    this.historicoInicio = '';
+    this.historicoFim = '';
+    this.carregarHistorico();
+  }
+
+  carregarHistorico(): void {
+    if (!this.historicoIntegracao || this.loadingHistorico) return;
+    if (this.historicoInicio && this.historicoFim
+        && this.historicoInicio > this.historicoFim) {
+      this.error = 'No histórico, a data inicial deve ser anterior ou igual à final.';
+      return;
+    }
+    this.loadingHistorico = true;
+    this.error = '';
+    this.service.listarTentativasIntegracao(
+      this.historicoIntegracao.integracao.id,
+      this.historicoStatus,
+      this.historicoInicio,
+      this.historicoFim
+    ).subscribe({
+      next: (tentativas) => {
+        this.tentativas = tentativas;
+        this.loadingHistorico = false;
+      },
+      error: (err) => {
+        this.loadingHistorico = false;
+        this.error = err?.status === 403
+          ? 'Seu perfil não possui acesso ao histórico das integrações.'
+          : 'Não foi possível carregar o histórico.';
+      }
+    });
+  }
+
+  fecharHistorico(): void {
+    this.historicoIntegracao = undefined;
+    this.tentativas = [];
+    this.loadingHistorico = false;
   }
 
   sincronizar(item: IntegracaoFinanceiraPainel): void {
@@ -165,6 +342,10 @@ export class IntegracoesFinanceirasComponent implements OnChanges {
 
   iniciais(provedor: string): string {
     return provedor.trim().slice(0, 2).toUpperCase();
+  }
+
+  trackTentativa(_: number, item: IntegracaoFinanceiraTentativa): string {
+    return item.id;
   }
 
   trackIntegracao(_: number, item: IntegracaoFinanceiraPainel): string {

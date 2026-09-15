@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import {
   ComprasService,
   PedidoCompra,
-  PedidoCompraItem
+  PedidoCompraItem,
+  RecebimentoCompra,
+  RecebimentoCompraItem
 } from './compras.service';
 
 @Component({
@@ -19,8 +21,8 @@ import {
           <h1>Pedidos de compra</h1>
           <p>Acompanhe pedidos e confira seus itens sem alterar o fluxo de recebimento.</p>
         </div>
-        <button (click)="carregar()" [disabled]="loading">
-          {{ loading ? 'Atualizando...' : 'Atualizar pedidos' }}
+        <button (click)="carregarTudo()" [disabled]="loading || loadingRecebimentos">
+          {{ loading || loadingRecebimentos ? 'Atualizando...' : 'Atualizar compras' }}
         </button>
       </header>
 
@@ -79,6 +81,68 @@ import {
         </div>
       </section>
 
+
+      <section class="card receipts-list" *ngIf="acessoRecebimentos">
+        <div class="panel-head">
+          <div><p class="eyebrow">Recebimento</p><h2>Entradas de compras</h2></div>
+          <span>{{ recebimentos.length }} registro(s)</span>
+        </div>
+        <div class="inline-alert" *ngIf="errorRecebimentos">{{ errorRecebimentos }}</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Documento</th><th>Recebido em</th><th>Pedido</th><th>Fornecedor</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let recebimento of recebimentos; trackBy: trackRecebimento">
+                <td><strong>{{ recebimento.documento || 'Sem documento' }}</strong><small>{{ abreviar(recebimento.id) }}</small></td>
+                <td>{{ recebimento.recebidoEm | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ numeroPedido(recebimento.pedidoCompraId) }}</td>
+                <td>{{ abreviar(recebimento.fornecedorId) }}</td>
+                <td><span class="status" [ngClass]="classeStatusRecebimento(recebimento.status)">{{ nomeStatusRecebimento(recebimento.status) }}</span></td>
+                <td><button class="detail-button" (click)="abrirDetalheRecebimento(recebimento)">Conferir itens</button></td>
+              </tr>
+              <tr *ngIf="!loadingRecebimentos && recebimentos.length === 0">
+                <td colspan="6" class="empty">Nenhum recebimento registrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="permission-note" *ngIf="!acessoRecebimentos">
+        Os recebimentos exigem a permissão COMPRA_RECEBIMENTO_LER. A consulta de pedidos continua disponível.
+      </section>
+
+      <section class="card receipt-detail" *ngIf="recebimentoSelecionado as recebimento">
+        <div class="panel-head">
+          <div><p class="eyebrow">Recebimento {{ recebimento.documento || abreviar(recebimento.id) }}</p><h2>Conferência recebida</h2></div>
+          <button class="secondary" (click)="fecharDetalheRecebimento()">Fechar</button>
+        </div>
+
+        <div class="detail-summary">
+          <span>Status<strong>{{ nomeStatusRecebimento(recebimento.status) }}</strong></span>
+          <span>Itens<strong>{{ itensRecebimento.length }}</strong></span>
+          <span>Quantidade recebida<strong>{{ quantidadeRecebidaTotal | number:'1.0-4':'pt-BR' }}</strong></span>
+          <span>Valor recebido<strong>{{ valorRecebidoTotal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong></span>
+        </div>
+
+        <div class="items" *ngIf="!loadingItensRecebimento">
+          <article *ngFor="let item of itensRecebimento; trackBy: trackItemRecebimento">
+            <div>
+              <strong>Produto {{ abreviar(item.produtoId) }}</strong>
+              <small *ngIf="item.gradeId">Grade {{ abreviar(item.gradeId) }}</small>
+            </div>
+            <span>Pedido: {{ item.quantidadePedida | number:'1.0-4':'pt-BR' }} · Recebido: {{ item.quantidadeRecebida | number:'1.0-4':'pt-BR' }}</span>
+            <strong>{{ valorItemRecebido(item) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+          </article>
+          <div class="empty" *ngIf="itensRecebimento.length === 0">Recebimento sem itens.</div>
+        </div>
+
+        <div class="loading" *ngIf="loadingItensRecebimento">Carregando conferência...</div>
+        <p class="observation" *ngIf="recebimento.observacao">{{ recebimento.observacao }}</p>
+      </section>
+
       <section class="card purchase-detail" *ngIf="pedidoSelecionado as pedido">
         <div class="panel-head">
           <div><p class="eyebrow">Pedido {{ pedido.numero }}</p><h2>Itens do pedido</h2></div>
@@ -116,16 +180,28 @@ export class ComprasComponent implements OnInit {
   pedidosFiltrados: PedidoCompra[] = [];
   pedidoSelecionado?: PedidoCompra;
   itens: PedidoCompraItem[] = [];
+  recebimentos: RecebimentoCompra[] = [];
+  recebimentoSelecionado?: RecebimentoCompra;
+  itensRecebimento: RecebimentoCompraItem[] = [];
   busca = '';
   status = '';
   loading = false;
   loadingItens = false;
+  loadingRecebimentos = false;
+  loadingItensRecebimento = false;
+  acessoRecebimentos = true;
   error = '';
+  errorRecebimentos = '';
 
   constructor(private readonly service: ComprasService) {}
 
   ngOnInit(): void {
+    this.carregarTudo();
+  }
+
+  carregarTudo(): void {
     this.carregar();
+    this.carregarRecebimentos();
   }
 
   get quantidadeTotal(): number {
@@ -137,6 +213,18 @@ export class ComprasComponent implements OnInit {
   get valorTotal(): number {
     return this.itens.reduce(
       (total, item) => total + Number(item.totalItem), 0
+    );
+  }
+
+  get quantidadeRecebidaTotal(): number {
+    return this.itensRecebimento.reduce(
+      (total, item) => total + Number(item.quantidadeRecebida), 0
+    );
+  }
+
+  get valorRecebidoTotal(): number {
+    return this.itensRecebimento.reduce(
+      (total, item) => total + this.valorItemRecebido(item), 0
     );
   }
 
@@ -158,6 +246,28 @@ export class ComprasComponent implements OnInit {
     });
   }
 
+  carregarRecebimentos(): void {
+    this.loadingRecebimentos = true;
+    this.errorRecebimentos = '';
+    this.service.listarRecebimentos().subscribe({
+      next: (recebimentos) => {
+        this.recebimentos = recebimentos;
+        this.acessoRecebimentos = true;
+        this.loadingRecebimentos = false;
+      },
+      error: (err) => {
+        this.loadingRecebimentos = false;
+        if (err?.status === 403) {
+          this.acessoRecebimentos = false;
+          this.recebimentos = [];
+          return;
+        }
+        this.acessoRecebimentos = true;
+        this.errorRecebimentos = 'Não foi possível carregar os recebimentos.';
+      }
+    });
+  }
+
   aplicarFiltros(): void {
     const termo = this.busca.trim().toLocaleLowerCase('pt-BR');
     this.pedidosFiltrados = this.pedidos.filter(pedido =>
@@ -174,6 +284,7 @@ export class ComprasComponent implements OnInit {
   }
 
   abrirDetalhe(pedido: PedidoCompra): void {
+    this.fecharDetalheRecebimento();
     this.pedidoSelecionado = pedido;
     this.itens = [];
     this.loadingItens = true;
@@ -190,6 +301,30 @@ export class ComprasComponent implements OnInit {
           : 'Não foi possível carregar os itens deste pedido.';
       }
     });
+  }
+
+  abrirDetalheRecebimento(recebimento: RecebimentoCompra): void {
+    this.fecharDetalhe();
+    this.recebimentoSelecionado = recebimento;
+    this.itensRecebimento = [];
+    this.loadingItensRecebimento = true;
+    this.errorRecebimentos = '';
+    this.service.listarItensRecebimento(recebimento.id).subscribe({
+      next: (itens) => {
+        this.itensRecebimento = itens;
+        this.loadingItensRecebimento = false;
+      },
+      error: () => {
+        this.loadingItensRecebimento = false;
+        this.errorRecebimentos = 'Não foi possível carregar a conferência deste recebimento.';
+      }
+    });
+  }
+
+  fecharDetalheRecebimento(): void {
+    this.recebimentoSelecionado = undefined;
+    this.itensRecebimento = [];
+    this.loadingItensRecebimento = false;
   }
 
   fecharDetalhe(): void {
@@ -219,10 +354,31 @@ export class ComprasComponent implements OnInit {
     return 'draft';
   }
 
+  nomeStatusRecebimento(status: string): string {
+    return status === 'INTEGRADO_ESTOQUE'
+      ? 'Integrado ao estoque'
+      : status === 'CONFERIDO' ? 'Conferido' : status;
+  }
+
+  classeStatusRecebimento(status: string): string {
+    return status === 'INTEGRADO_ESTOQUE' ? 'received' : 'checked';
+  }
+
+  numeroPedido(pedidoId: string): string {
+    return this.pedidos.find(pedido => pedido.id === pedidoId)?.numero
+      ?? this.abreviar(pedidoId);
+  }
+
+  valorItemRecebido(item: RecebimentoCompraItem): number {
+    return Number(item.quantidadeRecebida) * Number(item.precoUnitario);
+  }
+
   abreviar(id: string): string {
     return id.slice(0, 8).toUpperCase();
   }
 
   trackPedido(_: number, pedido: PedidoCompra): string { return pedido.id; }
   trackItem(_: number, item: PedidoCompraItem): string { return item.id; }
+  trackRecebimento(_: number, item: RecebimentoCompra): string { return item.id; }
+  trackItemRecebimento(_: number, item: RecebimentoCompraItem): string { return item.id; }
 }

@@ -212,7 +212,8 @@ td small {
 }
 
 .detail-button,
-.action-button {
+.action-button,
+.danger-button {
   padding: 8px 11px;
   font-size: 12px;
 }
@@ -221,9 +222,19 @@ td small {
   background: #0f766e;
 }
 
+.danger-button {
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #b91c1c;
+}
+
 .row-actions {
   display: flex;
   gap: 8px;
+}
+
+.row-actions button {
+  white-space: nowrap;
 }
 
 .inline-alert,
@@ -241,6 +252,10 @@ td small {
 .success-alert {
   background: #ecfdf5;
   color: #047857;
+}
+
+.page-message {
+  margin-top: 0;
 }
 
 .permission-note {

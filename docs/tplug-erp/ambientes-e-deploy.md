@@ -61,6 +61,9 @@ Variáveis de bootstrap, utilizadas apenas no primeiro provisionamento quando `B
 
 ## Fluxo de promoção
 
+Para o fluxo operacional atual e a separação ERP/Central, consultar [Homologação contínua](homologacao.md). A produção do ERP depende da conciliação com `main`; a Central mantém seu deploy independente.
+
+
 1. Toda alteração entra por branch e Pull Request para `develop`.
 2. O CI executa testes Java, valida Flyway contra PostgreSQL 17 e valida o `docker build`.
 3. Somente commit com CI verde pode ser considerado candidato a deploy.

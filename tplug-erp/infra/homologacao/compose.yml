@@ -1,0 +1,42 @@
+name: traxup-homologacao
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: traxup_homologacao
+      POSTGRES_USER: traxup_homologacao
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U traxup_homologacao -d traxup_homologacao"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  backend:
+    image: ${BACKEND_IMAGE:?Informe imagem por digest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/traxup_homologacao
+      DB_USERNAME: traxup_homologacao
+      DB_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Configure JWT_SECRET}
+      OPENAPI_ENABLED: "false"
+      FISCAL_STORAGE_ENABLED: "false"
+      BOOTSTRAP_ADMIN_ENABLED: ${BOOTSTRAP_ADMIN_ENABLED:-false}
+      BOOTSTRAP_ADMIN_TENANT_NAME: ${BOOTSTRAP_ADMIN_TENANT_NAME:-}
+      BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+  frontend:
+    image: ${FRONTEND_IMAGE:?Informe imagem por digest}
+    restart: unless-stopped
+    depends_on: [backend]
+    ports:
+      - "127.0.0.1:${HOMOLOGACAO_PORT:-8082}:80"
+volumes:
+  postgres_data:

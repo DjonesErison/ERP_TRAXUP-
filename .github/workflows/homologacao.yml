@@ -1,0 +1,184 @@
+name: TRAXUP ERP - Homologacao
+on:
+  pull_request:
+    branches: [homologacao]
+  push:
+    branches: [homologacao]
+permissions:
+  contents: read
+concurrency:
+  group: homologacao-${{ github.event.pull_request.number || 'deploy' }}
+  cancel-in-progress: false
+jobs:
+  backend:
+    name: Homologacao - backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: tplug_erp
+          POSTGRES_USER: tplug_erp
+          POSTGRES_PASSWORD: tplug_erp_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tplug_erp -d tplug_erp"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/tplug_erp
+      DB_USERNAME: tplug_erp
+      DB_PASSWORD: tplug_erp_ci
+      JWT_SECRET: tplug-erp-ci-jwt-secret-32-bytes-minimum-2026
+
+    defaults:
+      run:
+        working-directory: tplug-erp/backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configurar Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: tplug-erp/backend/pom.xml
+
+      - name: Executar testes e validar migrations
+        run: bash mvnw --batch-mode --no-transfer-progress clean verify
+
+      - name: Validar build da imagem Docker
+        run: docker build --tag tplug-erp-backend:ci .
+
+  frontend:
+    name: Homologacao - frontend e smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build das imagens e teste da aplicacao completa
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+          BACKEND_IMAGE: traxup-backend:ci
+          FRONTEND_IMAGE: traxup-frontend:ci
+          DB_PASSWORD: traxup-ci-only-password
+          JWT_SECRET: traxup-ci-only-jwt-secret-at-least-32-bytes
+        run: |
+          docker build -t "$BACKEND_IMAGE" tplug-erp/backend
+          docker build --build-arg RELEASE_SHA="$RELEASE_SHA" -t "$FRONTEND_IMAGE" tplug-erp/frontend
+          docker compose -f tplug-erp/infra/homologacao/compose.yml up -d
+          bash tplug-erp/infra/homologacao/smoke.sh http://127.0.0.1:8082 "$RELEASE_SHA"
+      - name: Guardar exatamente as imagens testadas
+        run: docker save traxup-backend:ci traxup-frontend:ci -o /tmp/homologacao-images.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: homologacao-images
+          path: /tmp/homologacao-images.tar
+          retention-days: 7
+      - name: Diagnostico
+        if: failure()
+        env:
+          BACKEND_IMAGE: traxup-backend:ci
+          FRONTEND_IMAGE: traxup-frontend:ci
+          DB_PASSWORD: traxup-ci-only-password
+          JWT_SECRET: traxup-ci-only-jwt-secret-at-least-32-bytes
+        run: docker compose -f tplug-erp/infra/homologacao/compose.yml logs --tail=100
+  admission:
+    name: Homologacao - entrega aprovada
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          BASELINE_SHA: ${{ vars.HOMOLOGACAO_BASELINE_SHA }}
+        with:
+          script: |
+            // Bootstrap exige autorizacao explicita para o SHA exato, apos revisar o inventario.
+            if (process.env.BASELINE_SHA === context.sha) return;
+            const prs = await github.paginate(github.rest.repos.listPullRequestsAssociatedWithCommit,
+              {...context.repo, commit_sha: context.sha});
+            const approved = prs.some(pr => pr.merged_at && pr.base.ref === 'homologacao' &&
+              pr.merge_commit_sha === context.sha &&
+              pr.labels.some(label => label.name === 'homologacao-aprovada'));
+            if (!approved) core.setFailed('Exige PR de promocao revisada e rotulada homologacao-aprovada.');
+  publish:
+    name: Homologacao - publicar imagens
+    needs: [backend, frontend, admission]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      backend: ${{ steps.images.outputs.backend }}
+      frontend: ${{ steps.images.outputs.frontend }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: homologacao-images
+          path: /tmp/images
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publicar as imagens ja testadas
+        id: images
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          docker load -i /tmp/images/homologacao-images.tar
+          for component in backend frontend; do
+            image="ghcr.io/djoneserison/traxup-erp-$component"
+            docker tag "traxup-$component:ci" "$image:$RELEASE_SHA"
+            docker push "$image:$RELEASE_SHA"
+            digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$image:$RELEASE_SHA")
+            echo "$component=${digest#*@}" >> "$GITHUB_OUTPUT"
+          done
+  deploy:
+    name: Homologacao - deploy
+    needs: publish
+    if: github.ref == 'refs/heads/homologacao' && vars.HOMOLOGACAO_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: homologacao
+      url: ${{ vars.HOMOLOGACAO_URL }}
+    env:
+      SSH_HOST: ${{ secrets.HOMOLOGACAO_SSH_HOST }}
+      SSH_USER: ${{ secrets.HOMOLOGACAO_SSH_USER }}
+      SSH_PORT: ${{ secrets.HOMOLOGACAO_SSH_PORT }}
+      RELEASE_SHA: ${{ github.sha }}
+      BACKEND_IMAGE: ghcr.io/djoneserison/traxup-erp-backend@${{ needs.publish.outputs.backend }}
+      FRONTEND_IMAGE: ghcr.io/djoneserison/traxup-erp-frontend@${{ needs.publish.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar acesso exclusivo de homologacao
+        env:
+          SSH_KEY: ${{ secrets.HOMOLOGACAO_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.HOMOLOGACAO_SSH_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
+          test -n "$SSH_HOST" && test -n "$SSH_USER"
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/homologacao
+          chmod 600 ~/.ssh/homologacao
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Publicar versao e validar
+        env:
+          PUBLIC_URL: ${{ vars.HOMOLOGACAO_URL }}
+        run: |
+          test -n "$PUBLIC_URL"
+          scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,deploy.sh,smoke.sh} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"
+          ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" "bash /opt/traxup-homologacao/deploy.sh '$RELEASE_SHA' '$BACKEND_IMAGE' '$FRONTEND_IMAGE'"
+          bash tplug-erp/infra/homologacao/smoke.sh "$PUBLIC_URL" "$RELEASE_SHA"
+          printf 'Versao: %s\nURL: %s\nBackend: %s\nFrontend: %s\n' "$RELEASE_SHA" "$PUBLIC_URL" "$BACKEND_IMAGE" "$FRONTEND_IMAGE" >> "$GITHUB_STEP_SUMMARY"

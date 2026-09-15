@@ -37,12 +37,16 @@ Depois da validação da base e dos checks, o administrador pode definir a vari�
 
 ## Provisionamento do ambiente
 
-Não há URL de ERP ou acesso de servidor confirmado nesta configuração. Criar/configurar o environment GitHub `homologacao` (quando suportado pelo plano), sem reutilizar `production`. Configurar:
+Destino confirmado pelo usuário: **https://apphomologacao.traxup.com.br**, na **mesma VPS da Central**. O endereço está fixado no workflow e nos arquivos de proxy desta pasta. Acesso SSH e configuração efetiva do servidor ainda precisam ser disponibilizados ao environment `homologacao`.
+
+A Central usa os segredos `TRAXUP_DEPLOY_HOST`, `TRAXUP_DEPLOY_USER`, `TRAXUP_DEPLOY_PORT` e `TRAXUP_DEPLOY_SSH_KEY` no environment `production`. Para a homologação, cadastrar o mesmo host/porta e um acesso autorizado à mesma VPS no environment `homologacao`, com os nomes abaixo. Se for reutilizada a credencial existente, cadastrá-la pelo gerenciador seguro original: segredos salvos no GitHub não podem ser recuperados em texto para cópia. Não alterar o environment `production` nem expor os segredos em logs.
+
+Criar/configurar o environment GitHub `homologacao` (quando suportado pelo plano). Configurar:
 
 | Local | Nome | Conteúdo |
 |---|---|---|
 | Variável do repositório | `HOMOLOGACAO_DEPLOY_ENABLED` | `true` somente após provisionamento |
-| Variável do environment | `HOMOLOGACAO_URL` | URL HTTPS real do ERP |
+| URL versionada no workflow | `https://apphomologacao.traxup.com.br` | Domínio confirmado para o ERP |
 | Segredo do environment | `HOMOLOGACAO_SSH_HOST` | Host do servidor |
 | Segredo do environment | `HOMOLOGACAO_SSH_USER` | Usuário de deploy |
 | Segredo do environment | `HOMOLOGACAO_SSH_PORT` | Porta SSH, padrão 22 |
@@ -54,7 +58,7 @@ No servidor Linux com Docker Compose v2, curl e flock:
 1. Criar `/opt/traxup-homologacao` acessível ao usuário de deploy.
 2. Copiar `.env.example` para `/opt/traxup-homologacao/.env`, restringir acesso (`chmod 600`) e preencher senha do banco e JWT próprio (mínimo 32 bytes). Nunca colocar segredos em PR/chat.
 3. Autenticar o Docker do usuário de deploy no GHCR com credencial de leitura dos dois pacotes privados. O workflow usa seu `GITHUB_TOKEN` somente para publicar.
-4. Configurar proxy HTTPS do domínio real para `127.0.0.1:8082`, preservando a Central. Configurar backups do volume exclusivo antes de novas migrations.
+4. Apontar o DNS de `apphomologacao.traxup.com.br` para a mesma VPS da Central. Configurar o proxy que já administra HTTPS nesse servidor para `127.0.0.1:8082`: usar o trecho [Caddyfile](../../tplug-erp/infra/homologacao/Caddyfile) se a VPS usa Caddy, ou [nginx-site.conf](../../tplug-erp/infra/homologacao/nginx-site.conf) se usa Nginx. Não instalar um segundo proxy disputando as portas 80/443. Validar a configuração completa antes de recarregar o serviço e manter o host da Central intacto. Configurar backups do volume exclusivo antes de novas migrations.
 5. Na base vazia, usar bootstrap administrativo documentado em [ambientes e deploy](ambientes-e-deploy.md). Desabilitar `BOOTSTRAP_ADMIN_ENABLED` depois de provisionar; remover a senha de bootstrap do arquivo e recriar o backend. Obter o tenant criado para login; não pressupor um tenant de produção.
 6. Habilitar deploy e reexecutar o workflow da versão aprovada. Conferir o deployment no GitHub e executar login real, RBAC e o roteiro de cada entrega.
 
@@ -69,3 +73,13 @@ O frontend usa `/api/` na mesma origem e Nginx encaminha para o backend. Fiscal 
 ## Preservação da Etapa 0
 
 Nenhum diretório foi reorganizado, migration alterada ou arquivo da Central substituído. O [Documento Mestre em main](https://github.com/DjonesErison/ERP_TRAXUP-/blob/main/docs/TRAXUP-DOCUMENTO-MESTRE.md), catálogo visual e evidências continuam sendo as fontes existentes. Esta documentação trata de entrega e ambiente, sem criar roadmap paralelo. A conciliação `main/develop` segue na Etapa 0.
+
+### Configuração do proxy no servidor existente
+
+Os arquivos de proxy são preparados para instalação, não comprovam alteração na VPS. Confirmar o proxy em uso antes de aplicar:
+
+- **Caddy:** adicionar o bloco `Caddyfile` à configuração existente (ou a um diretório já importado), validar com `caddy validate --config /etc/caddy/Caddyfile` e recarregar o serviço. O domínio precisa resolver para a VPS e as portas 80/443 estar disponíveis para emissão do certificado.
+- **Nginx:** instalar o virtual host HTTP preparado, executar `nginx -t` e recarregar o serviço. Emitir/configurar o certificado para `apphomologacao.traxup.com.br` pelo mecanismo ACME já usado na VPS (por exemplo, Certbot), habilitando HTTPS e redirecionamento. A configuração HTTP isolada não conclui a publicação HTTPS.
+- Se o proxy roda em container com rede bridge, `127.0.0.1:8082` aponta para o próprio container: adaptar a ligação à rede/host efetivamente utilizada, após inspecionar o deploy da Central. Não aplicar esse upstream sem conferir essa condição.
+
+Após configurar DNS/TLS, o smoke público do workflow precisa aprovar o SHA esperado em HTTPS; login real e validação funcional permanecem obrigatórios.

@@ -151,7 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: homologacao
-      url: ${{ vars.HOMOLOGACAO_URL }}
+      url: https://apphomologacao.traxup.com.br
     env:
       SSH_HOST: ${{ secrets.HOMOLOGACAO_SSH_HOST }}
       SSH_USER: ${{ secrets.HOMOLOGACAO_SSH_USER }}
@@ -175,7 +175,7 @@ jobs:
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
       - name: Publicar versao e validar
         env:
-          PUBLIC_URL: ${{ vars.HOMOLOGACAO_URL }}
+          PUBLIC_URL: https://apphomologacao.traxup.com.br
         run: |
           test -n "$PUBLIC_URL"
           scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,deploy.sh,smoke.sh} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"

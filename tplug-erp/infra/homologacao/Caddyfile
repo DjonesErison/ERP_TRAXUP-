@@ -1,0 +1,5 @@
+# Adicionar à configuração do Caddy já existente na VPS.
+# Válido para proxy executado no host (ou usando network_mode: host).
+apphomologacao.traxup.com.br {
+    reverse_proxy 127.0.0.1:8082
+}

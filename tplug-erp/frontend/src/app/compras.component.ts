@@ -46,6 +46,7 @@ import {
       </section>
 
       <div class="alert" *ngIf="error">{{ error }}</div>
+      <div class="success-alert page-message" *ngIf="sucessoPedido">{{ sucessoPedido }}</div>
 
       <section class="metrics">
         <article class="card"><span>Total de pedidos</span><strong>{{ pedidos.length }}</strong><small>no tenant autenticado</small></article>
@@ -71,7 +72,25 @@ import {
                 <td>{{ abreviar(pedido.filialId) }}</td>
                 <td>{{ abreviar(pedido.fornecedorId) }}</td>
                 <td><span class="status" [ngClass]="classeStatus(pedido.status)">{{ nomeStatus(pedido.status) }}</span></td>
-                <td><button class="detail-button" (click)="abrirDetalhe(pedido)">Ver itens</button></td>
+                <td>
+                  <div class="row-actions">
+                    <button class="detail-button" (click)="abrirDetalhe(pedido)">Ver itens</button>
+                    <button
+                      class="action-button"
+                      *ngIf="pedido.status === 'RASCUNHO'"
+                      (click)="executarAcaoPedido(pedido, 'abrir')"
+                      [disabled]="acaoPedidoId === pedido.id">
+                      {{ acaoPedidoId === pedido.id ? 'Processando...' : 'Abrir pedido' }}
+                    </button>
+                    <button
+                      class="danger-button"
+                      *ngIf="pedido.status === 'RASCUNHO' || pedido.status === 'ABERTO'"
+                      (click)="executarAcaoPedido(pedido, 'cancelar')"
+                      [disabled]="acaoPedidoId === pedido.id">
+                      Cancelar
+                    </button>
+                  </div>
+                </td>
               </tr>
               <tr *ngIf="!loading && pedidosFiltrados.length === 0">
                 <td colspan="6" class="empty">Nenhum pedido encontrado.</td>
@@ -205,7 +224,9 @@ export class ComprasComponent implements OnInit {
   error = '';
   errorRecebimentos = '';
   sucessoRecebimento = '';
+  sucessoPedido = '';
   integrandoId = '';
+  acaoPedidoId = '';
 
   constructor(private readonly service: ComprasService) {}
 
@@ -279,6 +300,52 @@ export class ComprasComponent implements OnInit {
         }
         this.acessoRecebimentos = true;
         this.errorRecebimentos = 'Não foi possível carregar os recebimentos.';
+      }
+    });
+  }
+
+  executarAcaoPedido(
+    pedido: PedidoCompra,
+    acao: 'abrir' | 'cancelar'
+  ): void {
+    if (this.acaoPedidoId) return;
+    const mensagem = acao === 'abrir'
+      ? 'Abrir este pedido de compra? Depois disso, os itens não poderão mais ser alterados.'
+      : 'Cancelar este pedido de compra? Esta ação altera o estado operacional do pedido.';
+    if (!window.confirm(mensagem)) return;
+
+    this.acaoPedidoId = pedido.id;
+    this.error = '';
+    this.sucessoPedido = '';
+    const requisicao = acao === 'abrir'
+      ? this.service.abrirPedido(pedido.id)
+      : this.service.cancelarPedido(pedido.id);
+
+    requisicao.subscribe({
+      next: (atualizado) => {
+        this.acaoPedidoId = '';
+        this.pedidos = this.pedidos.map(item =>
+          item.id === atualizado.id ? atualizado : item
+        );
+        this.aplicarFiltros();
+        this.sucessoPedido = acao === 'abrir'
+          ? 'Pedido aberto com sucesso e pronto para recebimento.'
+          : 'Pedido cancelado com sucesso.';
+      },
+      error: (err) => {
+        this.acaoPedidoId = '';
+        if (err?.status === 403) {
+          this.error =
+            'Seu perfil não possui permissão para alterar pedidos de compra.';
+          return;
+        }
+        if ([400, 409, 422].includes(err?.status)) {
+          this.error = acao === 'abrir'
+            ? 'O pedido precisa estar em rascunho e possuir itens para ser aberto.'
+            : 'O pedido não pode ser cancelado no estado atual.';
+          return;
+        }
+        this.error = 'Não foi possível atualizar o pedido de compra.';
       }
     });
   }

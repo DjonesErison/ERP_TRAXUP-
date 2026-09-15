@@ -60,6 +60,20 @@ export class ComprasService {
     return this.http.get<PedidoCompra[]>(this.pedidosUrl);
   }
 
+  abrirPedido(pedidoId: string): Observable<PedidoCompra> {
+    return this.http.post<PedidoCompra>(
+      `${this.pedidosUrl}/${pedidoId}/abrir`,
+      {}
+    );
+  }
+
+  cancelarPedido(pedidoId: string): Observable<PedidoCompra> {
+    return this.http.post<PedidoCompra>(
+      `${this.pedidosUrl}/${pedidoId}/cancelar`,
+      {}
+    );
+  }
+
   listarRecebimentos(): Observable<RecebimentoCompra[]> {
     return this.http.get<RecebimentoCompra[]>(this.recebimentosUrl);
   }

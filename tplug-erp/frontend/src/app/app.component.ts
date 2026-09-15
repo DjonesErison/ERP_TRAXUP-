@@ -6,11 +6,12 @@ import { CrmService } from './crm.service';
 import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from './crm.models';
 import { InventarioMobileComponent } from './inventario-mobile.component';
 import { ContabilidadeComponent } from './contabilidade.component';
+import { ConciliacaoFinanceiraComponent } from './conciliacao-financeira.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent],
+  imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent],
   template: `
     <div class="login-shell" *ngIf="!autenticado">
       <section class="login-brand">
@@ -56,16 +57,17 @@ import { ContabilidadeComponent } from './contabilidade.component';
         <nav>
           <button type="button" class="nav-link" [class.active]="area === 'crm'" (click)="area = 'crm'">CRM</button>
           <button type="button" class="nav-link" [class.active]="area === 'contabilidade'" (click)="area = 'contabilidade'">Contabilidade</button>
+          <button type="button" class="nav-link" [class.active]="area === 'financeiro'" (click)="area = 'financeiro'">Financeiro</button>
           <a>Vendas</a>
           <a>Compras</a>
           <a href="#inventario">Inventário</a>
-          <a>Financeiro</a>
         </nav>
         <button class="logout" (click)="sair()" [disabled]="logoutLoading">{{ logoutLoading ? 'Saindo...' : 'Sair' }}</button>
       </aside>
 
       <main>
         <app-contabilidade *ngIf="area === 'contabilidade'"></app-contabilidade>
+        <app-conciliacao-financeira *ngIf="area === 'financeiro'"></app-conciliacao-financeira>
         <ng-container *ngIf="area === 'crm'">
         <header class="topbar">
           <div>
@@ -167,7 +169,7 @@ import { ContabilidadeComponent } from './contabilidade.component';
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
-  area: 'crm' | 'contabilidade' = 'crm';
+  area: 'crm' | 'contabilidade' | 'financeiro' = 'crm';
   autenticado = false;
   loginTenantId = '';
   loginEmail = '';

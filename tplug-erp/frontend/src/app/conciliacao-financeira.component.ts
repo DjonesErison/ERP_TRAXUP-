@@ -63,6 +63,21 @@ import {
         <button class="secondary" (click)="carregar()" [disabled]="loading || !contaId">Aplicar filtros</button>
       </section>
 
+      <section class="ofx-import card" *ngIf="contaId">
+        <div>
+          <p class="eyebrow">Importação segura</p>
+          <h2>Carregar extrato OFX</h2>
+          <p>O arquivo é convertido em lançamentos idempotentes da conta selecionada. Limite de 5 MB e 500 movimentos.</p>
+        </div>
+        <label class="file-picker">
+          <input type="file" accept=".ofx,application/x-ofx" (change)="selecionarOfx($event)">
+          <span>{{ nomeArquivoOfx || 'Selecionar arquivo OFX' }}</span>
+        </label>
+        <button (click)="importarOfx()" [disabled]="importandoOfx || !arquivoOfx">
+          {{ importandoOfx ? 'Importando...' : 'Importar extrato' }}
+        </button>
+      </section>
+
       <div class="alert" *ngIf="error">{{ error }}</div>
       <div class="feedback" *ngIf="feedback">{{ feedback }}</div>
       <div class="empty card" *ngIf="!loadingContas && contas.length === 0 && !error">
@@ -89,7 +104,17 @@ import {
                 <td>{{ item.ocorridoEm | date:'dd/MM/yyyy' }}</td>
                 <td><strong>{{ item.descricao || 'Sem descrição' }}</strong><small>{{ item.referenciaExterna }}</small></td>
                 <td>{{ item.origem }}</td>
-                <td><span class="tag">{{ nomeNatureza(item.natureza) }}</span></td>
+                <td>
+                  <select
+                    class="nature-select"
+                    [ngModel]="item.natureza"
+                    (ngModelChange)="classificar(item, $event)"
+                    [disabled]="item.status !== 'PENDENTE' || classificandoId === item.id">
+                    <option value="NORMAL">Normal</option><option value="TAXA">Taxa</option>
+                    <option value="ANTECIPACAO">Antecipação</option><option value="ESTORNO">Estorno</option>
+                    <option value="CHARGEBACK">Chargeback</option>
+                  </select>
+                </td>
                 <td>{{ item.tipo === 'ENTRADA' ? 'Entrada' : 'Saída' }}</td>
                 <td [class.negative]="item.tipo === 'SAIDA'">{{ item.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
                 <td><span class="status" [class.done]="item.status === 'CONCILIADO'">{{ item.status === 'CONCILIADO' ? 'Conciliado' : 'Pendente' }}</span></td>
@@ -137,6 +162,11 @@ export class ConciliacaoFinanceiraComponent implements OnInit {
   loading = false;
   loadingSugestoes = false;
   conciliando = false;
+  importandoOfx = false;
+  classificandoId = '';
+  arquivoOfx?: File;
+  nomeArquivoOfx = '';
+  private entradaOfx?: HTMLInputElement;
   error = '';
   feedback = '';
 
@@ -184,6 +214,89 @@ export class ConciliacaoFinanceiraComponent implements OnInit {
         this.error = err?.status === 403
           ? 'Seu perfil não possui acesso à conciliação financeira.'
           : 'Não foi possível carregar a conciliação com estes filtros.';
+      }
+    });
+  }
+
+  selecionarOfx(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const arquivo = input.files?.[0];
+    this.error = '';
+    this.feedback = '';
+    this.arquivoOfx = undefined;
+    this.nomeArquivoOfx = '';
+    this.entradaOfx = input;
+    if (!arquivo) return;
+    if (!arquivo.name.toLowerCase().endsWith('.ofx')) {
+      this.error = 'Selecione um arquivo com extensão .ofx.';
+      input.value = '';
+      return;
+    }
+    if (arquivo.size > 5_000_000) {
+      this.error = 'O arquivo OFX deve ter no máximo 5 MB.';
+      input.value = '';
+      return;
+    }
+    this.arquivoOfx = arquivo;
+    this.nomeArquivoOfx = arquivo.name;
+  }
+
+  async importarOfx(): Promise<void> {
+    if (!this.contaId || !this.arquivoOfx || this.importandoOfx) return;
+    this.importandoOfx = true;
+    this.error = '';
+    this.feedback = '';
+    try {
+      const conteudo = await this.arquivoOfx.text();
+      if (!conteudo.trim() || conteudo.length > 5_000_000) {
+        this.importandoOfx = false;
+        this.error = 'O conteúdo OFX está vazio ou excede o limite permitido.';
+        return;
+      }
+      this.service.importarOfx(this.contaId, conteudo).subscribe({
+        next: (lancamentos) => {
+          this.importandoOfx = false;
+          this.arquivoOfx = undefined;
+          this.nomeArquivoOfx = '';
+          if (this.entradaOfx) this.entradaOfx.value = '';
+          this.carregar();
+          this.feedback = lancamentos.length
+            + ' lançamento(s) importado(s) ou reconhecido(s) com sucesso.';
+        },
+        error: (err) => {
+          this.importandoOfx = false;
+          this.error = err?.status === 403
+            ? 'Seu perfil não possui permissão para importar extratos.'
+            : 'O arquivo OFX é inválido ou contém lançamentos conflitantes.';
+        }
+      });
+    } catch {
+      this.importandoOfx = false;
+      this.error = 'Não foi possível ler o arquivo selecionado.';
+    }
+  }
+
+  classificar(
+    lancamento: ConciliacaoLancamento,
+    natureza: ConciliacaoLancamento['natureza']
+  ): void {
+    if (lancamento.status !== 'PENDENTE'
+        || lancamento.natureza === natureza
+        || this.classificandoId) return;
+    this.classificandoId = lancamento.id;
+    this.error = '';
+    this.feedback = '';
+    this.service.classificar(lancamento.id, natureza).subscribe({
+      next: () => {
+        this.classificandoId = '';
+        this.carregar();
+        this.feedback = 'Natureza do lançamento atualizada.';
+      },
+      error: (err) => {
+        this.classificandoId = '';
+        this.error = err?.status === 403
+          ? 'Seu perfil não possui permissão para classificar lançamentos.'
+          : 'Não foi possível classificar este lançamento.';
       }
     });
   }

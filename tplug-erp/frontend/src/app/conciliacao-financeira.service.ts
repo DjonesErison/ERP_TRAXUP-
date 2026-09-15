@@ -68,6 +68,48 @@ export interface MovimentoFinanceiro {
   ocorridoEm: string;
 }
 
+export interface IntegracaoFinanceira {
+  id: string;
+  contaFinanceiraId: string;
+  filialId: string;
+  provedor: string;
+  identificadorExterno: string;
+  sincronizadoEm?: string | null;
+  ativo: boolean;
+  criadoEm: string;
+  atualizadoEm: string;
+  versao: number;
+}
+
+export interface IntegracaoFinanceiraSaude {
+  integracaoId: string;
+  status: 'SEM_EXECUCAO' | 'SAUDAVEL' | 'ATENCAO';
+  ultimaTentativaEm?: string | null;
+  ultimoSucessoEm?: string | null;
+  falhasConsecutivas: number;
+  tentativasConsideradas: number;
+  sucessos: number;
+  falhas: number;
+  duracaoMediaMs?: number | null;
+}
+
+export interface IntegracaoFinanceiraPainel {
+  integracao: IntegracaoFinanceira;
+  saude: IntegracaoFinanceiraSaude;
+}
+
+export interface IntegracaoFinanceiraResumo {
+  total: number;
+  saudaveis: number;
+  atencao: number;
+  semExecucao: number;
+}
+
+export interface SincronizacaoFinanceiraResultado {
+  integracao: IntegracaoFinanceira;
+  lancamentos: ConciliacaoLancamento[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ConciliacaoFinanceiraService {
   private readonly financeiroUrl = '/api/v1/financeiro';
@@ -98,6 +140,31 @@ export class ConciliacaoFinanceiraService {
     return this.http.get<ConciliacaoResumo>(
       `${this.conciliacaoUrl}/contas/${contaId}/resumo`,
       { params: this.parametros(filtros) }
+    );
+  }
+
+  consultarPainelIntegracoes(
+    contaId: string
+  ): Observable<IntegracaoFinanceiraPainel[]> {
+    return this.http.get<IntegracaoFinanceiraPainel[]>(
+      `${this.financeiroUrl}/integracoes/contas/${contaId}/painel`
+    );
+  }
+
+  consultarResumoIntegracoes(
+    contaId: string
+  ): Observable<IntegracaoFinanceiraResumo> {
+    return this.http.get<IntegracaoFinanceiraResumo>(
+      `${this.financeiroUrl}/integracoes/contas/${contaId}/painel/resumo`
+    );
+  }
+
+  sincronizarIntegracao(
+    integracaoId: string
+  ): Observable<SincronizacaoFinanceiraResultado> {
+    return this.http.post<SincronizacaoFinanceiraResultado>(
+      `${this.financeiroUrl}/integracoes/${integracaoId}/sincronizar`,
+      {}
     );
   }
 

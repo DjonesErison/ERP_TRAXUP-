@@ -7,6 +7,15 @@
 .filters label { display: grid; gap: 6px; color: #4b5563; font-size: 11px; font-weight: 700; }
 .filters input, .filters select { width: 100%; min-height: 40px; border: 1px solid #d1d5db; border-radius: 9px; padding: 8px 10px; background: #fff; color: #111827; font: inherit; }
 .filters input:focus, .filters select:focus { border-color: #2563eb; outline: 0; box-shadow: 0 0 0 3px rgb(37 99 235 / 10%); }
+.ofx-import { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(210px, .55fr) auto; gap: 18px; align-items: center; padding: 18px; margin-bottom: 16px; }
+.ofx-import h2 { margin: 3px 0 5px; font-size: 18px; }
+.ofx-import p:not(.eyebrow) { margin: 0; color: #64748b; font-size: 12px; line-height: 1.45; }
+.file-picker { min-width: 0; }
+.file-picker input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.file-picker span { display: block; overflow: hidden; border: 1px dashed #93c5fd; border-radius: 10px; padding: 11px 13px; background: #eff6ff; color: #1d4ed8; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; font-size: 12px; font-weight: 700; }
+.nature-select { min-height: 32px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 7px; background: #fff; color: #334155; font-size: 11px; font-weight: 700; }
+.nature-select:disabled { background: #f1f5f9; opacity: .75; }
+
 .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
 .metric { display: grid; gap: 4px; padding: 18px; border-left: 4px solid #2563eb; }
 .metric.warning { border-left-color: #f59e0b; }
@@ -49,9 +58,12 @@ button:disabled { opacity: .55; cursor: default; }
 @media (max-width: 900px) {
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .filters { grid-template-columns: repeat(2, 1fr); }
+  .ofx-import { grid-template-columns: 1fr 1fr; }
+  .ofx-import > div { grid-column: 1 / -1; }
 }
 @media (max-width: 620px) {
   .reconciliation-head { display: grid; }
-  .filters, .metrics { grid-template-columns: 1fr; }
+  .filters, .metrics, .ofx-import { grid-template-columns: 1fr; }
+  .ofx-import > div { grid-column: auto; }
   .suggestion-list article { align-items: stretch; flex-direction: column; }
 }

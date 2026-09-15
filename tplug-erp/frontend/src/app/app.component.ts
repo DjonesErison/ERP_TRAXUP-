@@ -8,11 +8,12 @@ import { InventarioMobileComponent } from './inventario-mobile.component';
 import { ContabilidadeComponent } from './contabilidade.component';
 import { ConciliacaoFinanceiraComponent } from './conciliacao-financeira.component';
 import { VendasComponent } from './vendas.component';
+import { ComprasComponent } from './compras.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent],
+  imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent],
   template: `
     <div class="login-shell" *ngIf="!autenticado">
       <section class="login-brand">
@@ -60,7 +61,7 @@ import { VendasComponent } from './vendas.component';
           <button type="button" class="nav-link" [class.active]="area === 'contabilidade'" (click)="area = 'contabilidade'">Contabilidade</button>
           <button type="button" class="nav-link" [class.active]="area === 'financeiro'" (click)="area = 'financeiro'">Financeiro</button>
           <button type="button" class="nav-link" [class.active]="area === 'vendas'" (click)="area = 'vendas'">Vendas</button>
-          <a>Compras</a>
+          <button type="button" class="nav-link" [class.active]="area === 'compras'" (click)="area = 'compras'">Compras</button>
           <a href="#inventario">Inventário</a>
         </nav>
         <button class="logout" (click)="sair()" [disabled]="logoutLoading">{{ logoutLoading ? 'Saindo...' : 'Sair' }}</button>
@@ -70,6 +71,7 @@ import { VendasComponent } from './vendas.component';
         <app-contabilidade *ngIf="area === 'contabilidade'"></app-contabilidade>
         <app-conciliacao-financeira *ngIf="area === 'financeiro'"></app-conciliacao-financeira>
         <app-vendas *ngIf="area === 'vendas'"></app-vendas>
+        <app-compras *ngIf="area === 'compras'"></app-compras>
         <ng-container *ngIf="area === 'crm'">
         <header class="topbar">
           <div>
@@ -171,7 +173,7 @@ import { VendasComponent } from './vendas.component';
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
-  area: 'crm' | 'contabilidade' | 'financeiro' | 'vendas' = 'crm';
+  area: 'crm' | 'contabilidade' | 'financeiro' | 'vendas' | 'compras' = 'crm';
   autenticado = false;
   loginTenantId = '';
   loginEmail = '';

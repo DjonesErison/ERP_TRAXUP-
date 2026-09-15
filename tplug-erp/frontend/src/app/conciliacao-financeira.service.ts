@@ -105,6 +105,18 @@ export interface IntegracaoFinanceiraResumo {
   semExecucao: number;
 }
 
+export interface IntegracaoFinanceiraTentativa {
+  id: string;
+  integracaoId: string;
+  provedor: string;
+  status: 'SUCESSO' | 'FALHA';
+  quantidadeLancamentos: number;
+  duracaoMs: number;
+  erroCodigo?: string | null;
+  iniciadoEm: string;
+  finalizadoEm: string;
+}
+
 export interface SincronizacaoFinanceiraResultado {
   integracao: IntegracaoFinanceira;
   lancamentos: ConciliacaoLancamento[];
@@ -156,6 +168,45 @@ export class ConciliacaoFinanceiraService {
   ): Observable<IntegracaoFinanceiraResumo> {
     return this.http.get<IntegracaoFinanceiraResumo>(
       `${this.financeiroUrl}/integracoes/contas/${contaId}/painel/resumo`
+    );
+  }
+
+  criarIntegracao(
+    contaId: string,
+    provedor: string,
+    identificadorExterno?: string
+  ): Observable<IntegracaoFinanceira> {
+    return this.http.post<IntegracaoFinanceira>(
+      `${this.financeiroUrl}/integracoes/contas/${contaId}`,
+      {
+        provedor,
+        identificadorExterno: identificadorExterno?.trim() || null
+      }
+    );
+  }
+
+  desativarIntegracao(
+    integracaoId: string
+  ): Observable<IntegracaoFinanceira> {
+    return this.http.post<IntegracaoFinanceira>(
+      `${this.financeiroUrl}/integracoes/${integracaoId}/desativar`,
+      {}
+    );
+  }
+
+  listarTentativasIntegracao(
+    integracaoId: string,
+    status?: string,
+    inicio?: string,
+    fim?: string
+  ): Observable<IntegracaoFinanceiraTentativa[]> {
+    let params = new HttpParams();
+    if (status) params = params.set('status', status);
+    if (inicio) params = params.set('inicio', `${inicio}T00:00:00Z`);
+    if (fim) params = params.set('fim', `${fim}T23:59:59Z`);
+    return this.http.get<IntegracaoFinanceiraTentativa[]>(
+      `${this.financeiroUrl}/integracoes/${integracaoId}/tentativas`,
+      { params }
     );
   }
 

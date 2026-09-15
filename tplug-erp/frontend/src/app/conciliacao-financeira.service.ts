@@ -101,6 +101,26 @@ export class ConciliacaoFinanceiraService {
     );
   }
 
+  importarOfx(
+    contaId: string,
+    conteudo: string
+  ): Observable<ConciliacaoLancamento[]> {
+    return this.http.post<ConciliacaoLancamento[]>(
+      `${this.conciliacaoUrl}/contas/${contaId}/ofx`,
+      { conteudo }
+    );
+  }
+
+  classificar(
+    lancamentoId: string,
+    natureza: ConciliacaoLancamento['natureza']
+  ): Observable<ConciliacaoLancamento> {
+    return this.http.post<ConciliacaoLancamento>(
+      `${this.conciliacaoUrl}/lancamentos/${lancamentoId}/classificar`,
+      { natureza }
+    );
+  }
+
   listarSugestoes(
     lancamentoId: string
   ): Observable<MovimentoFinanceiro[]> {

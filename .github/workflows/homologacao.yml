@@ -74,6 +74,8 @@ jobs:
           docker build --build-arg RELEASE_SHA="$RELEASE_SHA" -t "$FRONTEND_IMAGE" tplug-erp/frontend
           docker compose -f tplug-erp/infra/homologacao/compose.yml up -d
           bash tplug-erp/infra/homologacao/smoke.sh http://127.0.0.1:8082 "$RELEASE_SHA"
+      - name: Validar formulario de login no navegador
+        run: bash tplug-erp/infra/homologacao/browser-smoke.sh http://127.0.0.1:8082
       - name: Guardar exatamente as imagens testadas
         run: docker save traxup-backend:ci traxup-frontend:ci -o /tmp/homologacao-images.tar
       - uses: actions/upload-artifact@v4
@@ -181,4 +183,5 @@ jobs:
           scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,deploy.sh,smoke.sh} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"
           ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" "bash /opt/traxup-homologacao/deploy.sh '$RELEASE_SHA' '$BACKEND_IMAGE' '$FRONTEND_IMAGE'"
           bash tplug-erp/infra/homologacao/smoke.sh "$PUBLIC_URL" "$RELEASE_SHA"
+          bash tplug-erp/infra/homologacao/browser-smoke.sh "$PUBLIC_URL"
           printf 'Versao: %s\nURL: %s\nBackend: %s\nFrontend: %s\n' "$RELEASE_SHA" "$PUBLIC_URL" "$BACKEND_IMAGE" "$FRONTEND_IMAGE" >> "$GITHUB_STEP_SUMMARY"

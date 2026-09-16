@@ -1,0 +1,162 @@
+
+    <svg class="filter-definitions" aria-hidden="true"><defs><filter id="brand-remove-white" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -1 -1 -1 0 2.85"/><feComponentTransfer><feFuncA type="linear" slope="1.5"/></feComponentTransfer></filter></defs></svg>
+    <div class="login-shell" *ngIf="!autenticado">
+      <section class="login-brand" aria-label="TRAXUP ERP">
+        <img class="login-logo" src="assets/traxup-logo.webp" alt="TRAXUP — Tecnologia que impulsiona negócios" width="240" height="160">
+        <div class="brand-copy">
+          <h1>Gestão completa<br>para o seu negócio crescer</h1>
+          <p class="brand-description">ERP, PDV, estoque, financeiro e fiscal<br>trabalhando juntos.</p>
+          <ul class="brand-features">
+            <li><span class="feature-icon"><app-icon name="settings" /></span><div><strong>Gestão integrada</strong><span>Todos os processos em um só lugar</span></div></li>
+            <li><span class="feature-icon"><app-icon name="shield" /></span><div><strong>Operação segura</strong><span>Seus dados sempre protegidos</span></div></li>
+            <li><span class="feature-icon"><app-icon name="chart" /></span><div><strong>Dados em tempo real</strong><span>Decisões mais rápidas e assertivas</span></div></li>
+            <li><span class="feature-icon"><app-icon name="cloud" /></span><div><strong>Acesso de qualquer lugar</strong><span>No computador, tablet ou celular</span></div></li>
+          </ul>
+        </div>
+        <svg class="growth-art" viewBox="0 0 600 700" fill="none" aria-hidden="true"><path d="M60 660V530l90-30v160M190 660V420l90-30v270M320 660V290l90-35v405M450 660V145l90-40v555" fill="url(#growth)"/><path d="m60 490 105-45 88-106 101-43L530 45m-65 18 67-22-10 70" stroke="#1688ff" stroke-width="25" stroke-linejoin="round"/><defs><linearGradient id="growth" x2="0" y2="1"><stop stop-color="#1688ff"/><stop offset="1" stop-color="#1688ff" stop-opacity="0"/></linearGradient></defs></svg>
+        <p class="brand-footer">MAIS CONTROLE. MAIS RESULTADOS.</p>
+      </section>
+      <section class="login-panel">
+        <div class="login-content">
+          <img class="mobile-logo" src="assets/traxup-logo.webp" alt="TRAXUP" width="180" height="120">
+          <form class="login-card" (ngSubmit)="entrar()" [attr.aria-busy]="loginLoading">
+            <div class="login-heading"><h2>Acesse seu ERP</h2><p class="subtitle">Entre com seus dados para acessar o sistema</p></div>
+            <div class="alert" role="alert" *ngIf="loginError">{{ loginError }}</div>
+            <label for="login-company">Empresa</label>
+            <div class="input-icon"><app-icon name="building" /><input id="login-company" name="tenantId" type="text" [(ngModel)]="loginTenantId" required placeholder="Código da empresa" autocomplete="organization" aria-describedby="company-help"></div>
+            <small id="company-help" class="field-help">Código de acesso informado pelo administrador.</small>
+            <label for="login-email">E-mail</label>
+            <div class="input-icon"><app-icon name="user" /><input id="login-email" name="email" type="email" [(ngModel)]="loginEmail" required placeholder="seu@email.com" autocomplete="username"></div>
+            <label for="login-password">Senha</label>
+            <div class="input-icon password-field"><app-icon name="lock" /><input id="login-password" name="senha" [type]="mostrarSenha ? 'text' : 'password'" [(ngModel)]="loginSenha" required maxlength="72" placeholder="Sua senha" autocomplete="current-password"><button class="password-toggle" type="button" (click)="mostrarSenha = !mostrarSenha" [attr.aria-pressed]="mostrarSenha" [attr.aria-label]="mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'"><app-icon name="eye" /></button></div>
+            <div class="login-options"><label class="remember"><input type="checkbox" name="lembrarAcesso" [(ngModel)]="lembrarAcesso">Lembrar empresa e e-mail</label><button type="button" class="text-action" (click)="ajudaDialog.showModal()">Esqueci minha senha</button></div>
+            <button class="login-button" type="submit" [disabled]="loginLoading || !loginTenantId.trim() || !loginEmail.trim() || !loginSenha">{{ loginLoading ? 'Entrando...' : 'Entrar' }} <app-icon *ngIf="!loginLoading" name="arrow" /></button>
+            <div class="login-support"><button class="text-action" type="button" (click)="ajudaDialog.showModal()"><app-icon name="help" /> Preciso de ajuda</button><span class="environment-badge">Homologação</span></div>
+            <small class="security-note"><app-icon name="lock" /> Seus dados estão protegidos</small>
+            <p class="login-footer">TRAXUP ERP · Tecnologia que impulsiona negócios</p>
+          </form>
+        </div>
+      </section>
+    </div>
+    <div class="app-shell" *ngIf="autenticado" [class.nav-collapsed]="menuRecolhido">
+      <aside class="sidebar">
+        <div class="brand"><img src="assets/traxup-logo.webp" alt="TRAXUP" width="186" height="124"></div>
+        <nav aria-label="Menu principal">
+          <button *ngFor="let item of menu" type="button" class="nav-link" [class.active]="area === item.area" [attr.aria-label]="item.label" [attr.aria-current]="area === item.area ? 'page' : null" (click)="navegar(item.area)" [disabled]="!item.area" [attr.title]="item.area ? item.label : item.label + ': em preparação'"><app-icon [name]="item.icon" /><span>{{ item.label }}</span><small *ngIf="!item.area">Em breve</small></button>
+        </nav>
+        <p class="sidebar-footer">TRAXUP ERP<br><span>Tecnologia que<br>impulsiona negócios.</span></p>
+        <button class="logout" (click)="sair()" [disabled]="logoutLoading">{{ logoutLoading ? 'Saindo...' : 'Sair' }}</button>
+      </aside>
+      <main>
+        <div class="workspace-bar">
+          <button class="menu-toggle" (click)="menuRecolhido = !menuRecolhido" [attr.aria-expanded]="!menuRecolhido" aria-label="Alternar menu"><app-icon name="menu" /></button>
+          <span class="workspace-context"><app-icon name="home" /> Minha operação</span>
+          <span class="workspace-scope">Visão do seu acesso</span>
+          <span class="environment-badge">Homologação</span>
+          <button class="profile-button" (click)="ajudaDialog.showModal()" aria-label="Ajuda de acesso"><app-icon name="user" /></button>
+        </div>
+        <app-dashboard *ngIf="area === 'dashboard'" (abrirVendas)="navegar('vendas')" (sessaoExpirada)="expirarSessao()" />
+        <app-inventario-mobile *ngIf="area === 'inventario'"></app-inventario-mobile>
+        <app-contabilidade *ngIf="area === 'contabilidade'"></app-contabilidade>
+        <app-conciliacao-financeira *ngIf="area === 'financeiro'"></app-conciliacao-financeira>
+        <app-vendas *ngIf="area === 'vendas'"></app-vendas>
+        <app-compras *ngIf="area === 'compras'"></app-compras>
+        <ng-container *ngIf="area === 'crm'">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Relacionamento com clientes</p>
+            <h1>Painel de relacionamento</h1>
+            <p class="subtitle">Clientes inativos, agenda, RFV e histórico de interações em uma única visão.</p>
+          </div>
+          <button (click)="carregar()" [disabled]="loading">{{ loading ? 'Atualizando...' : 'Atualizar' }}</button>
+        </header>
+
+        <section class="filters card">
+          <label>
+            Filial (UUID opcional)
+            <input [(ngModel)]="filialId" placeholder="Todas as filiais">
+          </label>
+          <label>
+            Dias sem comprar
+            <input type="number" min="1" max="3650" [(ngModel)]="diasInatividade">
+          </label>
+          <button class="secondary" (click)="carregar()" [disabled]="loading">Aplicar filtros</button>
+        </section>
+
+        <div class="alert" *ngIf="error">{{ error }}</div>
+
+        <section class="metrics">
+          <article class="metric card"><span>Clientes inativos</span><strong>{{ inativos.length }}</strong><small>lista priorizada por maior inatividade</small></article>
+          <article class="metric card"><span>Follow-ups pendentes</span><strong>{{ followups.length }}</strong><small>ações ainda abertas</small></article>
+          <article class="metric card"><span>Interações recentes</span><strong>{{ interacoes.length }}</strong><small>últimos registros carregados</small></article>
+          <article class="metric card"><span>Clientes no RFV</span><strong>{{ rfv.length }}</strong><small>ranking por valor comprado</small></article>
+        </section>
+
+        <section class="grid two-columns">
+          <article class="card panel">
+            <div class="panel-title"><div><p class="eyebrow">Retorno</p><h2>Clientes inativos</h2></div><span>{{ inativos.length }} registros</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Cliente</th><th>Última compra</th><th>Compras</th><th>Contato</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let item of inativos; trackBy: trackCliente">
+                    <td><strong>{{ item.nomeRazaoSocial }}</strong><small>{{ item.nomeFantasia || '—' }}</small></td>
+                    <td>{{ item.ultimaCompraEm | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ item.quantidadeCompras }}</td>
+                    <td>{{ item.telefone || item.email || 'Não informado' }}</td>
+                  </tr>
+                  <tr *ngIf="!loading && inativos.length === 0"><td colspan="4" class="empty">Nenhum cliente encontrado.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card panel">
+            <div class="panel-title"><div><p class="eyebrow">Agenda</p><h2>Próximos follow-ups</h2></div><span>{{ followups.length }} pendentes</span></div>
+            <div class="stack">
+              <div class="followup" *ngFor="let item of followups; trackBy: trackId">
+                <div class="status-dot"></div>
+                <div><strong>{{ item.assunto }}</strong><span>{{ item.agendadoPara | date:'dd/MM/yyyy HH:mm' }}</span><small>Cliente {{ item.clienteId | slice:0:8 }}</small></div>
+              </div>
+              <div class="empty" *ngIf="!loading && followups.length === 0">Nenhum follow-up pendente.</div>
+            </div>
+          </article>
+        </section>
+
+        <section class="grid two-columns">
+          <article class="card panel">
+            <div class="panel-title"><div><p class="eyebrow">RFV</p><h2>Clientes por valor</h2></div><span>Top {{ rfv.length }}</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Cliente</th><th>Recência</th><th>Frequência</th><th>Valor</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let item of rfv; trackBy: trackCliente">
+                    <td><strong>{{ item.nomeRazaoSocial }}</strong><small>Ticket {{ item.ticketMedio | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</small></td>
+                    <td>{{ item.diasDesdeUltimaCompra }} dias</td>
+                    <td>{{ item.quantidadeCompras }}</td>
+                    <td>{{ item.valorTotalCompras | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+                  </tr>
+                  <tr *ngIf="!loading && rfv.length === 0"><td colspan="4" class="empty">Sem dados RFV para os filtros.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card panel">
+            <div class="panel-title"><div><p class="eyebrow">Histórico</p><h2>Interações recentes</h2></div><span>{{ interacoes.length }} registros</span></div>
+            <div class="stack">
+              <div class="interaction" *ngFor="let item of interacoes; trackBy: trackId">
+                <span class="badge">{{ item.canal }}</span>
+                <div><strong>{{ item.assunto }}</strong><span>{{ item.resultado.replaceAll('_', ' ') }}</span><small>{{ item.ocorridoEm | date:'dd/MM/yyyy HH:mm' }}</small></div>
+              </div>
+              <div class="empty" *ngIf="!loading && interacoes.length === 0">Nenhuma interação registrada.</div>
+            </div>
+          </article>
+        </section>
+
+        </ng-container>
+      </main>
+    </div>
+    <dialog #ajudaDialog class="help-dialog" aria-labelledby="help-title">
+      <h2 id="help-title">Ajuda de acesso</h2><p>Para recuperar sua senha, confirmar o código da empresa ou solicitar acesso, fale com o administrador da sua empresa.</p><p>A recuperação automática de senha ainda não está disponível neste ambiente.</p><form method="dialog"><button type="submit">Entendi</button></form>
+    </dialog>

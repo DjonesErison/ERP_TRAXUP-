@@ -25,7 +25,6 @@ try {
     assert.equal(await page.locator('[name=senha]').getAttribute('type'), 'text');
     await page.getByRole('button', { name: 'Ocultar senha' }).click();
     assert.equal(await page.locator('[name=senha]').getAttribute('type'), 'password');
-    // Only this browser uses fixtures; no user is created and no VPS data is changed.
     let accepted = false;
     let salesMode = 'data';
     let refreshCount = 0;
@@ -42,6 +41,7 @@ try {
       }
       if (url.endsWith('/auth/logout')) return route.fulfill({ status: 204 });
       const path = new URL(url).pathname;
+      if (path === '/api/v1/me/filiais') return route.fulfill({ json: [{ id: '00000000-0000-4000-8000-000000000101', nome: 'Filial Visual', cnpj: '00000000000100', empresaId: '00000000-0000-4000-8000-000000000201', empresaNome: 'Empresa Visual' }] });
       if (path.endsWith('/vendas/pedidos/recentes') && new URL(url).searchParams.get('tamanho') === '5') {
         assert.match(route.request().headers().authorization || '', /^Bearer /);
         if (salesMode === 'denied') return route.fulfill({ status: 403, json: {} });
@@ -101,6 +101,7 @@ try {
     await page.getByRole('button', { name: 'Sair', exact: true }).click();
     await page.getByRole('heading', { name: 'Acesse seu ERP' }).waitFor();
     assert.equal(await page.evaluate(() => localStorage.getItem('tplug_access_token')), null);
+    assert.equal(await page.evaluate(() => localStorage.getItem('traxup_filial_ativa')), null);
     const hint = await page.evaluate(() => JSON.parse(localStorage.getItem('traxup_login_hint')));
     assert.deepEqual(hint, { tenantId: '00000000-0000-4000-8000-000000000001', email: 'visual@example.test' });
     await page.reload();
@@ -122,5 +123,5 @@ try {
     assert.deepEqual(errors, [], 'Erros JavaScript no navegador');
     await page.close();
   }
-  console.log('TRAXUP UI-016/UI-001: login, home, dados/vazio/erro/403, refresh, expiracao, navegacao e logout verificados em desktop e celular. Dados autenticados simulados somente no navegador de teste.');
+  console.log('TRAXUP Etapa 1: login, contexto de filial, home, dados/vazio/erro/403, refresh, expiracao, navegacao e logout verificados em desktop e celular.');
 } finally { await browser.close(); }

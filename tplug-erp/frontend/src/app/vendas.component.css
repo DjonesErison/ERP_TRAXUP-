@@ -4,6 +4,7 @@
 }
 
 .sales-page {
+  grid-template-columns: minmax(0, 1fr);
   display: grid;
   gap: 20px;
 }

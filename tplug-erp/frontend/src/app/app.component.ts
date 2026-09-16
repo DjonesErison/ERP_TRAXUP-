@@ -73,7 +73,7 @@ import { ComprasComponent } from './compras.component';
           <button type="button" class="nav-link" [class.active]="area === 'vendas'" [attr.aria-current]="area === 'vendas' ? 'page' : null" (click)="area = 'vendas'"><span aria-hidden="true">↗</span> Vendas</button>
           <button type="button" class="nav-link" [class.active]="area === 'compras'" [attr.aria-current]="area === 'compras' ? 'page' : null" (click)="area = 'compras'"><span aria-hidden="true">▤</span> Compras</button>
           <button type="button" class="nav-link" [class.active]="area === 'inventario'" [attr.aria-current]="area === 'inventario' ? 'page' : null" (click)="area = 'inventario'"><span aria-hidden="true">▦</span> Inventário</button>
-          <button type="button" class="nav-link" [class.active]="area === 'financeiro'" [attr.aria-current]="area === 'financeiro' ? 'page' : null" (click)="area = 'financeiro'"><span aria-hidden="true">＄</span> Financeiro</button>
+          <button type="button" class="nav-link" [class.active]="area === 'financeiro'" [attr.aria-current]="area === 'financeiro' ? 'page' : null" (click)="area = 'financeiro'"><span aria-hidden="true">$</span> Financeiro</button>
           <button type="button" class="nav-link" [class.active]="area === 'contabilidade'" [attr.aria-current]="area === 'contabilidade' ? 'page' : null" (click)="area = 'contabilidade'"><span aria-hidden="true">▥</span> Contabilidade</button>
         </nav>
         <p class="sidebar-footer">Mais controle.<br>Mais resultados.</p>

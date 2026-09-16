@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from './auth.service';
+import { ContextoOperacionalService, FilialPermitida } from './contexto-operacional.service';
 import { CrmService } from './crm.service';
 import { ClienteFollowUp, ClienteInativo, ClienteInteracao, ClienteRfv } from './crm.models';
 import { InventarioMobileComponent } from './inventario-mobile.component';
@@ -48,6 +49,11 @@ export class AppComponent implements OnInit {
   loginError = '';
   logoutLoading = false;
   filialId = '';
+  filiais: FilialPermitida[] = [];
+  filialAtiva: FilialPermitida | null = null;
+  selecionandoFilial = false;
+  filiaisLoading = false;
+  filiaisError = '';
   diasInatividade = 30;
   loading = false;
   error = '';
@@ -56,11 +62,18 @@ export class AppComponent implements OnInit {
   followups: ClienteFollowUp[] = [];
   interacoes: ClienteInteracao[] = [];
 
-  constructor(private readonly crm: CrmService, private readonly auth: AuthService) {}
+  constructor(
+    private readonly crm: CrmService,
+    private readonly auth: AuthService,
+    private readonly contexto: ContextoOperacionalService
+  ) {}
 
   ngOnInit(): void {
     this.loginTenantId = this.auth.tenantId ?? '';
     this.autenticado = this.auth.autenticado;
+    this.filialAtiva = this.contexto.filialAtiva;
+    this.selecionandoFilial = this.autenticado && !this.filialAtiva;
+    if (this.selecionandoFilial) this.carregarFiliais();
     try {
       const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null');
       if (salvo && typeof salvo.tenantId === 'string' && typeof salvo.email === 'string') {
@@ -82,6 +95,10 @@ export class AppComponent implements OnInit {
         this.mostrarSenha = false;
         this.area = 'dashboard';
         this.autenticado = true;
+        this.contexto.limpar();
+        this.filialAtiva = null;
+        this.selecionandoFilial = true;
+        this.carregarFiliais();
         if (this.lembrarAcesso) {
           localStorage.setItem('traxup_login_hint', JSON.stringify({ tenantId: this.loginTenantId.trim(), email: this.loginEmail.trim() }));
         } else { localStorage.removeItem('traxup_login_hint'); }
@@ -93,6 +110,36 @@ export class AppComponent implements OnInit {
           : 'Não foi possível entrar. Verifique os dados e a disponibilidade do sistema.';
       }
     });
+  }
+
+  carregarFiliais(): void {
+    if (!this.auth.autenticado || this.filiaisLoading) return;
+    this.filiaisLoading = true;
+    this.filiaisError = '';
+    this.contexto.listarFiliais().subscribe({
+      next: (filiais) => {
+        this.filiais = filiais;
+        this.filiaisLoading = false;
+        if (filiais.length === 1) this.escolherFilial(filiais[0]);
+      },
+      error: () => {
+        this.filiaisLoading = false;
+        this.filiaisError = 'Não foi possível carregar as filiais permitidas para este usuário.';
+      }
+    });
+  }
+
+  escolherFilial(filial: FilialPermitida): void {
+    this.contexto.selecionarFilial(filial);
+    this.filialAtiva = filial;
+    this.filialId = filial.id;
+    this.selecionandoFilial = false;
+    this.area = 'dashboard';
+  }
+
+  trocarFilial(): void {
+    this.selecionandoFilial = true;
+    this.carregarFiliais();
   }
 
   sair(): void {
@@ -111,7 +158,7 @@ export class AppComponent implements OnInit {
     }
     this.loading = true;
     this.error = '';
-    const filial = this.filialId.trim() || undefined;
+    const filial = this.filialAtiva?.id || this.filialId.trim() || undefined;
     this.crm.carregarPainel(filial, this.diasInatividade).subscribe({
       next: (dados) => {
         this.inativos = dados.inativos;
@@ -133,12 +180,14 @@ export class AppComponent implements OnInit {
   }
 
   navegar(area: string): void {
-    if (!area) return;
+    if (!area || this.selecionandoFilial) return;
     this.area = area;
     if (area === 'crm') this.carregar();
   }
 
   expirarSessao(): void {
+    this.contexto.limpar();
+    this.filialAtiva = null;
     this.autenticado = false;
     this.loginError = 'Sua sessão expirou. Entre novamente.';
   }
@@ -147,6 +196,10 @@ export class AppComponent implements OnInit {
   trackCliente(_: number, item: { clienteId: string }): string { return item.clienteId; }
 
   private finalizarLogout(): void {
+    this.contexto.limpar();
+    this.filialAtiva = null;
+    this.filiais = [];
+    this.selecionandoFilial = false;
     this.logoutLoading = false;
     this.area = 'dashboard';
     this.menuRecolhido = false;

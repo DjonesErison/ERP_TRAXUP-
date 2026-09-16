@@ -10,6 +10,7 @@ try {
     const page = await browser.newPage({ viewport });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => { if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) errors.push(message.text()); });
     await page.goto(process.argv[2]);
     await page.getByRole('heading', { name: 'Acesse seu ERP' }).waitFor();
     await page.locator('img:visible').first().evaluate(image => image.decode());
@@ -34,6 +35,16 @@ try {
         return route.fulfill({ status: accepted ? 200 : 401, json: accepted ? { accessToken: 'visual-only', refreshToken: 'visual-only', tokenType: 'Bearer', expiresIn: 300 } : {} });
       }
       if (url.endsWith('/auth/logout')) return route.fulfill({ status: 204 });
+      const path = new URL(url).pathname;
+      const fixtures = {
+        '/api/v1/contabilidade/fechamento-mensal': { competencia: '2026-09', xml: { total: 0, arquivados: 0, pendentes: 0, falhas: 0 }, sped: { total: 0, concluidos: 0, pendentes: 0, falhas: 0, cancelados: 0 }, livroCaixa: { lancamentos: 0, entradas: 0, saidas: 0 }, inventario: { concluidos: 0, ajustados: 0, comDivergencias: 0 } },
+        '/api/v1/contabilidade/checklist-mensal': { competencia: '2026-09', statusGeral: 'PENDENTE', podeGerarPacote: false, totalPendencias: 0, itens: [] },
+        '/api/v1/contabilidade/livro-caixa': { totalLancamentos: 0, totalDisponivel: 0, pagina: 1, totalPaginas: 0, totalEntradas: 0, totalSaidas: 0, saldoPeriodo: 0, lancamentos: [] },
+        '/api/v1/contabilidade/inventarios': { totalNaPagina: 0, totalDisponivel: 0, pagina: 1, totalPaginas: 0, inventarios: [] },
+        '/api/v1/fiscal/arquivos': { totalRetornado: 0, itens: [] },
+        '/api/v1/contabilidade/sped/exportacoes/prontidao': { prontoParaProcessar: false, pendenciaCodigo: 'WORKER_DESABILITADO' }
+      };
+      if (fixtures[path]) return route.fulfill({ json: fixtures[path] });
       return route.fulfill({ json: url.includes('/recentes') ? { conteudo: [], totalRegistros: 0, totalPaginas: 0, pagina: 0, tamanho: 20 } : [] });
     });
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();

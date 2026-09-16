@@ -76,6 +76,16 @@ jobs:
           bash tplug-erp/infra/homologacao/smoke.sh http://127.0.0.1:8082 "$RELEASE_SHA"
       - name: Validar formulario de login no navegador
         run: bash tplug-erp/infra/homologacao/browser-smoke.sh http://127.0.0.1:8082
+      - name: Validar identidade visual e navegacao em desktop e celular
+        run: |
+          npm install --prefix /tmp/traxup-browser --no-package-lock playwright@1.51.1
+          PLAYWRIGHT_MODULE=/tmp/traxup-browser/node_modules/playwright/index.mjs node tplug-erp/infra/homologacao/visual-smoke.mjs http://127.0.0.1:8082
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: homologacao-visual
+          path: /tmp/traxup-visual
+          retention-days: 7
       - name: Guardar exatamente as imagens testadas
         run: docker save traxup-backend:ci traxup-frontend:ci -o /tmp/homologacao-images.tar
       - uses: actions/upload-artifact@v4

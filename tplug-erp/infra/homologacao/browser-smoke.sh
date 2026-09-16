@@ -33,6 +33,6 @@ assert parser.form, 'O navegador nao renderizou o formulario de login.'
 assert parser.fields.get('tenantId') == 'text', 'Campo de tenant ausente.'
 assert parser.fields.get('email') == 'email', 'Campo de email ausente.'
 assert parser.fields.get('senha') == 'password', 'Campo de senha ausente.'
-assert 'Entrar no TPlug ERP' in ''.join(parser.texts), 'Titulo de login ausente.'
+assert 'Acesse seu ERP' in ''.join(parser.texts), 'Titulo de login ausente.'
 print('Navegador: formulario de login renderizado com tenant, email e senha.')
 PY

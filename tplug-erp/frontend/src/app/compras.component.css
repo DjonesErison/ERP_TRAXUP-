@@ -330,6 +330,52 @@ td small {
   font-size: 17px;
 }
 
+.item-form {
+  border: 1px solid #ccfbf1;
+  border-radius: 12px;
+  margin: 18px 0;
+  padding: 16px;
+  background: #f0fdfa;
+}
+
+.item-form-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.item-form-title div {
+  display: grid;
+  gap: 3px;
+}
+
+.item-form-title small {
+  color: #64748b;
+}
+
+.item-form-title > span {
+  color: #047857;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.item-form-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(170px, 1fr) minmax(110px, .7fr) minmax(140px, .8fr) auto;
+  align-items: end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.item-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .items {
   display: grid;
   gap: 8px;
@@ -364,6 +410,7 @@ td small {
 @media (max-width: 900px) {
   .filters,
   .create-grid,
+  .item-form-grid,
   .metrics,
   .detail-summary {
     grid-template-columns: repeat(2, 1fr);
@@ -388,9 +435,15 @@ td small {
 
   .filters,
   .create-grid,
+  .item-form-grid,
   .metrics,
   .detail-summary {
     grid-template-columns: 1fr;
+  }
+
+  .item-form-title {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .items article {

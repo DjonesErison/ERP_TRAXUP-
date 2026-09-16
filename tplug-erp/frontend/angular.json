@@ -17,21 +17,12 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "assets": [],
-            "styles": [
-              "src/styles.css"
-            ],
-            "polyfills": [
-              "zone.js"
-            ]
+            "styles": ["src/styles.css"]
           },
           "configurations": {
             "production": {
               "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "800kB",
-                  "maximumError": "1MB"
-                }
+                {"type": "initial", "maximumWarning": "800kB", "maximumError": "1MB"}
               ],
               "outputHashing": "all"
             }
@@ -41,12 +32,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": {
-              "buildTarget": "tplug-erp:build:production"
-            },
-            "development": {
-              "buildTarget": "tplug-erp:build"
-            }
+            "production": {"buildTarget": "tplug-erp:build:production"},
+            "development": {"buildTarget": "tplug-erp:build"}
           },
           "defaultConfiguration": "development"
         }

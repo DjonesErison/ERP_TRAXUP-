@@ -2,12 +2,15 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  AdicionarPedidoCompraItem,
   ComprasService,
   CriarPedidoCompra,
   FilialCompraOpcao,
   FornecedorCompraOpcao,
+  GradeCompraOpcao,
   PedidoCompra,
   PedidoCompraItem,
+  ProdutoCompraOpcao,
   RecebimentoCompra,
   RecebimentoCompraItem
 } from './compras.service';
@@ -124,8 +127,9 @@ import {
                 <td><span class="status" [ngClass]="classeStatus(pedido.status)">{{ nomeStatus(pedido.status) }}</span></td>
                 <td>
                   <div class="row-actions">
-                    <button class="detail-button" (click)="abrirDetalhe(pedido)">Ver itens</button>
+                    <button type="button" class="detail-button" (click)="abrirDetalhe(pedido)">Ver itens</button>
                     <button
+                      type="button"
                       class="action-button"
                       *ngIf="pedido.status === 'RASCUNHO'"
                       (click)="executarAcaoPedido(pedido, 'abrir')"
@@ -133,6 +137,7 @@ import {
                       {{ acaoPedidoId === pedido.id ? 'Processando...' : 'Abrir pedido' }}
                     </button>
                     <button
+                      type="button"
                       class="danger-button"
                       *ngIf="pedido.status === 'RASCUNHO' || pedido.status === 'ABERTO'"
                       (click)="executarAcaoPedido(pedido, 'cancelar')"
@@ -172,8 +177,9 @@ import {
                 <td><span class="status" [ngClass]="classeStatusRecebimento(recebimento.status)">{{ nomeStatusRecebimento(recebimento.status) }}</span></td>
                 <td>
                   <div class="row-actions">
-                    <button class="detail-button" (click)="abrirDetalheRecebimento(recebimento)">Conferir itens</button>
+                    <button type="button" class="detail-button" (click)="abrirDetalheRecebimento(recebimento)">Conferir itens</button>
                     <button
+                      type="button"
                       class="action-button"
                       *ngIf="recebimento.status === 'CONFERIDO'"
                       (click)="integrarEstoque(recebimento)"
@@ -198,7 +204,7 @@ import {
       <section class="card receipt-detail" *ngIf="recebimentoSelecionado as recebimento">
         <div class="panel-head">
           <div><p class="eyebrow">Recebimento {{ recebimento.documento || abreviar(recebimento.id) }}</p><h2>Conferência recebida</h2></div>
-          <button class="secondary" (click)="fecharDetalheRecebimento()">Fechar</button>
+          <button type="button" class="secondary" (click)="fecharDetalheRecebimento()">Fechar</button>
         </div>
 
         <div class="detail-summary">
@@ -211,8 +217,8 @@ import {
         <div class="items" *ngIf="!loadingItensRecebimento">
           <article *ngFor="let item of itensRecebimento; trackBy: trackItemRecebimento">
             <div>
-              <strong>Produto {{ abreviar(item.produtoId) }}</strong>
-              <small *ngIf="item.gradeId">Grade {{ abreviar(item.gradeId) }}</small>
+              <strong>{{ nomeProduto(item.produtoId) }}</strong>
+              <small *ngIf="item.gradeId">{{ nomeGrade(item.gradeId) }}</small>
             </div>
             <span>Pedido: {{ item.quantidadePedida | number:'1.0-4':'pt-BR' }} · Recebido: {{ item.quantidadeRecebida | number:'1.0-4':'pt-BR' }}</span>
             <strong>{{ valorItemRecebido(item) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
@@ -227,7 +233,7 @@ import {
       <section class="card purchase-detail" *ngIf="pedidoSelecionado as pedido">
         <div class="panel-head">
           <div><p class="eyebrow">Pedido {{ pedido.numero }}</p><h2>Itens do pedido</h2></div>
-          <button class="secondary" (click)="fecharDetalhe()">Fechar</button>
+          <button type="button" class="secondary" (click)="fecharDetalhe()">Fechar</button>
         </div>
 
         <div class="detail-summary">
@@ -237,11 +243,54 @@ import {
           <span>Total<strong>{{ valorTotal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong></span>
         </div>
 
+
+        <form class="item-form" *ngIf="pedido.status === 'RASCUNHO' && produtosDisponiveis" (ngSubmit)="adicionarItem(pedido)">
+          <div class="item-form-title">
+            <div><strong>Adicionar produto</strong><small>O preço de compra é sugerido pelo cadastro e pode ser ajustado.</small></div>
+            <span *ngIf="sucessoItem">{{ sucessoItem }}</span>
+          </div>
+          <div class="item-form-grid">
+            <label>
+              Produto
+              <select
+                name="produtoId"
+                [(ngModel)]="novoItem.produtoId"
+                (ngModelChange)="selecionarProduto($event)"
+                required>
+                <option value="">Selecione o produto</option>
+                <option *ngFor="let produto of produtosAtivos" [value]="produto.id">
+                  {{ produto.codigo }} · {{ produto.descricao }}
+                </option>
+              </select>
+            </label>
+            <label>
+              Grade opcional
+              <select name="gradeId" [(ngModel)]="novoItem.gradeId" [disabled]="loadingGrades || gradesAtivas.length === 0">
+                <option value="">{{ loadingGrades ? 'Carregando...' : 'Sem grade' }}</option>
+                <option *ngFor="let grade of gradesAtivas" [value]="grade.id">
+                  {{ grade.codigoGrade }} · {{ grade.descricaoGrade }}
+                </option>
+              </select>
+            </label>
+            <label>
+              Quantidade
+              <input name="quantidade" type="number" min="0.0001" step="0.0001" [(ngModel)]="novoItem.quantidade" required>
+            </label>
+            <label>
+              Preço unitário
+              <input name="precoUnitario" type="number" min="0" step="0.0001" [(ngModel)]="novoItem.precoUnitario" required>
+            </label>
+            <button type="submit" [disabled]="adicionandoItem || !novoItem.produtoId || novoItem.quantidade <= 0 || novoItem.precoUnitario < 0">
+              {{ adicionandoItem ? 'Adicionando...' : 'Adicionar item' }}
+            </button>
+          </div>
+        </form>
+
         <div class="items" *ngIf="!loadingItens">
           <article *ngFor="let item of itens; trackBy: trackItem">
             <div>
-              <strong>Produto {{ abreviar(item.produtoId) }}</strong>
-              <small *ngIf="item.gradeId">Grade {{ abreviar(item.gradeId) }}</small>
+              <strong>{{ nomeProduto(item.produtoId) }}</strong>
+              <small *ngIf="item.gradeId">{{ nomeGrade(item.gradeId) }}</small>
             </div>
             <span>{{ item.quantidade | number:'1.0-4':'pt-BR' }} × {{ item.precoUnitario | currency:'BRL':'symbol':'1.2-4':'pt-BR' }}</span>
             <strong>{{ item.totalItem | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
@@ -261,6 +310,14 @@ export class ComprasComponent implements OnInit {
   pedidosFiltrados: PedidoCompra[] = [];
   pedidoSelecionado?: PedidoCompra;
   itens: PedidoCompraItem[] = [];
+  produtos: ProdutoCompraOpcao[] = [];
+  grades: GradeCompraOpcao[] = [];
+  novoItem: AdicionarPedidoCompraItem = {
+    produtoId: '',
+    gradeId: '',
+    quantidade: 1,
+    precoUnitario: 0
+  };
   filiais: FilialCompraOpcao[] = [];
   fornecedores: FornecedorCompraOpcao[] = [];
   novoPedido: CriarPedidoCompra = {
@@ -277,7 +334,10 @@ export class ComprasComponent implements OnInit {
   loading = false;
   loadingItens = false;
   criandoPedido = false;
+  adicionandoItem = false;
+  loadingGrades = false;
   novoPedidoAberto = false;
+  produtosDisponiveis = false;
   cadastrosDisponiveis = false;
   loadingRecebimentos = false;
   loadingItensRecebimento = false;
@@ -286,6 +346,7 @@ export class ComprasComponent implements OnInit {
   errorRecebimentos = '';
   sucessoRecebimento = '';
   sucessoPedido = '';
+  sucessoItem = '';
   integrandoId = '';
   acaoPedidoId = '';
 
@@ -294,11 +355,20 @@ export class ComprasComponent implements OnInit {
   ngOnInit(): void {
     this.carregarTudo();
     this.carregarOpcoesPedido();
+    this.carregarProdutos();
   }
 
   carregarTudo(): void {
     this.carregar();
     this.carregarRecebimentos();
+  }
+
+  get produtosAtivos(): ProdutoCompraOpcao[] {
+    return this.produtos.filter(produto => produto.ativo);
+  }
+
+  get gradesAtivas(): GradeCompraOpcao[] {
+    return this.grades.filter(grade => grade.ativo);
   }
 
   get filiaisAtivas(): FilialCompraOpcao[] {
@@ -333,6 +403,77 @@ export class ComprasComponent implements OnInit {
     return this.itensRecebimento.reduce(
       (total, item) => total + this.valorItemRecebido(item), 0
     );
+  }
+
+  carregarProdutos(): void {
+    this.service.listarProdutos().subscribe({
+      next: (produtos) => {
+        this.produtos = produtos;
+        this.produtosDisponiveis = this.produtosAtivos.length > 0;
+      },
+      error: () => {
+        this.produtos = [];
+        this.produtosDisponiveis = false;
+      }
+    });
+  }
+
+  selecionarProduto(produtoId: string): void {
+    this.novoItem.gradeId = '';
+    this.grades = [];
+    const produto = this.produtos.find(item => item.id === produtoId);
+    this.novoItem.precoUnitario = Number(produto?.compraPrc || 0);
+    if (!produtoId) return;
+
+    this.loadingGrades = true;
+    this.service.listarGrades(produtoId).subscribe({
+      next: (grades) => {
+        this.grades = grades;
+        this.loadingGrades = false;
+      },
+      error: () => {
+        this.grades = [];
+        this.loadingGrades = false;
+      }
+    });
+  }
+
+  adicionarItem(pedido: PedidoCompra): void {
+    if (pedido.status !== 'RASCUNHO'
+        || this.adicionandoItem
+        || !this.novoItem.produtoId
+        || Number(this.novoItem.quantidade) <= 0
+        || Number(this.novoItem.precoUnitario) < 0) return;
+
+    this.adicionandoItem = true;
+    this.error = '';
+    this.sucessoItem = '';
+    const request: AdicionarPedidoCompraItem = {
+      produtoId: this.novoItem.produtoId,
+      gradeId: this.novoItem.gradeId || undefined,
+      quantidade: Number(this.novoItem.quantidade),
+      precoUnitario: Number(this.novoItem.precoUnitario)
+    };
+    this.service.adicionarItem(pedido.id, request).subscribe({
+      next: (item) => {
+        this.itens = [...this.itens, item];
+        this.adicionandoItem = false;
+        this.limparNovoItem();
+        this.sucessoItem = 'Item adicionado ao pedido.';
+      },
+      error: (err) => {
+        this.adicionandoItem = false;
+        if (err?.status === 403) {
+          this.error = 'Seu perfil não possui permissão para editar pedidos de compra.';
+          return;
+        }
+        if ([400, 409, 422].includes(err?.status)) {
+          this.error = 'Revise o produto, a grade, a quantidade e o preço informados.';
+          return;
+        }
+        this.error = 'Não foi possível adicionar o item ao pedido.';
+      }
+    });
   }
 
   carregarOpcoesPedido(): void {
@@ -501,6 +642,8 @@ export class ComprasComponent implements OnInit {
 
   abrirDetalhe(pedido: PedidoCompra): void {
     this.fecharDetalheRecebimento();
+    this.limparNovoItem();
+    this.sucessoItem = '';
     this.pedidoSelecionado = pedido;
     this.itens = [];
     this.loadingItens = true;
@@ -586,6 +729,8 @@ export class ComprasComponent implements OnInit {
 
   fecharDetalhe(): void {
     this.pedidoSelecionado = undefined;
+    this.limparNovoItem();
+    this.sucessoItem = '';
     this.itens = [];
     this.loadingItens = false;
   }
@@ -611,9 +756,34 @@ export class ComprasComponent implements OnInit {
     return 'draft';
   }
 
+  nomeProduto(produtoId: string): string {
+    const produto = this.produtos.find(item => item.id === produtoId);
+    return produto
+      ? `${produto.codigo} · ${produto.descricao}`
+      : `Produto ${this.abreviar(produtoId)}`;
+  }
+
+  nomeGrade(gradeId: string): string {
+    const grade = this.grades.find(item => item.id === gradeId);
+    return grade
+      ? `${grade.codigoGrade} · ${grade.descricaoGrade}`
+      : `Grade ${this.abreviar(gradeId)}`;
+  }
+
   nomeFornecedor(fornecedor: FornecedorCompraOpcao): string {
     return fornecedor.nomeFantasia?.trim()
       || fornecedor.nomeRazaoSocial;
+  }
+
+  private limparNovoItem(): void {
+    this.novoItem = {
+      produtoId: '',
+      gradeId: '',
+      quantidade: 1,
+      precoUnitario: 0
+    };
+    this.grades = [];
+    this.loadingGrades = false;
   }
 
   private limparNovoPedido(): void {

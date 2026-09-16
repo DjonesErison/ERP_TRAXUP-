@@ -12,10 +12,10 @@
 .readiness.blocked { background: #fff7ed; color: #9a3412; }
 .readiness span { line-height: 1.4; }
 label { display: grid; gap: 7px; color: #4b5563; font-size: 12px; font-weight: 700; }
-select { width: 100%; min-height: 40px; border: 1px solid #d1d5db; border-radius: 9px; padding: 9px 11px; background: #fff; color: #111827; font: inherit; }
-button { border: 0; border-radius: 10px; background: #111827; color: #fff; padding: 11px 16px; font-weight: 700; cursor: pointer; }
+select { width: 100%; min-height: 40px; border: 1px solid #d1d5db; border-radius: 9px; padding: 9px 11px; background: #fff; color: var(--traxup-ink); font: inherit; }
+button { border: 0; border-radius: 10px; background: var(--traxup-primary); color: #fff; padding: 11px 16px; font-weight: 700; cursor: pointer; }
 button:disabled { opacity: .55; cursor: default; }
-button.secondary { background: #e5e7eb; color: #111827; }
+button.secondary { background: #e5e7eb; color: var(--traxup-ink); }
 button.danger { background: #fee2e2; color: #991b1b; }
 button.compact { padding: 7px 10px; font-size: 11px; }
 .part-control { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; border-radius: 10px; background: #f8fafc; font-size: 12px; }

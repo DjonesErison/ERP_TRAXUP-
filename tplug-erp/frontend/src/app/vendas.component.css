@@ -1,6 +1,6 @@
 :host {
   display: block;
-  color: #172033;
+  color: var(--traxup-ink);
 }
 
 .sales-page {
@@ -35,7 +35,7 @@ button {
   border: 0;
   border-radius: 10px;
   padding: 11px 16px;
-  background: #176b5b;
+  background: var(--traxup-primary);
   color: #fff;
   font: inherit;
   font-weight: 700;
@@ -79,7 +79,7 @@ select {
   border-radius: 9px;
   padding: 10px 11px;
   background: #fff;
-  color: #172033;
+  color: var(--traxup-ink);
   font: inherit;
 }
 
@@ -121,7 +121,7 @@ td small {
 }
 
 .eyebrow {
-  color: #0f766e;
+  color: var(--traxup-blue);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: .12em;
@@ -236,7 +236,7 @@ td small {
 }
 
 .detail-summary strong {
-  color: #172033;
+  color: var(--traxup-ink);
   font-size: 17px;
 }
 
@@ -264,10 +264,10 @@ td small {
 }
 
 .observation {
-  border-left: 3px solid #0f766e;
+  border-left: 3px solid var(--traxup-blue);
   margin: 16px 0 0;
   padding: 10px 12px;
-  background: #f0fdfa;
+  background: var(--traxup-blue-soft);
   color: #334155;
 }
 

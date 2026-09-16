@@ -1,0 +1,28 @@
+<header class="dashboard-heading">
+  <div><h1>Olá, boas-vindas!</h1><p>Aqui está o resumo da sua operação</p></div>
+  <div class="today"><span>{{ hoje | date:'EEEE, d MMMM yyyy':'':'pt-BR' }}</span><small>Boa gestão, grandes resultados!</small></div>
+</header>
+
+<section class="summary-grid" aria-label="Resumo da operação">
+  <article class="summary-card"><span class="metric-icon"><app-icon name="cart" /></span><div><h2>Vendas hoje</h2><strong>—</strong><small>Resumo diário em preparação</small></div></article>
+  <article class="summary-card"><span class="metric-icon orange"><app-icon name="file" /></span><div><h2>Pedidos</h2><strong>{{ loading ? '…' : (totalPedidos ?? '—') }}</strong><small>{{ erro ? 'Consulta indisponível' : 'Total de pedidos registrados' }}</small></div></article>
+  <article class="summary-card"><span class="metric-icon"><app-icon name="chart" /></span><div><h2>Ticket médio</h2><strong>—</strong><small>Indicador em preparação</small></div></article>
+  <article class="summary-card"><span class="metric-icon red"><app-icon name="box" /></span><div><h2>Estoque baixo</h2><strong>—</strong><small>Alertas em preparação</small></div></article>
+</section>
+
+<section class="analysis-grid">
+  <article class="panel"><header><h2>Vendas da semana</h2><span class="period">Últimos 7 dias</span></header><div class="chart-empty"><app-icon name="chart" /><strong>Seu desempenho, em uma visão</strong><p>O histórico consolidado estará disponível aqui.<br>Consulte os pedidos em Vendas.</p><button class="text-link" (click)="abrirVendas.emit()">Consultar vendas <app-icon name="arrow" /></button></div></article>
+  <article class="panel"><header><h2>Formas de pagamento</h2></header><div class="chart-empty payment-empty"><span class="empty-ring" aria-hidden="true"></span><strong>Resumo em preparação</strong><p>A distribuição por forma de pagamento<br>ainda não está disponível.</p></div></article>
+  <article class="panel applications"><header><h2>Central de aplicativos</h2></header><p>Ferramentas para o seu negócio</p><div class="app-download"><app-icon name="monitor" /><div><strong>Baixar PDV</strong><small>Download em preparação</small></div><button type="button" disabled aria-label="Baixar PDV indisponível"><app-icon name="download" /></button></div><div class="app-download remote"><app-icon name="monitor" /><div><strong>Acesso Remoto</strong><small>Consulte seu suporte</small></div><button type="button" disabled aria-label="Download de acesso remoto indisponível"><app-icon name="download" /></button></div></article>
+</section>
+
+<section class="activity-grid">
+  <article class="panel recent-sales" [attr.aria-busy]="loading"><header><h2>Últimas vendas</h2><button class="text-link" (click)="abrirVendas.emit()">Ver todas</button></header>
+    <div *ngIf="erro" class="error" role="alert">{{ erro }} <button (click)="carregar()">Tentar novamente</button></div>
+    <div class="table-wrap" *ngIf="!erro"><table><thead><tr><th>Nº Pedido</th><th>Data/Hora</th><th>Valor</th><th>Status</th></tr></thead><tbody>
+      <tr *ngFor="let venda of vendas"><td><strong>{{ venda.numero }}</strong></td><td>{{ venda.criadoEm | date:'dd/MM/yyyy HH:mm' }}</td><td>{{ venda.totalLiquido | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td><td><span class="sale-status" [class.billed]="venda.status === 'FATURADO'" [class.cancelled]="venda.status === 'CANCELADO'">{{ status(venda) }}</span></td></tr>
+      <tr *ngIf="!vendas.length"><td colspan="4" class="empty-sales">{{ loading ? 'Carregando vendas…' : 'Nenhuma venda registrada.' }}</td></tr>
+    </tbody></table></div>
+  </article>
+  <article class="panel alerts"><header><h2>Alertas e pendências</h2></header><div class="alert-item"><app-icon name="file" /><div><strong>Documentos fiscais</strong><small>Acompanhamento em preparação</small></div></div><div class="alert-item stock-alert"><app-icon name="box" /><div><strong>Disponibilidade de estoque</strong><small>Alertas ainda não disponíveis</small></div></div><div class="alert-item certificate"><app-icon name="shield" /><div><strong>Certificado digital</strong><small>Consulte o responsável fiscal</small></div></div></article>
+</section>

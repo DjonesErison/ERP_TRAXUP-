@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from './auth.service';
 import { ContextoOperacionalService, FilialPermitida } from './contexto-operacional.service';
@@ -38,6 +38,8 @@ export class AppComponent implements OnInit {
 
   abrirRecuperacao(): void { this.recuperacaoTenantId = this.loginTenantId.trim(); this.recuperacaoEmail = this.loginEmail.trim(); this.recuperacaoMensagem = ''; this.recuperacaoError = ''; this.recuperacaoAberta = true; }
   fecharRecuperacao(): void { if (!this.recuperacaoLoading) this.recuperacaoAberta = false; }
+  @HostListener('document:keydown.escape')
+  fecharRecuperacaoComEscape(): void { if (this.recuperacaoAberta) this.fecharRecuperacao(); }
   solicitarRecuperacao(): void {
     if (this.recuperacaoLoading || !this.recuperacaoTenantId.trim() || !this.recuperacaoEmail.trim()) return;
     this.recuperacaoLoading = true; this.recuperacaoError = ''; this.recuperacaoMensagem = '';

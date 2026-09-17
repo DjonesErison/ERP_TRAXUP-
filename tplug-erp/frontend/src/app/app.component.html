@@ -29,8 +29,8 @@
   </main>
 </div>
 
-<div class="modal-backdrop" *ngIf="recuperacaoAberta" (click)="fecharRecuperacao()"></div>
-<section class="help-dialog" role="dialog" aria-modal="true" aria-labelledby="recuperacao-title" *ngIf="recuperacaoAberta">
+<div *ngIf="recuperacaoAberta" (click)="fecharRecuperacao()" aria-hidden="true" style="position:fixed;inset:0;background:rgba(5,23,67,.58);z-index:9998"></div>
+<section class="help-dialog" role="dialog" aria-modal="true" aria-labelledby="recuperacao-title" *ngIf="recuperacaoAberta" style="position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);max-height:calc(100vh - 32px);overflow:auto;background:#fff;margin:0">
   <form (ngSubmit)="solicitarRecuperacao()">
     <h2 id="recuperacao-title">Recuperar senha</h2><p>Informe a empresa e o e-mail do seu acesso. Se os dados estiverem cadastrados, enviaremos as instruções para redefinir sua senha.</p>
     <div class="alert" role="alert" *ngIf="recuperacaoError">{{ recuperacaoError }}</div><div class="alert" role="status" *ngIf="recuperacaoMensagem">{{ recuperacaoMensagem }}</div>

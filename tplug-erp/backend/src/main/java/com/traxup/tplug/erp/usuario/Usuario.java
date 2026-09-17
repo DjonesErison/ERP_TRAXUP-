@@ -69,39 +69,19 @@ public class Usuario {
         atualizadoEm = Instant.now();
     }
 
-    public UUID getId() {
-        return id;
+    public UUID getId() { return id; }
+    public Tenant getTenant() { return tenant; }
+    public String getNome() { return nome; }
+    public String getEmail() { return email; }
+    public String getSenhaHash() { return senhaHash; }
+    public boolean isAtivo() { return ativo; }
+    public Instant getCriadoEm() { return criadoEm; }
+    public Instant getAtualizadoEm() { return atualizadoEm; }
+
+    public void alterarSenhaHash(String senhaHash) {
+        if (senhaHash == null || senhaHash.isBlank()) throw new IllegalArgumentException("Senha hash obrigatoria");
+        this.senhaHash = senhaHash;
     }
 
-    public Tenant getTenant() {
-        return tenant;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getSenhaHash() {
-        return senhaHash;
-    }
-
-    public boolean isAtivo() {
-        return ativo;
-    }
-
-    public Instant getCriadoEm() {
-        return criadoEm;
-    }
-
-    public Instant getAtualizadoEm() {
-        return atualizadoEm;
-    }
-
-    public void desativar() {
-        this.ativo = false;
-    }
+    public void desativar() { this.ativo = false; }
 }

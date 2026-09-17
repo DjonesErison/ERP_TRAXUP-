@@ -13,7 +13,6 @@ jobs:
   backend:
     name: Homologacao - backend
     runs-on: ubuntu-latest
-
     services:
       postgres:
         image: postgres:17
@@ -21,28 +20,21 @@ jobs:
           POSTGRES_DB: tplug_erp
           POSTGRES_USER: tplug_erp
           POSTGRES_PASSWORD: tplug_erp_ci
-        ports:
-          - 5432:5432
+        ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U tplug_erp -d tplug_erp"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
+          --health-interval 10s --health-timeout 5s --health-retries 5
     env:
       DB_URL: jdbc:postgresql://localhost:5432/tplug_erp
       DB_USERNAME: tplug_erp
       DB_PASSWORD: tplug_erp_ci
       JWT_SECRET: tplug-erp-ci-jwt-secret-32-bytes-minimum-2026
-
     defaults:
       run:
         working-directory: tplug-erp/backend
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-
       - name: Configurar Java 21
         uses: actions/setup-java@v5
         with:
@@ -50,13 +42,10 @@ jobs:
           java-version: '21'
           cache: maven
           cache-dependency-path: tplug-erp/backend/pom.xml
-
       - name: Executar testes e validar migrations
         run: bash mvnw --batch-mode --no-transfer-progress clean verify
-
       - name: Validar build da imagem Docker
         run: docker build --tag tplug-erp-backend:ci .
-
   frontend:
     name: Homologacao - frontend e smoke
     runs-on: ubuntu-latest
@@ -114,14 +103,13 @@ jobs:
           BASELINE_SHA: ${{ vars.HOMOLOGACAO_BASELINE_SHA }}
         with:
           script: |
-            // Bootstrap exige autorizacao explicita para o SHA exato, apos revisar o inventario.
             if (process.env.BASELINE_SHA === context.sha) return;
             const prs = await github.paginate(github.rest.repos.listPullRequestsAssociatedWithCommit,
               {...context.repo, commit_sha: context.sha});
             const approved = prs.some(pr => pr.merged_at && pr.base.ref === 'homologacao' &&
               pr.merge_commit_sha === context.sha &&
               pr.labels.some(label => label.name === 'homologacao-aprovada'));
-            if (!approved) core.setFailed('Exige PR de promocao revisada e rotulada homologacao-aprovada.');
+            if (!approved) core.setFailed('Exige PR de promocao mergeada e rotulada homologacao-aprovada.');
   publish:
     name: Homologacao - publicar imagens
     needs: [backend, frontend, admission]

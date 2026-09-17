@@ -2,60 +2,46 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, tap } from 'rxjs';
 
-export interface LoginPayload {
-  tenantId: string;
-  email: string;
-  senha: string;
-}
-
-export interface TokenResponse {
-  accessToken: string;
-  tokenType: string;
-  expiresIn: number;
-  refreshToken: string;
-}
+export interface LoginPayload { tenantId: string; email: string; senha: string; }
+export interface TokenResponse { accessToken: string; tokenType: string; expiresIn: number; refreshToken: string; }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   static readonly ACCESS_TOKEN_KEY = 'tplug_access_token';
   static readonly REFRESH_TOKEN_KEY = 'tplug_refresh_token';
   static readonly TENANT_KEY = 'tplug_tenant_id';
-
   private readonly baseUrl = '/api/v1/auth';
   private refreshInFlight$?: Observable<string>;
 
   constructor(private readonly http: HttpClient) {}
 
   login(payload: LoginPayload): Observable<TokenResponse> {
-    return this.http.post<TokenResponse>(`${this.baseUrl}/login`, payload).pipe(
-      tap((tokens) => this.salvarTokens(tokens, payload.tenantId))
-    );
+    return this.http.post<TokenResponse>(`${this.baseUrl}/login`, payload).pipe(tap(tokens => this.salvarTokens(tokens, payload.tenantId)));
+  }
+
+  solicitarRecuperacao(tenantId: string, email: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/recuperacao-senha/solicitar`, { tenantId, email });
+  }
+
+  confirmarRecuperacao(token: string, novaSenha: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/recuperacao-senha/confirmar`, { token, novaSenha });
   }
 
   refreshSession(): Observable<string> {
     if (this.refreshInFlight$) return this.refreshInFlight$;
     const refreshToken = this.refreshToken;
-    if (!refreshToken) return new Observable<string>((subscriber) => subscriber.error(new Error('Refresh token ausente')));
-
+    if (!refreshToken) return new Observable<string>(subscriber => subscriber.error(new Error('Refresh token ausente')));
     this.refreshInFlight$ = this.http.post<TokenResponse>(`${this.baseUrl}/refresh`, { refreshToken }).pipe(
-      tap((tokens) => this.salvarTokens(tokens, this.tenantId)),
-      map((tokens) => tokens.accessToken),
-      shareReplay({ bufferSize: 1, refCount: false }),
-      finalize(() => { this.refreshInFlight$ = undefined; })
+      tap(tokens => this.salvarTokens(tokens, this.tenantId)), map(tokens => tokens.accessToken),
+      shareReplay({ bufferSize: 1, refCount: false }), finalize(() => { this.refreshInFlight$ = undefined; })
     );
     return this.refreshInFlight$;
   }
 
   logout(): Observable<void> {
     const refreshToken = this.refreshToken;
-    if (!refreshToken) {
-      this.limparSessao();
-      return of(void 0);
-    }
-    return this.http.post<void>(`${this.baseUrl}/logout`, { refreshToken }).pipe(
-      catchError(() => of(void 0)),
-      finalize(() => this.limparSessao())
-    );
+    if (!refreshToken) { this.limparSessao(); return of(void 0); }
+    return this.http.post<void>(`${this.baseUrl}/logout`, { refreshToken }).pipe(catchError(() => of(void 0)), finalize(() => this.limparSessao()));
   }
 
   limparSessao(): void {

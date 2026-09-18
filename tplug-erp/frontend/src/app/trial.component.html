@@ -1,0 +1,17 @@
+<div class="trial-page">
+<header><img src="assets/traxup-logo.webp" alt="TRAXUP"><button type="button" (click)="voltarLogin.emit()">Já sou cliente</button></header>
+<main>
+<section class="trial-copy"><p class="eyebrow">ERP + PDV + Fiscal + Financeiro</p><h1>Gestão completa para sua empresa crescer.</h1><p>Comece agora. Sem cartão de crédito e sem compromisso.</p><div class="benefits"><span>✓ ERP completo</span><span>✓ PDV integrado</span><span>✓ Controle de estoque</span><span>✓ Financeiro e fiscal</span><span>✓ CRM e BI</span><span>✓ Suporte especializado</span></div><div class="steps"><strong>1. Cadastre-se</strong><span>→</span><strong>2. Configure sua empresa</strong><span>→</span><strong>3. Comece a usar</strong></div></section>
+<section class="trial-card" *ngIf="!sucesso"><div class="badge">7 DIAS GRÁTIS</div><h2>Teste o TRAXUP gratuitamente</h2><p>Preencha seus dados e comece agora.</p><div class="alert" *ngIf="error">{{error}}</div>
+<form (ngSubmit)="cadastrar()">
+<label>Nome completo<input name="nomeCompleto" [(ngModel)]="nomeCompleto" required maxlength="150"></label>
+<label>Nome da empresa<input name="nomeEmpresa" [(ngModel)]="nomeEmpresa" required maxlength="200"></label>
+<label>Razão social<input name="razaoSocial" [(ngModel)]="razaoSocial" required maxlength="200"></label>
+<div class="row"><label>CNPJ / CPF<input name="documento" [(ngModel)]="documento" required></label><label>Telefone / WhatsApp<input name="telefone" [(ngModel)]="telefone" required></label></div>
+<label>E-mail profissional<input name="email" type="email" [(ngModel)]="email" required maxlength="254"></label>
+<div class="row"><label>Segmento<input name="segmento" [(ngModel)]="segmento" maxlength="80"></label><label>Quantidade de lojas<input name="quantidadeLojas" type="number" min="1" [(ngModel)]="quantidadeLojas" required></label></div>
+<label class="terms"><input name="aceitouTermos" type="checkbox" [(ngModel)]="aceitouTermos"> Concordo com os Termos de Uso e Política de Privacidade.</label>
+<button class="cta" type="submit" [disabled]="loading || !aceitouTermos">{{loading?'Criando seu acesso...':'Começar teste grátis →'}}</button><small>🔒 Seus dados estão protegidos</small>
+</form></section>
+<section class="trial-card success" *ngIf="sucesso"><div class="badge">CADASTRO CRIADO</div><h2>Seu teste de 7 dias começou.</h2><p>Empresa criada com sucesso. Agora vamos ativar seu administrador e concluir a configuração inicial.</p><code>{{tenantId}}</code><button class="cta" type="button" (click)="voltarLogin.emit()">Continuar para ativação</button></section>
+</main><footer>TRAXUP · Tecnologia que impulsiona negócios</footer></div>

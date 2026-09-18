@@ -1,4 +1,5 @@
-<div class="login-shell" *ngIf="!autenticado">
+<app-trial *ngIf="!autenticado && exibindoTrial" (voltarLogin)="exibindoTrial = false"></app-trial>
+<div class="login-shell" *ngIf="!autenticado && !exibindoTrial">
   <section class="login-brand" aria-label="TRAXUP ERP">
     <img class="login-logo" src="assets/traxup-logo.webp" alt="TRAXUP — Tecnologia que impulsiona negócios" width="240" height="160">
     <div class="brand-copy"><h1>Gestão completa<br>para o seu negócio crescer</h1><p class="brand-description">ERP, PDV, estoque, financeiro e fiscal<br>trabalhando juntos.</p></div>
@@ -14,7 +15,7 @@
       <label for="login-password">Senha</label><div class="input-icon password-field"><app-icon name="lock" /><input id="login-password" name="senha" [type]="mostrarSenha ? 'text' : 'password'" [(ngModel)]="loginSenha" required maxlength="72" placeholder="Sua senha" autocomplete="current-password"><button class="password-toggle" type="button" (click)="mostrarSenha = !mostrarSenha" [attr.aria-label]="mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'"><app-icon name="eye" /></button></div>
       <div class="login-options"><label class="remember"><input type="checkbox" name="lembrarAcesso" [(ngModel)]="lembrarAcesso">Lembrar empresa e e-mail</label><button type="button" class="text-action" (click)="abrirRecuperacao()">Esqueci minha senha</button></div>
       <button class="login-button" type="submit" [disabled]="loginLoading || !loginTenantId.trim() || !loginEmail.trim() || !loginSenha">{{ loginLoading ? 'Entrando...' : 'Entrar' }} <app-icon *ngIf="!loginLoading" name="arrow" /></button>
-      <small class="security-note"><app-icon name="lock" /> Seus dados estão protegidos</small><p class="login-footer">TRAXUP ERP · Tecnologia que impulsiona negócios</p>
+      <small class="security-note"><app-icon name="lock" /> Seus dados estão protegidos</small><button type="button" class="text-action" (click)="exibindoTrial = true">Ainda não é cliente? Teste grátis por 7 dias</button><p class="login-footer">TRAXUP ERP · Tecnologia que impulsiona negócios</p>
     </form>
   </div></section>
 </div>

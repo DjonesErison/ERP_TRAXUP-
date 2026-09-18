@@ -10,6 +10,7 @@ import com.traxup.tplug.erp.usuario.Usuario;
 import com.traxup.tplug.erp.usuario.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
@@ -28,6 +29,7 @@ public class TrialProvisioningService {
     private final Clock clock;
     private final SecureRandom secureRandom = new SecureRandom();
 
+    @Autowired
     public TrialProvisioningService(TenantRepository tenantRepository, EmpresaRepository empresaRepository,
                                     UsuarioRepository usuarioRepository, TrialSaasRepository trialRepository,
                                     PasswordEncoder passwordEncoder) {

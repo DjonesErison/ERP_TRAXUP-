@@ -22,6 +22,12 @@ try {
     await trialPage.goto(`${process.argv[2]}/teste`);
     await trialPage.getByRole('heading', { name: 'Transforme a gestão da sua empresa com a TraxUp' }).waitFor();
     await trialPage.getByRole('heading', { name: 'Comece seu teste grátis' }).waitFor();
+    await trialPage.getByText('MAIS CONTROLE. MAIS VENDAS. UM FUTURO MAIOR.', { exact: true }).waitFor();
+    await trialPage.getByText('7 dias grátis', { exact: true }).waitFor();
+    await trialPage.getByText('Sem compromisso', { exact: true }).waitFor();
+    await trialPage.getByText('Configuração guiada', { exact: true }).waitFor();
+    await trialPage.getByText('Baixe o PDV e comece a vender', { exact: true }).waitFor();
+    await trialPage.getByText('Assistente IA', { exact: true }).waitFor();
     assert.equal(await trialPage.getByRole('button', { name: /Criar minha conta grátis/ }).isDisabled(), true);
     assert.equal(await trialPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no trial');
     await trialPage.screenshot({ path: `${out}/trial-${viewport.width}.png`, fullPage: true });

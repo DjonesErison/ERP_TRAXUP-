@@ -41,6 +41,12 @@ public class AuthController {
         return ResponseEntity.accepted().build();
     }
 
+    @PostMapping("/ativacao-admin/confirmar")
+    public ResponseEntity<Void> confirmarAtivacaoAdmin(@Valid @RequestBody AtivacaoAdminConfirmarRequest request) {
+        authApplicationService.confirmarAtivacaoAdministrador(request.token(), request.novaSenha());
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/recuperacao-senha/confirmar")
     public ResponseEntity<Void> confirmarRecuperacao(@Valid @RequestBody RecuperacaoSenhaConfirmarRequest request) {
         authApplicationService.confirmarRecuperacao(request.token(), request.novaSenha());

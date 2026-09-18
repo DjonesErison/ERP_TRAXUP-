@@ -1,6 +1,7 @@
 package com.traxup.tplug.erp.trial;
 
 import com.traxup.tplug.erp.empresa.Empresa;
+import com.traxup.tplug.erp.auth.AuthApplicationService;
 import com.traxup.tplug.erp.empresa.EmpresaRepository;
 import com.traxup.tplug.erp.tenant.Tenant;
 import com.traxup.tplug.erp.tenant.TenantRepository;
@@ -26,24 +27,26 @@ public class TrialProvisioningService {
     private final UsuarioRepository usuarioRepository;
     private final TrialSaasRepository trialRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthApplicationService authApplicationService;
     private final Clock clock;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Autowired
     public TrialProvisioningService(TenantRepository tenantRepository, EmpresaRepository empresaRepository,
                                     UsuarioRepository usuarioRepository, TrialSaasRepository trialRepository,
-                                    PasswordEncoder passwordEncoder) {
-        this(tenantRepository, empresaRepository, usuarioRepository, trialRepository, passwordEncoder, Clock.systemUTC());
+                                    PasswordEncoder passwordEncoder, AuthApplicationService authApplicationService) {
+        this(tenantRepository, empresaRepository, usuarioRepository, trialRepository, passwordEncoder, authApplicationService, Clock.systemUTC());
     }
 
     TrialProvisioningService(TenantRepository tenantRepository, EmpresaRepository empresaRepository,
                              UsuarioRepository usuarioRepository, TrialSaasRepository trialRepository,
-                             PasswordEncoder passwordEncoder, Clock clock) {
+                             PasswordEncoder passwordEncoder, AuthApplicationService authApplicationService, Clock clock) {
         this.tenantRepository = tenantRepository;
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.trialRepository = trialRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authApplicationService = authApplicationService;
         this.clock = clock;
     }
 
@@ -51,7 +54,7 @@ public class TrialProvisioningService {
     public TrialCadastroResponse provisionar(TrialCadastroRequest request) {
         String idempotencyKey = request.idempotencyKey().trim();
         return trialRepository.findByIdempotencyKey(idempotencyKey)
-                .map(this::response)
+                .map(trial -> response(trial, null))
                 .orElseGet(() -> criar(request, idempotencyKey));
     }
 
@@ -73,12 +76,13 @@ public class TrialProvisioningService {
         TrialSaas trial = trialRepository.save(new TrialSaas(tenant, empresa, admin, email, documento, telefone,
                 normalizarOpcional(request.segmento()), request.quantidadeLojas(), request.termosVersao().trim(),
                 idempotencyKey, agora));
-        return response(trial);
+        String ativacaoToken = authApplicationService.criarAtivacaoAdministrador(admin);
+        return response(trial, ativacaoToken);
     }
 
-    private TrialCadastroResponse response(TrialSaas trial) {
+    private TrialCadastroResponse response(TrialSaas trial, String ativacaoToken) {
         return new TrialCadastroResponse(trial.getId(), trial.getTenantId(), trial.getExpiraEm(),
-                trial.getStatus(), "ATIVAR_ADMINISTRADOR");
+                trial.getStatus(), "ATIVAR_ADMINISTRADOR", ativacaoToken);
     }
 
     private String segredoAleatorio() {

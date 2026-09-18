@@ -7,7 +7,7 @@ export interface TrialCadastroPayload {
   telefone: string; email: string; segmento?: string; quantidadeLojas: number;
   aceitouTermos: boolean; termosVersao: string; idempotencyKey: string;
 }
-export interface TrialCadastroResponse { trialId: string; tenantId: string; expiraEm: string; status: string; proximoPasso: string; }
+export interface TrialCadastroResponse { trialId: string; tenantId: string; expiraEm: string; status: string; proximoPasso: string; ativacaoToken?: string | null; }
 
 @Injectable({ providedIn: 'root' })
 export class TrialService {

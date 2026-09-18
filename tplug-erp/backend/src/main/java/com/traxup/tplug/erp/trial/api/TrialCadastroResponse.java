@@ -8,5 +8,6 @@ public record TrialCadastroResponse(
         UUID tenantId,
         Instant expiraEm,
         String status,
-        String proximoPasso
+        String proximoPasso,
+        String ativacaoToken
 ) {}

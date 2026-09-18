@@ -70,6 +70,7 @@ public class TrialSaas {
     public UUID getId() { return id; }
     public UUID getTenantId() { return tenant.getId(); }
     public String getIdempotencyKey() { return idempotencyKey; }
+    public Usuario getAdministrador() { return administrador; }
     public Instant getExpiraEm() { return expiraEm; }
     public String getStatus() { return status; }
     public String getOnboardingStatus() { return onboardingStatus; }

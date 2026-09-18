@@ -1,5 +1,5 @@
-<app-trial *ngIf="!autenticado && exibindoTrial" (voltarLogin)="exibindoTrial = false"></app-trial>
-<div class="login-shell" *ngIf="!autenticado && !exibindoTrial">
+<app-ativacao-admin *ngIf="!autenticado && ativacaoAdminToken" [token]="ativacaoAdminToken" (concluida)="concluirAtivacaoAdmin()"></app-ativacao-admin>\n<app-trial *ngIf="!autenticado && exibindoTrial && !ativacaoAdminToken" (voltarLogin)="exibindoTrial = false" (ativarAdmin)="iniciarAtivacaoAdmin($event)"></app-trial>
+<div class="login-shell" *ngIf="!autenticado && !exibindoTrial && !ativacaoAdminToken">
   <section class="login-brand" aria-label="TRAXUP ERP">
     <img class="login-logo" src="assets/traxup-logo.webp" alt="TRAXUP — Tecnologia que impulsiona negócios" width="240" height="160">
     <div class="brand-copy"><h1>Gestão completa<br>para o seu negócio crescer</h1><p class="brand-description">ERP, PDV, estoque, financeiro e fiscal<br>trabalhando juntos.</p></div>

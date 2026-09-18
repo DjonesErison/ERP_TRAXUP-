@@ -41,6 +41,7 @@ try {
       }
       if (url.endsWith('/auth/logout')) return route.fulfill({ status: 204 });
       const path = new URL(url).pathname;
+      if (path === '/api/v1/onboarding') return route.fulfill({ json: { concluido: true, empresaConfigurada: true, filialConfigurada: true } });
       if (path === '/api/v1/me/filiais') return route.fulfill({ json: [{ id: '00000000-0000-4000-8000-000000000101', nome: 'Filial Visual', cnpj: '00000000000100', empresaId: '00000000-0000-4000-8000-000000000201', empresaNome: 'Empresa Visual' }] });
       if (path.endsWith('/vendas/pedidos/recentes') && new URL(url).searchParams.get('tamanho') === '5') {
         assert.match(route.request().headers().authorization || '', /^Bearer /);

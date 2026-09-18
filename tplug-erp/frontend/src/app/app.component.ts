@@ -14,8 +14,10 @@ import { DashboardComponent } from './dashboard.component';
 import { UiIconComponent } from './ui-icon.component';
 import { TrialComponent } from './trial.component';
 import { AtivacaoAdminComponent } from './ativacao-admin.component';
+import { OnboardingComponent } from './onboarding.component';
+import { OnboardingService } from './onboarding.service';
 
-@Component({ selector: 'app-root', standalone: true, imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
+@Component({ selector: 'app-root', standalone: true, imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
   area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false; ativacaoAdminToken = '';
   readonly menu = [
@@ -27,14 +29,15 @@ export class AppComponent implements OnInit {
   ];
   autenticado = false; loginTenantId = ''; loginEmail = ''; loginSenha = ''; mostrarSenha = false; loginLoading = false; loginError = ''; logoutLoading = false;
   recuperacaoAberta = false; recuperacaoTenantId = ''; recuperacaoEmail = ''; recuperacaoLoading = false; recuperacaoMensagem = ''; recuperacaoError = '';
+  onboardingPendente = false;
   filialId = ''; filiais: FilialPermitida[] = []; filialAtiva: FilialPermitida | null = null; selecionandoFilial = false; filiaisLoading = false; filiaisError = '';
   diasInatividade = 30; loading = false; error = ''; inativos: ClienteInativo[] = []; rfv: ClienteRfv[] = []; followups: ClienteFollowUp[] = []; interacoes: ClienteInteracao[] = [];
 
-  constructor(private readonly crm: CrmService, private readonly auth: AuthService, private readonly contexto: ContextoOperacionalService) {}
+  constructor(private readonly crm: CrmService, private readonly auth: AuthService, private readonly contexto: ContextoOperacionalService, private readonly onboarding: OnboardingService) {}
 
   ngOnInit(): void {
     this.loginTenantId = this.auth.tenantId ?? ''; this.autenticado = this.auth.autenticado; this.filialAtiva = this.contexto.filialAtiva;
-    this.selecionandoFilial = this.autenticado && !this.filialAtiva; if (this.selecionandoFilial) this.carregarFiliais();
+    this.selecionandoFilial = this.autenticado && !this.filialAtiva; if (this.autenticado) this.verificarOnboarding(); else if (this.selecionandoFilial) this.carregarFiliais();
     try { const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null'); if (salvo && typeof salvo.tenantId === 'string' && typeof salvo.email === 'string') { this.loginTenantId = this.auth.tenantId || salvo.tenantId; this.loginEmail = salvo.email; this.lembrarAcesso = true; } } catch { localStorage.removeItem('traxup_login_hint'); }
   }
 
@@ -57,10 +60,13 @@ export class AppComponent implements OnInit {
   entrar(): void {
     if (this.loginLoading) return; this.loginLoading = true; this.loginError = '';
     this.auth.login({ tenantId: this.loginTenantId.trim(), email: this.loginEmail.trim(), senha: this.loginSenha }).subscribe({
-      next: () => { this.loginLoading = false; this.loginSenha = ''; this.mostrarSenha = false; this.area = 'dashboard'; this.autenticado = true; this.contexto.limpar(); this.filialAtiva = null; this.selecionandoFilial = true; this.carregarFiliais(); if (this.lembrarAcesso) localStorage.setItem('traxup_login_hint', JSON.stringify({ tenantId: this.loginTenantId.trim(), email: this.loginEmail.trim() })); else localStorage.removeItem('traxup_login_hint'); },
+      next: () => { this.loginLoading = false; this.loginSenha = ''; this.mostrarSenha = false; this.area = 'dashboard'; this.autenticado = true; this.contexto.limpar(); this.filialAtiva = null; this.selecionandoFilial = true; this.verificarOnboarding(); if (this.lembrarAcesso) localStorage.setItem('traxup_login_hint', JSON.stringify({ tenantId: this.loginTenantId.trim(), email: this.loginEmail.trim() })); else localStorage.removeItem('traxup_login_hint'); },
       error: err => { this.loginLoading = false; this.loginError = err?.status === 401 || err?.status === 403 ? 'Empresa, e-mail ou senha inválidos.' : 'Não foi possível entrar. Verifique os dados e a disponibilidade do sistema.'; }
     });
   }
+
+  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { this.onboardingPendente = !s.concluido; if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = false; this.carregarFiliais(); } }); }
+  onboardingConcluido(): void { this.onboardingPendente = false; this.selecionandoFilial = true; this.carregarFiliais(); }
 
   carregarFiliais(): void { if (!this.auth.autenticado || this.filiaisLoading) return; this.filiaisLoading = true; this.filiaisError = ''; this.contexto.listarFiliais().subscribe({ next: filiais => { this.filiais = filiais; this.filiaisLoading = false; if (filiais.length === 1) this.escolherFilial(filiais[0]); }, error: () => { this.filiaisLoading = false; this.filiaisError = 'Não foi possível carregar as filiais permitidas para este usuário.'; } }); }
   escolherFilial(filial: FilialPermitida): void { this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id; this.selecionandoFilial = false; this.area = 'dashboard'; }

@@ -36,6 +36,8 @@ export class AppComponent implements OnInit {
   constructor(private readonly crm: CrmService, private readonly auth: AuthService, private readonly contexto: ContextoOperacionalService, private readonly onboarding: OnboardingService) {}
 
   ngOnInit(): void {
+    const publicPath = window.location.pathname.replace(/\/+$/, '');
+    if (publicPath === '/teste' || publicPath === '/trial') this.exibindoTrial = true;
     this.loginTenantId = this.auth.tenantId ?? ''; this.autenticado = this.auth.autenticado; this.filialAtiva = this.contexto.filialAtiva;
     this.selecionandoFilial = this.autenticado && !this.filialAtiva; if (this.autenticado) this.verificarOnboarding(); else if (this.selecionandoFilial) this.carregarFiliais();
     try { const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null'); if (salvo && typeof salvo.tenantId === 'string' && typeof salvo.email === 'string') { this.loginTenantId = this.auth.tenantId || salvo.tenantId; this.loginEmail = salvo.email; this.lembrarAcesso = true; } } catch { localStorage.removeItem('traxup_login_hint'); }

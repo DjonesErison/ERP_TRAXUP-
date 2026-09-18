@@ -12,10 +12,11 @@ import { VendasComponent } from './vendas.component';
 import { ComprasComponent } from './compras.component';
 import { DashboardComponent } from './dashboard.component';
 import { UiIconComponent } from './ui-icon.component';
+import { TrialComponent } from './trial.component';
 
-@Component({ selector: 'app-root', standalone: true, imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
+@Component({ selector: 'app-root', standalone: true, imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
-  area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false;
+  area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false;
   readonly menu = [
     { label: 'Visão Geral', icon: 'home', area: 'dashboard' }, { label: 'Vendas', icon: 'cart', area: 'vendas' }, { label: 'Produtos', icon: 'box', area: '' },
     { label: 'Inventário', icon: 'stock', area: 'inventario' }, { label: 'Clientes', icon: 'users', area: '' }, { label: 'CRM', icon: 'users', area: 'crm' },

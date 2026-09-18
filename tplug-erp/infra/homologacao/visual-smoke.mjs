@@ -18,6 +18,14 @@ try {
     assert.equal(await page.getByRole('button', { name: 'Entrar', exact: true }).isDisabled(), true);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no login');
     await page.screenshot({ path: `${out}/login-${viewport.width}.png`, fullPage: true });
+    const trialPage = await browser.newPage({ viewport });
+    await trialPage.goto(`${process.argv[2]}/teste`);
+    await trialPage.getByRole('heading', { name: 'Transforme a gestão da sua empresa com a TraxUp' }).waitFor();
+    await trialPage.getByRole('heading', { name: 'Comece seu teste grátis' }).waitFor();
+    assert.equal(await trialPage.getByRole('button', { name: /Criar minha conta grátis/ }).isDisabled(), true);
+    assert.equal(await trialPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no trial');
+    await trialPage.screenshot({ path: `${out}/trial-${viewport.width}.png`, fullPage: true });
+    await trialPage.close();
     await page.getByLabel('Empresa', { exact: true }).fill('00000000-0000-4000-8000-000000000001');
     await page.getByLabel('E-mail', { exact: true }).fill('visual@example.test');
     await page.getByLabel('Senha', { exact: true }).fill('somente-teste-visual');

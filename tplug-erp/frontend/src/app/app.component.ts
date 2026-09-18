@@ -13,10 +13,11 @@ import { ComprasComponent } from './compras.component';
 import { DashboardComponent } from './dashboard.component';
 import { UiIconComponent } from './ui-icon.component';
 import { TrialComponent } from './trial.component';
+import { AtivacaoAdminComponent } from './ativacao-admin.component';
 
-@Component({ selector: 'app-root', standalone: true, imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
+@Component({ selector: 'app-root', standalone: true, imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
-  area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false;
+  area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false; ativacaoAdminToken = '';
   readonly menu = [
     { label: 'Visão Geral', icon: 'home', area: 'dashboard' }, { label: 'Vendas', icon: 'cart', area: 'vendas' }, { label: 'Produtos', icon: 'box', area: '' },
     { label: 'Inventário', icon: 'stock', area: 'inventario' }, { label: 'Clientes', icon: 'users', area: '' }, { label: 'CRM', icon: 'users', area: 'crm' },
@@ -36,6 +37,9 @@ export class AppComponent implements OnInit {
     this.selecionandoFilial = this.autenticado && !this.filialAtiva; if (this.selecionandoFilial) this.carregarFiliais();
     try { const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null'); if (salvo && typeof salvo.tenantId === 'string' && typeof salvo.email === 'string') { this.loginTenantId = this.auth.tenantId || salvo.tenantId; this.loginEmail = salvo.email; this.lembrarAcesso = true; } } catch { localStorage.removeItem('traxup_login_hint'); }
   }
+
+  iniciarAtivacaoAdmin(token: string): void { this.ativacaoAdminToken = token; this.exibindoTrial = false; }
+  concluirAtivacaoAdmin(): void { this.ativacaoAdminToken = ''; this.exibindoTrial = false; this.loginError = ''; }
 
   abrirRecuperacao(): void { this.recuperacaoTenantId = this.loginTenantId.trim(); this.recuperacaoEmail = this.loginEmail.trim(); this.recuperacaoMensagem = ''; this.recuperacaoError = ''; this.recuperacaoAberta = true; }
   fecharRecuperacao(): void { if (!this.recuperacaoLoading) this.recuperacaoAberta = false; }

@@ -26,17 +26,19 @@ public class AuthApplicationService {
     private final UsuarioRepository usuarioRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final RecuperacaoSenhaTokenRepository recuperacaoSenhaTokenRepository;
+    private final AtivacaoAdminTokenRepository ativacaoAdminTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final JwtProperties properties;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AuthApplicationService(UsuarioRepository usuarioRepository, RefreshTokenRepository refreshTokenRepository,
-            RecuperacaoSenhaTokenRepository recuperacaoSenhaTokenRepository, PasswordEncoder passwordEncoder,
+            RecuperacaoSenhaTokenRepository recuperacaoSenhaTokenRepository, AtivacaoAdminTokenRepository ativacaoAdminTokenRepository, PasswordEncoder passwordEncoder,
             JwtService jwtService, JwtProperties properties) {
         this.usuarioRepository = usuarioRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.recuperacaoSenhaTokenRepository = recuperacaoSenhaTokenRepository;
+        this.ativacaoAdminTokenRepository = ativacaoAdminTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.properties = properties;
@@ -91,6 +93,26 @@ public class AuthApplicationService {
         usuarioRepository.save(usuario);
         recuperacao.marcarUsado(agora);
         recuperacaoSenhaTokenRepository.save(recuperacao);
+    }
+
+
+    public String criarAtivacaoAdministrador(Usuario usuario) {
+        String token = gerarTokenAleatorio();
+        ativacaoAdminTokenRepository.save(new AtivacaoAdminToken(usuario.getTenant(), usuario, hash(token),
+                Instant.now().plus(24, ChronoUnit.HOURS)));
+        return token;
+    }
+
+    public void confirmarAtivacaoAdministrador(String token, String novaSenha) {
+        Instant agora = Instant.now();
+        AtivacaoAdminToken ativacao = ativacaoAdminTokenRepository.findByTokenHash(hash(token))
+                .filter(item -> item.podeUsar(agora))
+                .orElseThrow(() -> new AutenticacaoException("Token de ativacao invalido ou expirado"));
+        Usuario usuario = ativacao.getUsuario();
+        usuario.alterarSenhaHash(passwordEncoder.encode(novaSenha));
+        usuarioRepository.save(usuario);
+        ativacao.marcarUsado(agora);
+        ativacaoAdminTokenRepository.save(ativacao);
     }
 
     private AuthTokens emitirTokens(Usuario usuario) {

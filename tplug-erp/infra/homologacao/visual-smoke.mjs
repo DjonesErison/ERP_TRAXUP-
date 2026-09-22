@@ -30,6 +30,8 @@ try {
     await trialPage.getByText('Assistente IA', { exact: true }).waitFor();
     assert.equal(await trialPage.getByRole('button', { name: /Criar minha conta grátis/ }).isDisabled(), true);
     assert.equal(await trialPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no trial');
+    const overlap = await trialPage.evaluate(() => { const modules=document.querySelector('.modules')?.getBoundingClientRect(); const art=document.querySelector('.product-art')?.getBoundingClientRect(); if(!modules||!art)return false; return !(modules.right <= art.left || modules.left >= art.right || modules.bottom <= art.top || modules.top >= art.bottom); });
+    assert.equal(overlap, false, 'Mockup ERP/PDV sobrepondo os modulos do Trial');
     await trialPage.screenshot({ path: `${out}/trial-${viewport.width}.png`, fullPage: true });
     await trialPage.close();
     await page.getByLabel('Empresa', { exact: true }).fill('00000000-0000-4000-8000-000000000001');

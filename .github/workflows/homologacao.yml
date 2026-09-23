@@ -69,6 +69,7 @@ jobs:
         run: |
           npm install --prefix /tmp/traxup-browser --no-package-lock playwright@1.51.1
           PLAYWRIGHT_MODULE=/tmp/traxup-browser/node_modules/playwright/index.mjs node tplug-erp/infra/homologacao/visual-smoke.mjs http://127.0.0.1:8082
+          PLAYWRIGHT_MODULE=/tmp/traxup-browser/node_modules/playwright/index.mjs node tplug-erp/infra/homologacao/trial-smoke.mjs http://127.0.0.1:8082
       - uses: actions/upload-artifact@v4
         if: always()
         with:

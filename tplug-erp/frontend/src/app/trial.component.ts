@@ -1,10 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { UiIconComponent } from './ui-icon.component';
 import { TrialService } from './trial.service';
 
-@Component({ selector: 'app-trial', standalone: true, imports: [CommonModule, FormsModule], templateUrl: './trial.component.html', styleUrl: './trial.component.css' })
+@Component({ selector: 'app-trial', standalone: true, imports: [CommonModule, FormsModule, UiIconComponent], templateUrl: './trial.component.html', styleUrl: './trial.component.css' })
 export class TrialComponent {
+  @ViewChild('nomeInput') nomeInput?: ElementRef<HTMLInputElement>;
+  focarCadastro(): void { this.nomeInput?.nativeElement.focus(); }
   @Output() voltarLogin = new EventEmitter<void>();
   @Output() ativarAdmin = new EventEmitter<string>();
   nomeCompleto=''; nomeEmpresa=''; razaoSocial=''; documento=''; telefone=''; email=''; segmento=''; quantidadeLojas=1; aceitouTermos=false;

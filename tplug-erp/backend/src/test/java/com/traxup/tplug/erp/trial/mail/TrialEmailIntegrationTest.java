@@ -22,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class TrialEmailIntegrationTest {
     @Autowired TrialProvisioningService provisioning;
+    @Autowired com.traxup.tplug.erp.trial.TrialSaasRepository trials;
     @Autowired TrialEmailQueue queue;
     @Autowired JdbcTemplate jdbc;
     @Autowired MockMvc mvc;
@@ -36,6 +37,7 @@ class TrialEmailIntegrationTest {
     }
     @Test void cadastroAtomicoSemTokenPublicoEIdempotente() {
         var req=request(UUID.randomUUID().toString());var first=provisioning.provisionar(req);var again=provisioning.provisionar(req);
+        assertThat(trials.existsByTenantId(first.tenantId())).isTrue();
         assertThat(first.ativacaoToken()).isNull();assertThat(first.proximoPasso()).isEqualTo("VERIFICAR_EMAIL");
         assertThat(again.trialId()).isEqualTo(first.trialId());
         assertThat(jdbc.queryForObject("select count(*) from trial_activation_emails where trial_id=?",Integer.class,first.trialId())).isEqualTo(1);

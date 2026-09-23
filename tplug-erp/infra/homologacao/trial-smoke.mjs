@@ -73,12 +73,14 @@ try {
     await page.getByRole('heading',{name:'Crie sua senha'}).waitFor();
     assert.equal(oldSessionRequests,0,'Activation must not query the previous account');
     assert.equal(await page.evaluate(()=>localStorage.getItem('tplug_access_token')),null);
+    await page.goto('about:blank');
     await page.goto(`${base}/entrar#empresa=${tenant}&email=ana%40example.test`);
     await page.getByRole('heading',{name:'Acesse seu ERP'}).waitFor();
     assert.equal(await page.locator('#login-company').inputValue(),tenant);
     assert.equal(await page.locator('#login-email').inputValue(),'ana@example.test');
     assert.equal(oldSessionRequests,0,'Email login must not query the previous account');
     // A stale bare login with no company must recover instead of trapping the user in onboarding.
+    await page.goto('about:blank');
     await page.goto(`${base}/entrar`);
     await page.getByRole('alert').filter({hasText:'Esta sessão não possui uma empresa cadastrada'}).waitFor();
     assert.equal(await page.locator('app-onboarding').count(),0);

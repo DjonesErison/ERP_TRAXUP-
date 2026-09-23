@@ -1,3 +1,4 @@
+import { ReenviarAtivacaoComponent } from './reenviar-ativacao.component';
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -17,7 +18,7 @@ import { AtivacaoAdminComponent } from './ativacao-admin.component';
 import { OnboardingComponent } from './onboarding.component';
 import { OnboardingService } from './onboarding.service';
 
-@Component({ selector: 'app-root', standalone: true, imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
+@Component({ selector: 'app-root', standalone: true, imports: [ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
   area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false; ativacaoAdminToken = '';
   readonly menu = [
@@ -29,7 +30,7 @@ export class AppComponent implements OnInit {
   ];
   autenticado = false; loginTenantId = ''; loginEmail = ''; loginSenha = ''; mostrarSenha = false; loginLoading = false; loginError = ''; logoutLoading = false;
   recuperacaoAberta = false; recuperacaoTenantId = ''; recuperacaoEmail = ''; recuperacaoLoading = false; recuperacaoMensagem = ''; recuperacaoError = '';
-  onboardingPendente = false;
+  onboardingPendente = false; reenviarAtivacao = false; ativacaoMensagem = '';
   filialId = ''; filiais: FilialPermitida[] = []; filialAtiva: FilialPermitida | null = null; selecionandoFilial = false; filiaisLoading = false; filiaisError = '';
   diasInatividade = 30; loading = false; error = ''; inativos: ClienteInativo[] = []; rfv: ClienteRfv[] = []; followups: ClienteFollowUp[] = []; interacoes: ClienteInteracao[] = [];
 
@@ -37,14 +38,27 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     const publicPath = window.location.pathname.replace(/\/+$/, '');
-    if (window.location.hostname === 'captacaoclientes.traxup.com.br' || publicPath === '/teste' || publicPath === '/trial') this.exibindoTrial = true;
+    if ((window.location.hostname === 'captacaoclientes.traxup.com.br' && !['/ativar','/entrar'].includes(publicPath)) || publicPath === '/teste' || publicPath === '/trial') this.exibindoTrial = true;
     this.loginTenantId = this.auth.tenantId ?? ''; this.autenticado = this.auth.autenticado; this.filialAtiva = this.contexto.filialAtiva;
     this.selecionandoFilial = this.autenticado && !this.filialAtiva; if (this.autenticado) this.verificarOnboarding(); else if (this.selecionandoFilial) this.carregarFiliais();
     try { const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null'); if (salvo && typeof salvo.tenantId === 'string' && typeof salvo.email === 'string') { this.loginTenantId = this.auth.tenantId || salvo.tenantId; this.loginEmail = salvo.email; this.lembrarAcesso = true; } } catch { localStorage.removeItem('traxup_login_hint'); }
+    if (publicPath === '/ativar' || publicPath === '/entrar') {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const tenantId = params.get('empresa') || ''; const email = params.get('email') || '';
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) this.loginTenantId = tenantId;
+      if (email.length <= 254) this.loginEmail = email;
+      if (publicPath === '/ativar') {
+        const token = params.get('token') || '';
+        if (/^[A-Za-z0-9_-]{43}$/.test(token)) this.ativacaoAdminToken = token;
+        else { this.reenviarAtivacao = true; this.loginError = 'Link de ativação incompleto. Solicite um novo link abaixo.'; }
+      }
+      // Keep credentials out of URLs, referrers and browser history after opening.
+      window.history.replaceState(null, '', '/entrar');
+    }
   }
 
   iniciarAtivacaoAdmin(token: string): void { this.ativacaoAdminToken = token; this.exibindoTrial = false; }
-  concluirAtivacaoAdmin(): void { this.ativacaoAdminToken = ''; this.exibindoTrial = false; this.loginError = ''; }
+  concluirAtivacaoAdmin(): void { this.ativacaoAdminToken = ''; this.exibindoTrial = false; this.loginError = ''; this.ativacaoMensagem = 'Senha criada! Entre para configurar sua empresa.'; }
 
   abrirRecuperacao(): void { this.recuperacaoTenantId = this.loginTenantId.trim(); this.recuperacaoEmail = this.loginEmail.trim(); this.recuperacaoMensagem = ''; this.recuperacaoError = ''; this.recuperacaoAberta = true; }
   fecharRecuperacao(): void { if (!this.recuperacaoLoading) this.recuperacaoAberta = false; }

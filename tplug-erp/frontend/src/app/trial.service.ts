@@ -12,6 +12,9 @@ export interface TrialCadastroResponse { trialId: string; tenantId: string; expi
 @Injectable({ providedIn: 'root' })
 export class TrialService {
   constructor(private readonly http: HttpClient) {}
+  reenviar(tenantId: string, email: string): Observable<void> {
+    return this.http.post<void>('/api/public/trials/reenviar-ativacao', {tenantId, email});
+  }
   cadastrar(payload: TrialCadastroPayload): Observable<TrialCadastroResponse> {
     return this.http.post<TrialCadastroResponse>('/api/public/trials', payload);
   }

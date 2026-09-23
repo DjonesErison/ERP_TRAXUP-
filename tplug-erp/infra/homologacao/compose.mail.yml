@@ -1,0 +1,17 @@
+# VPS only: the mailbox password is maintained outside Git and mounted read-only.
+services:
+  backend:
+    environment:
+      TRIAL_MAIL_ENABLED: "true"
+      SMTP_HOST: smtp.hostinger.com
+      SMTP_PORT: "465"
+      SMTP_USERNAME: naoresponda@traxup.com.br
+      SMTP_FROM: naoresponda@traxup.com.br
+      TRIAL_PUBLIC_URL: https://captacaoclientes.traxup.com.br
+    volumes:
+      - type: bind
+        source: /opt/traxup-homologacao/secrets/smtp-password
+        target: /run/secrets/traxup-mail/spring.mail.password
+        read_only: true
+        bind:
+          create_host_path: false

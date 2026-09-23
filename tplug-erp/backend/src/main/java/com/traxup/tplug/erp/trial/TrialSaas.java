@@ -41,6 +41,10 @@ public class TrialSaas {
     @Column(name = "criado_em", nullable = false) private Instant criadoEm;
     @Column(name = "atualizado_em", nullable = false) private Instant atualizadoEm;
 
+    @Column(name="admin_ativado_em") private Instant adminAtivadoEm;
+    public boolean isAdminAtivado() { return adminAtivadoEm != null; }
+    public void marcarAdminAtivado(Instant now) { adminAtivadoEm=now; }
+
     protected TrialSaas() {}
 
     public TrialSaas(Tenant tenant, Empresa empresa, Usuario administrador, String email, String documento,

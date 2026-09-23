@@ -23,6 +23,7 @@ import java.util.UUID;
 @Transactional
 public class AuthApplicationService {
 
+    private final com.traxup.tplug.erp.trial.TrialSaasRepository trialRepository;
     private final UsuarioRepository usuarioRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final RecuperacaoSenhaTokenRepository recuperacaoSenhaTokenRepository;
@@ -34,7 +35,8 @@ public class AuthApplicationService {
 
     public AuthApplicationService(UsuarioRepository usuarioRepository, RefreshTokenRepository refreshTokenRepository,
             RecuperacaoSenhaTokenRepository recuperacaoSenhaTokenRepository, AtivacaoAdminTokenRepository ativacaoAdminTokenRepository, PasswordEncoder passwordEncoder,
-            JwtService jwtService, JwtProperties properties) {
+            JwtService jwtService, JwtProperties properties, com.traxup.tplug.erp.trial.TrialSaasRepository trialRepository) {
+        this.trialRepository=trialRepository;
         this.usuarioRepository = usuarioRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.recuperacaoSenhaTokenRepository = recuperacaoSenhaTokenRepository;
@@ -109,10 +111,15 @@ public class AuthApplicationService {
                 .filter(item -> item.podeUsar(agora))
                 .orElseThrow(() -> new AutenticacaoException("Token de ativacao invalido ou expirado"));
         Usuario usuario = ativacao.getUsuario();
+        var trial=trialRepository.lockByAdministradorId(usuario.getId()).orElseThrow(() -> new AutenticacaoException("Ativacao indisponivel"));
+        if(!usuario.isAtivo() || trial.isAdminAtivado() || !trial.getExpiraEm().isAfter(agora)) throw new AutenticacaoException("Ativacao indisponivel");
+        trial.marcarAdminAtivado(agora);
+        trialRepository.save(trial);
         usuario.alterarSenhaHash(passwordEncoder.encode(novaSenha));
         usuarioRepository.save(usuario);
         ativacao.marcarUsado(agora);
         ativacaoAdminTokenRepository.save(ativacao);
+        ativacaoAdminTokenRepository.consumeAll(usuario.getId(),agora);
     }
 
     private AuthTokens emitirTokens(Usuario usuario) {

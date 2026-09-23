@@ -45,7 +45,7 @@ jobs:
       - name: Executar testes e validar migrations
         run: bash mvnw --batch-mode --no-transfer-progress clean verify
       - name: Testar limpeza isolada e preservacao de dados tecnicos
-        run: bash ../infra/homologacao/cleanup-test.sh
+        run: docker run --rm --network host -v "$GITHUB_WORKSPACE:/workspace:ro" -w /workspace/tplug-erp/backend --entrypoint bash postgres:17 ../infra/homologacao/cleanup-test.sh
       - name: Validar build da imagem Docker
         run: docker build --tag tplug-erp-backend:ci .
   frontend:

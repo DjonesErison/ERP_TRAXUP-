@@ -30,6 +30,7 @@ try {
     assert.equal(await page.locator('.create').isDisabled(),true);
     await page.getByRole('button',{name:'Teste grátis',exact:true}).click();
     assert.equal(await page.locator('[name=nomeCompleto]').evaluate(e=>e===document.activeElement),true);
+    await page.locator('h1').click();
     await page.screenshot({path:`${out}/trial-${width}.png`,fullPage:true});
     let calls=[]; let status=400;
     await page.route('**/api/public/trials',async route=>{

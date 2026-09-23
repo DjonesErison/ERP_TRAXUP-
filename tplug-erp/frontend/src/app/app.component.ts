@@ -199,7 +199,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.modoTrial) return;
-    this.loginTenantId = this.auth.tenantId ?? '';
+    this.loginTenantId = localStorage.getItem('traxup_trial_tenant') ?? this.auth.tenantId ?? '';
     this.autenticado = this.auth.autenticado;
     if (this.autenticado) this.carregar();
   }

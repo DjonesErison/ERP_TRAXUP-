@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, tap } from 'rxjs';
 
-export interface LoginPayload { tenantId: string; email: string; senha: string; }
+export interface LoginPayload { codigoEmpresa: string; email: string; senha: string; }
 export interface TokenResponse { accessToken: string; tokenType: string; expiresIn: number; refreshToken: string; }
 
 @Injectable({ providedIn: 'root' })
@@ -16,11 +16,11 @@ export class AuthService {
   constructor(private readonly http: HttpClient) {}
 
   login(payload: LoginPayload): Observable<TokenResponse> {
-    return this.http.post<TokenResponse>(`${this.baseUrl}/login`, payload).pipe(tap(tokens => this.salvarTokens(tokens, payload.tenantId)));
+    return this.http.post<TokenResponse>(`${this.baseUrl}/login`, payload).pipe(tap(tokens => this.salvarTokens(tokens, this.tenantDoToken(tokens.accessToken))));
   }
 
-  solicitarRecuperacao(tenantId: string, email: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/recuperacao-senha/solicitar`, { tenantId, email });
+  solicitarRecuperacao(codigoEmpresa: string, email: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/recuperacao-senha/solicitar`, { codigoEmpresa, email });
   }
 
   confirmarRecuperacao(token: string, novaSenha: string): Observable<void> {
@@ -55,9 +55,15 @@ export class AuthService {
   get tenantId(): string | null { return localStorage.getItem(AuthService.TENANT_KEY); }
   get autenticado(): boolean { return Boolean(this.accessToken && this.refreshToken); }
 
+  private tenantDoToken(token: string): string | null {
+    try { return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).tenant_id ?? null; }
+    catch { return null; }
+  }
+
   private salvarTokens(tokens: TokenResponse, tenantId: string | null): void {
     localStorage.setItem(AuthService.ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(AuthService.REFRESH_TOKEN_KEY, tokens.refreshToken);
     if (tenantId) localStorage.setItem(AuthService.TENANT_KEY, tenantId);
+    else localStorage.removeItem(AuthService.TENANT_KEY);
   }
 }

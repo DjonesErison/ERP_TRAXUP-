@@ -7,13 +7,13 @@ export interface TrialCadastroPayload {
   telefone: string; email: string; segmento?: string; quantidadeLojas: number;
   aceitouTermos: boolean; termosVersao: string; idempotencyKey: string;
 }
-export interface TrialCadastroResponse { trialId: string; tenantId: string; expiraEm: string; status: string; proximoPasso: string; ativacaoToken?: string | null; }
+export interface TrialCadastroResponse { trialId: string; tenantId: string; codigoEmpresa: string; expiraEm: string; status: string; proximoPasso: string; ativacaoToken?: string | null; }
 
 @Injectable({ providedIn: 'root' })
 export class TrialService {
   constructor(private readonly http: HttpClient) {}
-  reenviar(tenantId: string, email: string): Observable<void> {
-    return this.http.post<void>('/api/public/trials/reenviar-ativacao', {tenantId, email});
+  reenviar(codigoEmpresa: string, email: string): Observable<void> {
+    return this.http.post<void>('/api/public/trials/reenviar-ativacao', {codigoEmpresa, email});
   }
   cadastrar(payload: TrialCadastroPayload): Observable<TrialCadastroResponse> {
     return this.http.post<TrialCadastroResponse>('/api/public/trials', payload);

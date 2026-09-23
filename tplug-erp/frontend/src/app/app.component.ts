@@ -28,8 +28,8 @@ export class AppComponent implements OnInit {
     { label: 'Relatórios', icon: 'chart', area: '' }, { label: 'Assistente IA', icon: 'spark', area: '' }, { label: 'Compras', icon: 'file', area: 'compras' },
     { label: 'Contabilidade', icon: 'file', area: 'contabilidade' }, { label: 'Configurações', icon: 'settings', area: '' }
   ];
-  autenticado = false; loginTenantId = ''; loginEmail = ''; loginSenha = ''; mostrarSenha = false; loginLoading = false; loginError = ''; logoutLoading = false;
-  recuperacaoAberta = false; recuperacaoTenantId = ''; recuperacaoEmail = ''; recuperacaoLoading = false; recuperacaoMensagem = ''; recuperacaoError = '';
+  autenticado = false; loginCodigoEmpresa = ''; loginEmail = ''; loginSenha = ''; mostrarSenha = false; loginLoading = false; loginError = ''; logoutLoading = false;
+  recuperacaoAberta = false; recuperacaoCodigoEmpresa = ''; recuperacaoEmail = ''; recuperacaoLoading = false; recuperacaoMensagem = ''; recuperacaoError = '';
   onboardingPendente = false; reenviarAtivacao = false; ativacaoMensagem = '';
   filialId = ''; filiais: FilialPermitida[] = []; filialAtiva: FilialPermitida | null = null; selecionandoFilial = false; filiaisLoading = false; filiaisError = '';
   diasInatividade = 30; loading = false; error = ''; inativos: ClienteInativo[] = []; rfv: ClienteRfv[] = []; followups: ClienteFollowUp[] = []; interacoes: ClienteInteracao[] = [];
@@ -39,13 +39,13 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     const publicPath = window.location.pathname.replace(/\/+$/, '');
     if ((window.location.hostname === 'captacaoclientes.traxup.com.br' && !['/ativar','/entrar'].includes(publicPath)) || publicPath === '/teste' || publicPath === '/trial') this.exibindoTrial = true;
-    this.loginTenantId = this.auth.tenantId ?? ''; this.autenticado = this.auth.autenticado; this.filialAtiva = this.contexto.filialAtiva;
+    this.loginCodigoEmpresa = ''; this.autenticado = this.auth.autenticado; this.filialAtiva = this.contexto.filialAtiva;
     this.selecionandoFilial = this.autenticado && !this.filialAtiva; if (this.autenticado) this.verificarOnboarding(); else if (this.selecionandoFilial) this.carregarFiliais();
-    try { const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null'); if (salvo && typeof salvo.tenantId === 'string' && typeof salvo.email === 'string') { this.loginTenantId = this.auth.tenantId || salvo.tenantId; this.loginEmail = salvo.email; this.lembrarAcesso = true; } } catch { localStorage.removeItem('traxup_login_hint'); }
+    try { const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null'); if (salvo && typeof salvo.codigoEmpresa === 'string' && /^[0-9]{4}$/.test(salvo.codigoEmpresa) && typeof salvo.email === 'string') { this.loginCodigoEmpresa = salvo.codigoEmpresa; this.loginEmail = salvo.email; this.lembrarAcesso = true; } } catch { localStorage.removeItem('traxup_login_hint'); }
     if (publicPath === '/ativar' || publicPath === '/entrar') {
       const params = new URLSearchParams(window.location.hash.slice(1));
       const tenantId = params.get('empresa') || ''; const email = params.get('email') || '';
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) this.loginTenantId = tenantId;
+      if (/^[0-9]{4}$/.test(tenantId)) this.loginCodigoEmpresa = tenantId;
       if (email.length <= 254) this.loginEmail = email;
       if (publicPath === '/ativar') {
         const token = params.get('token') || '';
@@ -60,23 +60,23 @@ export class AppComponent implements OnInit {
   iniciarAtivacaoAdmin(token: string): void { this.ativacaoAdminToken = token; this.exibindoTrial = false; }
   concluirAtivacaoAdmin(): void { this.ativacaoAdminToken = ''; this.exibindoTrial = false; this.loginError = ''; this.ativacaoMensagem = 'Senha criada! Entre para configurar sua empresa.'; }
 
-  abrirRecuperacao(): void { this.recuperacaoTenantId = this.loginTenantId.trim(); this.recuperacaoEmail = this.loginEmail.trim(); this.recuperacaoMensagem = ''; this.recuperacaoError = ''; this.recuperacaoAberta = true; }
+  abrirRecuperacao(): void { this.recuperacaoCodigoEmpresa = this.loginCodigoEmpresa.trim(); this.recuperacaoEmail = this.loginEmail.trim(); this.recuperacaoMensagem = ''; this.recuperacaoError = ''; this.recuperacaoAberta = true; }
   fecharRecuperacao(): void { if (!this.recuperacaoLoading) this.recuperacaoAberta = false; }
   @HostListener('document:keydown.escape')
   fecharRecuperacaoComEscape(): void { if (this.recuperacaoAberta) this.fecharRecuperacao(); }
   solicitarRecuperacao(): void {
-    if (this.recuperacaoLoading || !this.recuperacaoTenantId.trim() || !this.recuperacaoEmail.trim()) return;
+    if (this.recuperacaoLoading || !this.recuperacaoCodigoEmpresa.trim() || !this.recuperacaoEmail.trim()) return;
     this.recuperacaoLoading = true; this.recuperacaoError = ''; this.recuperacaoMensagem = '';
-    this.auth.solicitarRecuperacao(this.recuperacaoTenantId.trim(), this.recuperacaoEmail.trim()).subscribe({
+    this.auth.solicitarRecuperacao(this.recuperacaoCodigoEmpresa.trim(), this.recuperacaoEmail.trim()).subscribe({
       next: () => { this.recuperacaoLoading = false; this.recuperacaoMensagem = 'Se os dados estiverem cadastrados, você receberá as instruções para criar uma nova senha.'; },
       error: () => { this.recuperacaoLoading = false; this.recuperacaoError = 'Não foi possível solicitar a recuperação agora. Tente novamente.'; }
     });
   }
 
   entrar(): void {
-    if (this.loginLoading) return; this.loginLoading = true; this.loginError = '';
-    this.auth.login({ tenantId: this.loginTenantId.trim(), email: this.loginEmail.trim(), senha: this.loginSenha }).subscribe({
-      next: () => { this.loginLoading = false; this.loginSenha = ''; this.mostrarSenha = false; this.area = 'dashboard'; this.autenticado = true; this.contexto.limpar(); this.filialAtiva = null; this.selecionandoFilial = true; this.verificarOnboarding(); if (this.lembrarAcesso) localStorage.setItem('traxup_login_hint', JSON.stringify({ tenantId: this.loginTenantId.trim(), email: this.loginEmail.trim() })); else localStorage.removeItem('traxup_login_hint'); },
+    if (this.loginLoading || !/^[0-9]{4}$/.test(this.loginCodigoEmpresa)) return; this.loginLoading = true; this.loginError = '';
+    this.auth.login({ codigoEmpresa: this.loginCodigoEmpresa.trim(), email: this.loginEmail.trim(), senha: this.loginSenha }).subscribe({
+      next: () => { this.loginLoading = false; this.loginSenha = ''; this.mostrarSenha = false; this.area = 'dashboard'; this.autenticado = true; this.contexto.limpar(); this.filialAtiva = null; this.selecionandoFilial = true; this.verificarOnboarding(); if (this.lembrarAcesso) localStorage.setItem('traxup_login_hint', JSON.stringify({ codigoEmpresa: this.loginCodigoEmpresa.trim(), email: this.loginEmail.trim() })); else localStorage.removeItem('traxup_login_hint'); },
       error: err => { this.loginLoading = false; this.loginError = err?.status === 401 || err?.status === 403 ? 'Empresa, e-mail ou senha inválidos.' : 'Não foi possível entrar. Verifique os dados e a disponibilidade do sistema.'; }
     });
   }

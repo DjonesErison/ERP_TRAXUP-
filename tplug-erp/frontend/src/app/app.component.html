@@ -1,5 +1,5 @@
-<app-ativacao-admin *ngIf="!autenticado && ativacaoAdminToken" [token]="ativacaoAdminToken" [tenantId]="loginTenantId" [email]="loginEmail" (concluida)="concluirAtivacaoAdmin()"></app-ativacao-admin>
-<app-trial *ngIf="!autenticado && exibindoTrial && !ativacaoAdminToken" (voltarLogin)="exibindoTrial = false" (ativarAdmin)="iniciarAtivacaoAdmin($event)"></app-trial>
+<app-ativacao-admin *ngIf="!autenticado && ativacaoAdminToken" [token]="ativacaoAdminToken" [codigoEmpresa]="loginCodigoEmpresa" [email]="loginEmail" (concluida)="concluirAtivacaoAdmin()"></app-ativacao-admin>
+<app-trial *ngIf="!autenticado && exibindoTrial && !ativacaoAdminToken" (acessoCriado)="loginCodigoEmpresa = $event.codigoEmpresa; loginEmail = $event.email" (voltarLogin)="exibindoTrial = false" (ativarAdmin)="iniciarAtivacaoAdmin($event)"></app-trial>
 <div class="login-shell" *ngIf="!autenticado && !exibindoTrial && !ativacaoAdminToken">
   <section class="login-brand" aria-label="TRAXUP ERP">
     <img class="login-logo" src="assets/traxup-logo.webp" alt="TRAXUP — Tecnologia que impulsiona negócios" width="240" height="160">
@@ -8,18 +8,18 @@
   </section>
   <section class="login-panel"><div class="login-content">
     <img class="mobile-logo" src="assets/traxup-logo.webp" alt="TRAXUP" width="180" height="120">
-    <form class="login-card" (ngSubmit)="entrar()" [attr.aria-busy]="loginLoading">
+    <form class="login-card" #loginForm="ngForm" (ngSubmit)="loginForm.valid && entrar()" [attr.aria-busy]="loginLoading">
       <div class="login-heading"><h2>Acesse seu ERP</h2><p class="subtitle">Entre com seus dados para acessar o sistema</p></div>
       <div class="alert" role="status" *ngIf="ativacaoMensagem">{{ativacaoMensagem}}</div><div class="alert" role="alert" *ngIf="loginError">{{ loginError }}</div>
-      <label for="login-company">Empresa</label><div class="input-icon"><app-icon name="building" /><input id="login-company" name="tenantId" type="text" [(ngModel)]="loginTenantId" required placeholder="Código da empresa" autocomplete="organization"></div>
+      <label for="login-company">Empresa (4 dígitos)</label><div class="input-icon"><app-icon name="building" /><input id="login-company" name="codigoEmpresa" pattern="[0-9]{4}" maxlength="4" inputmode="numeric" type="text" [(ngModel)]="loginCodigoEmpresa" required placeholder="Código da empresa" autocomplete="organization"></div>
       <label for="login-email">E-mail</label><div class="input-icon"><app-icon name="user" /><input id="login-email" name="email" type="email" [(ngModel)]="loginEmail" required placeholder="seu@email.com" autocomplete="username"></div>
       <label for="login-password">Senha</label><div class="input-icon password-field"><app-icon name="lock" /><input id="login-password" name="senha" [type]="mostrarSenha ? 'text' : 'password'" [(ngModel)]="loginSenha" required maxlength="72" placeholder="Sua senha" autocomplete="current-password"><button class="password-toggle" type="button" (click)="mostrarSenha = !mostrarSenha" [attr.aria-label]="mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'"><app-icon name="eye" /></button></div>
       <div class="login-options"><label class="remember"><input type="checkbox" name="lembrarAcesso" [(ngModel)]="lembrarAcesso">Lembrar empresa e e-mail</label><button type="button" class="text-action" (click)="abrirRecuperacao()">Esqueci minha senha</button></div>
-      <button class="login-button" type="submit" [disabled]="loginLoading || !loginTenantId.trim() || !loginEmail.trim() || !loginSenha">{{ loginLoading ? 'Entrando...' : 'Entrar' }} <app-icon *ngIf="!loginLoading" name="arrow" /></button>
+      <button class="login-button" type="submit" [disabled]="loginLoading || !loginForm.valid || !loginCodigoEmpresa.trim() || !loginEmail.trim() || !loginSenha">{{ loginLoading ? 'Entrando...' : 'Entrar' }} <app-icon *ngIf="!loginLoading" name="arrow" /></button>
       <small class="security-note"><app-icon name="lock" /> Seus dados estão protegidos</small><button type="button" class="text-action" (click)="exibindoTrial = true">Ainda não é cliente? Teste grátis por 7 dias</button><p class="login-footer">TRAXUP ERP · Tecnologia que impulsiona negócios</p>
       <button type="button" class="text-action" (click)="reenviarAtivacao = !reenviarAtivacao">Não recebi o e-mail de ativação</button>
     </form>
-    <app-reenviar-ativacao *ngIf="reenviarAtivacao" [tenantId]="loginTenantId" [email]="loginEmail" />
+    <app-reenviar-ativacao *ngIf="reenviarAtivacao" [codigoEmpresa]="loginCodigoEmpresa" [email]="loginEmail" />
   </div></section>
 </div>
 
@@ -37,11 +37,11 @@
 
 <div *ngIf="recuperacaoAberta" (click)="fecharRecuperacao()" aria-hidden="true" style="position:fixed;inset:0;background:rgba(5,23,67,.58);z-index:9998"></div>
 <section class="help-dialog" role="dialog" aria-modal="true" aria-labelledby="recuperacao-title" *ngIf="recuperacaoAberta" style="position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);max-height:calc(100vh - 32px);overflow:auto;background:#fff;margin:0">
-  <form (ngSubmit)="solicitarRecuperacao()">
+  <form #recoveryForm="ngForm" (ngSubmit)="recoveryForm.valid && solicitarRecuperacao()">
     <h2 id="recuperacao-title">Recuperar senha</h2><p>Informe a empresa e o e-mail do seu acesso. Se os dados estiverem cadastrados, enviaremos as instruções para redefinir sua senha.</p>
     <div class="alert" role="alert" *ngIf="recuperacaoError">{{ recuperacaoError }}</div><div class="alert" role="status" *ngIf="recuperacaoMensagem">{{ recuperacaoMensagem }}</div>
-    <label for="recovery-company">Empresa</label><input id="recovery-company" name="recuperacaoTenantId" [(ngModel)]="recuperacaoTenantId" required placeholder="Código da empresa" autocomplete="organization">
+    <label for="recovery-company">Empresa (4 dígitos)</label><input id="recovery-company" name="recuperacaoCodigoEmpresa" pattern="[0-9]{4}" maxlength="4" inputmode="numeric" [(ngModel)]="recuperacaoCodigoEmpresa" required placeholder="Código da empresa" autocomplete="organization">
     <label for="recovery-email">E-mail</label><input id="recovery-email" name="recuperacaoEmail" type="email" [(ngModel)]="recuperacaoEmail" required placeholder="seu@email.com" autocomplete="email">
-    <div class="login-options"><button type="button" class="secondary" (click)="fecharRecuperacao()" [disabled]="recuperacaoLoading">Voltar ao login</button><button type="submit" class="login-button" [disabled]="recuperacaoLoading || !recuperacaoTenantId.trim() || !recuperacaoEmail.trim()">{{ recuperacaoLoading ? 'Enviando...' : 'Enviar instruções' }}</button></div>
+    <div class="login-options"><button type="button" class="secondary" (click)="fecharRecuperacao()" [disabled]="recuperacaoLoading">Voltar ao login</button><button type="submit" class="login-button" [disabled]="recuperacaoLoading || !recoveryForm.valid || !recuperacaoCodigoEmpresa.trim() || !recuperacaoEmail.trim()">{{ recuperacaoLoading ? 'Enviando...' : 'Enviar instruções' }}</button></div>
   </form>
 </section>

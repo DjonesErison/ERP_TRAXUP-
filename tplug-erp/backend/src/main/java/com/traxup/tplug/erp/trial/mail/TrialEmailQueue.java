@@ -37,7 +37,7 @@ public class TrialEmailQueue {
                 """,t.getId());
         });
     }
-    public record Delivery(UUID trialId,int attempt,String email,String name,UUID tenantId,Instant expiresAt,String token) {}
+    public record Delivery(UUID trialId,int attempt,String email,String name,UUID tenantId,String codigoEmpresa,Instant expiresAt,String token) {}
     public Optional<Delivery> prepare() {
         var ids=jdbc.query("""
             SELECT trial_id FROM trial_activation_emails
@@ -56,7 +56,7 @@ public class TrialEmailQueue {
         String token=auth.criarAtivacaoAdministrador(trial.getAdministrador());
         jdbc.update("UPDATE trial_activation_emails SET status='SENDING', attempts=?, next_attempt_at=NOW()+INTERVAL '10 minutes' WHERE trial_id=?",attempt,id);
         // Transaction commits token hash and lease BEFORE the worker contacts SMTP.
-        return Optional.of(new Delivery(id,attempt,trial.getAdministrador().getEmail(),trial.getAdministrador().getNome(),trial.getTenantId(),trial.getExpiraEm(),token));
+        return Optional.of(new Delivery(id,attempt,trial.getAdministrador().getEmail(),trial.getAdministrador().getNome(),trial.getTenantId(),trial.getCodigoEmpresa(),trial.getExpiraEm(),token));
     }
     public void sent(Delivery delivery) {
         jdbc.update("UPDATE trial_activation_emails SET status='SENT',sent_at=NOW(),last_error=NULL WHERE trial_id=? AND status='SENDING' AND attempts=?",delivery.trialId(),delivery.attempt());

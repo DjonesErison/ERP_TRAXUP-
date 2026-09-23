@@ -24,6 +24,7 @@ import java.util.UUID;
 public class AuthApplicationService {
 
     private final com.traxup.tplug.erp.trial.TrialSaasRepository trialRepository;
+    private final com.traxup.tplug.erp.tenant.TenantRepository tenantRepository;
     private final UsuarioRepository usuarioRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final RecuperacaoSenhaTokenRepository recuperacaoSenhaTokenRepository;
@@ -35,7 +36,8 @@ public class AuthApplicationService {
 
     public AuthApplicationService(UsuarioRepository usuarioRepository, RefreshTokenRepository refreshTokenRepository,
             RecuperacaoSenhaTokenRepository recuperacaoSenhaTokenRepository, AtivacaoAdminTokenRepository ativacaoAdminTokenRepository, PasswordEncoder passwordEncoder,
-            JwtService jwtService, JwtProperties properties, com.traxup.tplug.erp.trial.TrialSaasRepository trialRepository) {
+            JwtService jwtService, JwtProperties properties, com.traxup.tplug.erp.trial.TrialSaasRepository trialRepository, com.traxup.tplug.erp.tenant.TenantRepository tenantRepository) {
+        this.tenantRepository = tenantRepository;
         this.trialRepository=trialRepository;
         this.usuarioRepository = usuarioRepository;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -44,6 +46,17 @@ public class AuthApplicationService {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.properties = properties;
+    }
+
+    public java.util.Optional<UUID> resolverTenant(String codigoEmpresa, UUID tenantId) {
+        return codigoEmpresa == null ? java.util.Optional.ofNullable(tenantId)
+                : tenantRepository.findByCodigoEmpresa(codigoEmpresa)
+                    .filter(com.traxup.tplug.erp.tenant.Tenant::isAtivo)
+                    .map(com.traxup.tplug.erp.tenant.Tenant::getId);
+    }
+
+    public AuthTokens loginPorEmpresa(String codigoEmpresa, UUID tenantId, String email, String senha) {
+        return login(resolverTenant(codigoEmpresa, tenantId).orElseThrow(this::credenciaisInvalidas), email, senha);
     }
 
     public AuthTokens login(UUID tenantId, String email, String senha) {

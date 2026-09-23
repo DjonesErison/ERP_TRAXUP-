@@ -21,7 +21,7 @@ public class TrialActivationMail {
         this.sender=sender;this.from=from;this.publicUrl=publicUrl.replaceAll("/+$","");
     }
     public SimpleMailMessage message(TrialEmailQueue.Delivery d) {
-        String context="empresa="+d.tenantId()+"&email="+URLEncoder.encode(d.email(),StandardCharsets.UTF_8);
+        String context="empresa="+d.codigoEmpresa()+"&email="+URLEncoder.encode(d.email(),StandardCharsets.UTF_8);
         String activation=publicUrl+"/ativar#token="+d.token()+"&"+context;
         String login=publicUrl+"/entrar#"+context;
         var message=new SimpleMailMessage();
@@ -48,7 +48,7 @@ public class TrialActivationMail {
 
             Equipe TRAXUP
             Tecnologia que impulsiona negócios
-            """.formatted(d.name(),activation,d.tenantId(),d.email(),login,DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm").withZone(ZoneId.of("America/Recife")).format(d.expiresAt())));
+            """.formatted(d.name(),activation,d.codigoEmpresa(),d.email(),login,DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm").withZone(ZoneId.of("America/Recife")).format(d.expiresAt())));
         return message;
     }
     public void send(TrialEmailQueue.Delivery delivery) { sender.send(message(delivery)); }

@@ -72,6 +72,7 @@ public class TrialSaas {
     }
 
     public UUID getId() { return id; }
+    public String getCodigoEmpresa() { return tenant.getCodigoEmpresa(); }
     public UUID getTenantId() { return tenant.getId(); }
     public String getIdempotencyKey() { return idempotencyKey; }
     public Usuario getAdministrador() { return administrador; }

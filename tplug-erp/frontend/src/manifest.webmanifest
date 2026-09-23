@@ -1,0 +1,19 @@
+{
+  "name": "TRAXUP - Teste grátis",
+  "short_name": "TRAXUP",
+  "description": "Captação e onboarding do Trial TRAXUP",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#075fd8",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "assets/traxup-logo.webp",
+      "sizes": "any",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ]
+}

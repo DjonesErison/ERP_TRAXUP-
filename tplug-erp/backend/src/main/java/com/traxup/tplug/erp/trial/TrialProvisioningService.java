@@ -58,12 +58,18 @@ public class TrialProvisioningService {
     public TrialCadastroResponse provisionar(TrialCadastroRequest request) {
         String idempotencyKey = request.idempotencyKey().trim();
         return trialRepository.findByIdempotencyKey(idempotencyKey)
-                .map(trial -> response(trial, null))
+                .map(trial -> {
+                    if (!trial.getDocumento().equals(request.documento()) || !trial.getEmail().equalsIgnoreCase(request.email().trim()))
+                        throw new com.traxup.tplug.erp.shared.exception.RecursoConflitanteException("Empresa já cadastrada");
+                    return response(trial, null);
+                })
                 .orElseGet(() -> criar(request, idempotencyKey));
     }
 
     private TrialCadastroResponse criar(TrialCadastroRequest request, String idempotencyKey) {
         String documento = somenteDigitos(request.documento());
+        if (trialRepository.existsByDocumento(documento))
+            throw new com.traxup.tplug.erp.shared.exception.RecursoConflitanteException("Empresa já cadastrada");
         String telefone = somenteDigitos(request.telefone());
         String email = request.email().trim().toLowerCase(Locale.ROOT);
         Instant agora = clock.instant();

@@ -38,6 +38,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh",
                                 "/api/public/trials",
                                 "/api/public/trials/reenviar-ativacao",
+                                "/api/public/trials/recuperar-acesso",
                                 "/api/v1/auth/ativacao-admin/confirmar",
                                 "/api/v1/auth/recuperacao-senha/solicitar",
                                 "/api/v1/auth/recuperacao-senha/confirmar",

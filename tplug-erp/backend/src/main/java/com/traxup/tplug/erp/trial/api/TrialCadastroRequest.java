@@ -14,4 +14,8 @@ public record TrialCadastroRequest(
         @AssertTrue Boolean aceitouTermos,
         @NotBlank @Size(max = 40) String termosVersao,
         @NotBlank @Size(max = 100) String idempotencyKey
-) {}
+ ) {
+    public TrialCadastroRequest {
+        documento = documento == null ? null : documento.replaceAll("[.\\s/-]", "");
+    }
+}

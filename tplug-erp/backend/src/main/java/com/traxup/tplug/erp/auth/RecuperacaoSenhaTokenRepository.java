@@ -6,5 +6,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface RecuperacaoSenhaTokenRepository extends JpaRepository<RecuperacaoSenhaToken, UUID> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     Optional<RecuperacaoSenhaToken> findByTokenHash(String tokenHash);
 }

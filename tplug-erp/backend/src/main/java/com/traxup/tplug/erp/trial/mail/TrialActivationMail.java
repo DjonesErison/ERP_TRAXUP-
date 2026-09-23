@@ -34,7 +34,7 @@ public class TrialActivationMail {
 
             %s
 
-            Este link é pessoal, pode ser usado uma única vez e expira em até 24 horas, dentro do prazo do teste grátis.
+            Este link é pessoal, pode ser usado uma única vez e expira em até 30 minutos, dentro do prazo do teste grátis.
 
             Seus dados de acesso:
             Empresa: %s

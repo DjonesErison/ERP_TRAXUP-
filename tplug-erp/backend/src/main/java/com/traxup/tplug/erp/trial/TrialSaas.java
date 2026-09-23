@@ -71,6 +71,8 @@ public class TrialSaas {
         this.atualizadoEm = agora;
     }
 
+    public String getDocumento() { return documento; }
+    public String getEmail() { return email; }
     public UUID getId() { return id; }
     public String getCodigoEmpresa() { return tenant.getCodigoEmpresa(); }
     public UUID getTenantId() { return tenant.getId(); }

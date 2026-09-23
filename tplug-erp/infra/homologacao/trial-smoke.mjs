@@ -58,7 +58,7 @@ try {
     await context.close();
   }
   // Email-first signup and deep links, including mobile, expiration and retry.
-  for (const width of [390,1280]) {
+  for (const width of [320,390,1280]) {
     const context=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block'});
     const page=await context.newPage();
     const tenant='a8d3e764-1e2b-4eb5-8b23-a6fd71192350'; const email='ana+teste@example.test'; const token='a'.repeat(43);

@@ -19,6 +19,7 @@ try {
     await page.goto(`${base}/teste`);
     await page.getByRole('heading',{name:'Comece seu teste grátis'}).waitFor();
     for (const img of await page.locator('.trial-page img').all()) await img.evaluate(i=>i.decode());
+    assert.equal(await page.locator('.top img').evaluate(img=>img.clientWidth/img.clientHeight >= img.naturalWidth/img.naturalHeight),true,`Logo sem recorte horizontal ${width}`);
     const layout = await page.evaluate(()=>{
       const rect=s=>document.querySelector(s).getBoundingClientRect();
       const benefitRects=[...document.querySelectorAll('.checks li')].map(x=>x.getBoundingClientRect());

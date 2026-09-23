@@ -2,7 +2,7 @@
 .trial-page { min-height:100vh; background:white; color:#07134f; font-family:Arial,sans-serif; }
 button { cursor:pointer; font:inherit; }
 .top { min-height:88px; padding:10px 3.7%; display:flex; align-items:center; gap:5%; }
-.top img { display:block; width:clamp(190px,17vw,340px); height:76px; object-fit:cover; }
+.top img { display:block; width:clamp(190px,17vw,340px); height:clamp(44px,4vw,76px); object-fit:cover; }
 .top nav,.actions { display:flex; align-items:center; gap:clamp(20px,2.5vw,50px); }
 .top button { border:0; background:none; color:inherit; font-size:clamp(14px,1.05vw,20px); }
 .actions { margin-left:auto; }

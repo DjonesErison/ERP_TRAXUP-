@@ -11,7 +11,7 @@ class TrialMailSchedulingTest {
         var queue = mock(TrialEmailQueue.class);
         var mail = mock(TrialActivationMail.class);
         var delivery = new TrialEmailQueue.Delivery(java.util.UUID.randomUUID(), 1,
-                "test@example.test", "Test", java.util.UUID.randomUUID(), java.time.Instant.now(), "test-token");
+                "test@example.test", "Test", java.util.UUID.randomUUID(), "0042", java.time.Instant.now(), "test-token");
         when(queue.prepare()).thenReturn(Optional.of(delivery), Optional.empty());
         new ApplicationContextRunner()
                 .withUserConfiguration(TrialMailSchedulingConfiguration.class, TrialEmailWorker.class)

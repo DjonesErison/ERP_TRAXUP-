@@ -30,7 +30,7 @@ class LoginParser(HTMLParser):
 parser = LoginParser()
 parser.feed(Path(sys.argv[1]).read_text())
 assert parser.form, 'O navegador nao renderizou o formulario de login.'
-assert parser.fields.get('tenantId') == 'text', 'Campo de tenant ausente.'
+assert parser.fields.get('codigoEmpresa') == 'text', 'Campo de tenant ausente.'
 assert parser.fields.get('email') == 'email', 'Campo de email ausente.'
 assert parser.fields.get('senha') == 'password', 'Campo de senha ausente.'
 assert 'Acesse seu ERP' in ''.join(parser.texts), 'Titulo de login ausente.'

@@ -11,7 +11,7 @@ import static org.mockito.Mockito.*;
 
 class TrialActivationMailTest {
     private TrialEmailQueue.Delivery delivery() {
-        return new TrialEmailQueue.Delivery(UUID.randomUUID(),1,"ana+teste@example.test","Ana",UUID.randomUUID(),Instant.parse("2026-09-30T15:00:00Z"),"personal-token");
+        return new TrialEmailQueue.Delivery(UUID.randomUUID(),1,"ana+teste@example.test","Ana",UUID.randomUUID(),"0042",Instant.parse("2026-09-30T15:00:00Z"),"personal-token");
     }
     @Test void linkTemContextoEFragmentoSemSenha() {
         var sender=mock(JavaMailSender.class);
@@ -19,7 +19,7 @@ class TrialActivationMailTest {
         var d=delivery(); var message=service.message(d);
         assertThat(message.getTo()).containsExactly(d.email());
         assertThat(message.getFrom()).isEqualTo("naoresponda@traxup.com.br");
-        assertThat(message.getText()).contains("/ativar#token=personal-token&empresa="+d.tenantId(),"email=ana%2Bteste%40example.test","/entrar#empresa=", "30/09/2026 às 12:00", "crie sua senha").doesNotContain("Senha:","smtp-password");
+        assertThat(message.getText()).contains("/ativar#token=personal-token&empresa="+d.codigoEmpresa(),"email=ana%2Bteste%40example.test","/entrar#empresa=", "30/09/2026 às 12:00", "crie sua senha").doesNotContain("Senha:","smtp-password",d.tenantId().toString());
         service.send(d);verify(sender).send(message);
     }
     @Test void rejeitaUrlInsegura() {

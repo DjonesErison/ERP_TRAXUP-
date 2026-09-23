@@ -20,6 +20,12 @@ public class Tenant {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @org.hibernate.annotations.Generated(event = org.hibernate.generator.EventType.INSERT)
+    @Column(name = "codigo_empresa", nullable = false, unique = true, length = 4, insertable = false, updatable = false)
+    private String codigoEmpresa;
+
+    public String getCodigoEmpresa() { return codigoEmpresa; }
+
     @Column(name = "nome", nullable = false, length = 150)
     private String nome;
 

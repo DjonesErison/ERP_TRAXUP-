@@ -20,7 +20,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
-        return TokenResponse.from(authApplicationService.login(request.tenantId(), request.email(), request.senha()));
+        return TokenResponse.from(authApplicationService.loginPorEmpresa(request.codigoEmpresa(), request.tenantId(), request.email(), request.senha()));
     }
 
     @PostMapping("/refresh")
@@ -37,7 +37,8 @@ public class AuthController {
     @PostMapping("/recuperacao-senha/solicitar")
     public ResponseEntity<Void> solicitarRecuperacao(@Valid @RequestBody RecuperacaoSenhaSolicitarRequest request) {
         // Resposta intencionalmente neutra: nao revela se o e-mail existe no tenant.
-        authApplicationService.solicitarRecuperacao(request.tenantId(), request.email());
+        authApplicationService.resolverTenant(request.codigoEmpresa(), request.tenantId())
+                .ifPresent(id -> authApplicationService.solicitarRecuperacao(id, request.email()));
         return ResponseEntity.accepted().build();
     }
 

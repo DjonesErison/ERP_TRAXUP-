@@ -27,4 +27,15 @@ class OnboardingServiceTest {
   verify(filiais).saveAndFlush(any(Filial.class)); verify(jdbc).update(startsWith("insert into usuario_filiais"),eq(tenantId),eq(usuarioId),any());
   verify(jdbc).update(startsWith("update trials_saas"),eq(tenantId));
  }
+ @Test void sessaoSemEmpresaNaoCriaUnidadeNemVinculo(){
+  TenantContext context=mock(TenantContext.class); EmpresaRepository empresas=mock(EmpresaRepository.class);
+  FilialRepository filiais=mock(FilialRepository.class); JdbcTemplate jdbc=mock(JdbcTemplate.class);
+  UUID tenant=UUID.randomUUID(); when(context.tenantId()).thenReturn(tenant);
+  when(empresas.findAllByTenantId(tenant)).thenReturn(List.of());
+  var service=new OnboardingService(context,empresas,filiais,mock(TrialSaasRepository.class),jdbc);
+  org.assertj.core.api.Assertions.assertThatThrownBy(()->service.concluir("Matriz",null))
+    .isInstanceOf(com.traxup.tplug.erp.shared.exception.RegraNegocioException.class)
+    .hasMessageContaining("Entre pelo link de acesso");
+  verifyNoInteractions(filiais,jdbc);
+ }
 }

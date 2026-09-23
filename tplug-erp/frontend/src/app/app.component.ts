@@ -38,6 +38,11 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     const publicPath = window.location.pathname.replace(/\/+$/, '');
+    // Email links must not reuse credentials from a previous account in this browser.
+    const linkParams = new URLSearchParams(window.location.hash.slice(1));
+    if (publicPath === '/ativar' || (publicPath === '/entrar' && linkParams.has('empresa'))) {
+      this.auth.limparSessao(); this.contexto.limpar();
+    }
     if ((window.location.hostname === 'captacaoclientes.traxup.com.br' && !['/ativar','/entrar'].includes(publicPath)) || publicPath === '/teste' || publicPath === '/trial') this.exibindoTrial = true;
     this.loginTenantId = this.auth.tenantId ?? ''; this.autenticado = this.auth.autenticado; this.filialAtiva = this.contexto.filialAtiva;
     this.selecionandoFilial = this.autenticado && !this.filialAtiva; if (this.autenticado) this.verificarOnboarding(); else if (this.selecionandoFilial) this.carregarFiliais();
@@ -81,7 +86,7 @@ export class AppComponent implements OnInit {
     });
   }
 
-  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { this.onboardingPendente = !s.concluido; if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = false; this.carregarFiliais(); } }); }
+  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { if (!s.empresaConfigurada) { this.auth.limparSessao(); this.contexto.limpar(); this.autenticado = false; this.onboardingPendente = false; this.loginError = 'Esta sessão não possui uma empresa cadastrada. Entre pelo link de acesso do e-mail de confirmação do seu cadastro.'; return; } this.onboardingPendente = !s.concluido; if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = false; this.carregarFiliais(); } }); }
   onboardingConcluido(): void { this.onboardingPendente = false; this.selecionandoFilial = true; this.carregarFiliais(); }
 
   carregarFiliais(): void { if (!this.auth.autenticado || this.filiaisLoading) return; this.filiaisLoading = true; this.filiaisError = ''; this.contexto.listarFiliais().subscribe({ next: filiais => { this.filiais = filiais; this.filiaisLoading = false; if (filiais.length === 1) this.escolherFilial(filiais[0]); }, error: () => { this.filiaisLoading = false; this.filiaisError = 'Não foi possível carregar as filiais permitidas para este usuário.'; } }); }

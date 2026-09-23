@@ -57,6 +57,33 @@ try {
     assert.deepEqual(errors,[]);
     await context.close();
   }
+  // An existing account must never hide activation or override an email's company.
+  {
+    const context=await browser.newContext({serviceWorkers:'block'});
+    const page=await context.newPage();
+    const tenant='a8d3e764-1e2b-4eb5-8b23-a6fd71192350';
+    let oldSessionRequests=0;
+    await page.route('**/api/v1/onboarding',route=>{oldSessionRequests++;return route.fulfill({json:{concluido:false,empresaConfigurada:false,filialConfigurada:false}});});
+    await page.addInitScript(()=>{
+      localStorage.setItem('tplug_access_token','old-account-token');
+      localStorage.setItem('tplug_refresh_token','old-refresh-token');
+      localStorage.setItem('tplug_tenant_id','11111111-1111-4111-8111-111111111111');
+    });
+    await page.goto(`${base}/ativar#token=${'a'.repeat(43)}&empresa=${tenant}&email=ana%40example.test`);
+    await page.getByRole('heading',{name:'Crie sua senha'}).waitFor();
+    assert.equal(oldSessionRequests,0,'Activation must not query the previous account');
+    assert.equal(await page.evaluate(()=>localStorage.getItem('tplug_access_token')),null);
+    await page.goto(`${base}/entrar#empresa=${tenant}&email=ana%40example.test`);
+    await page.getByRole('heading',{name:'Acesse seu ERP'}).waitFor();
+    assert.equal(await page.locator('#login-company').inputValue(),tenant);
+    assert.equal(await page.locator('#login-email').inputValue(),'ana@example.test');
+    assert.equal(oldSessionRequests,0,'Email login must not query the previous account');
+    // A stale bare login with no company must recover instead of trapping the user in onboarding.
+    await page.goto(`${base}/entrar`);
+    await page.getByRole('alert').filter({hasText:'Esta sessão não possui uma empresa cadastrada'}).waitFor();
+    assert.equal(await page.locator('app-onboarding').count(),0);
+    await context.close();
+  }
   // Email-first signup and deep links, including mobile, expiration and retry.
   for (const width of [320,390,1280]) {
     const context=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block'});

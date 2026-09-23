@@ -45,6 +45,7 @@ class TrialAccessRecoveryIntegrationTest {
         assertThat(d.action()).isEqualTo("ACTIVATE"); assertThat(d.code()).matches("[0-9]{4}");
         assertThat(mail.message(d).getTo()).containsExactly("ana@example.test");
         assertThat(mail.message(d).getText()).contains("/ativar#token=", "30 minutos");
+        em.flush();
         assertThat(jdbc.queryForObject("SELECT max(extract(epoch from (expira_em-criado_em))) FROM ativacao_admin_tokens",Double.class)).isBetween(1790.0,1801.0);
         auth.confirmarAtivacaoAdministrador(d.token(),"SenhaNova123!");
         assertThatThrownBy(()->auth.confirmarAtivacaoAdministrador(d.token(),"OutraSenha123!")).isInstanceOf(RuntimeException.class);
@@ -53,6 +54,7 @@ class TrialAccessRecoveryIntegrationTest {
         var t=create(); active(t.trialId()); queue.requestDocument("12345678901","ana@example.test"); var d=queue.prepare().orElseThrow();
         assertThat(d.action()).isEqualTo("RECOVER"); assertThat(d.code()).isEqualTo(t.codigoEmpresa());
         assertThat(mail.message(d).getText()).contains("/recuperar#token=", "Empresa: "+t.codigoEmpresa());
+        em.flush();
         assertThat(jdbc.queryForObject("SELECT max(extract(epoch from (expira_em-criado_em))) FROM recuperacao_senha_tokens",Double.class)).isBetween(1790.0,1801.0);
         assertThat(jdbc.queryForObject("SELECT token_hash FROM recuperacao_senha_tokens LIMIT 1",String.class)).hasSize(64).isNotEqualTo(d.token());
         auth.confirmarRecuperacao(d.token(),"SenhaNova123!");

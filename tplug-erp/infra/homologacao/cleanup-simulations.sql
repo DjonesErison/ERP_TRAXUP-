@@ -40,13 +40,13 @@ BEGIN
   IF EXISTS(SELECT 1 FROM cleanup_rows WHERE rel IN ('permissoes'::regclass,'flyway_schema_history'::regclass)) THEN
     RAISE EXCEPTION 'Protected technical rows in cleanup closure';
   END IF;
+  INSERT INTO cleanup_counts SELECT c.relname,count(*) FROM cleanup_rows d JOIN pg_class c ON c.oid=d.rel GROUP BY c.relname;
   LOOP
     progress:=0;
     FOR r IN SELECT d.rel,c.relname,count(*) AS amount FROM cleanup_rows d JOIN pg_class c ON c.oid=d.rel GROUP BY d.rel,c.relname LOOP
       BEGIN
         EXECUTE format('DELETE FROM %I t USING cleanup_rows d WHERE d.rel=%s AND d.row_tid=t.ctid',r.relname,r.rel);
         GET DIAGNOSTICS n=ROW_COUNT;
-        INSERT INTO cleanup_counts VALUES(r.relname,n) ON CONFLICT(table_name) DO UPDATE SET removed=cleanup_counts.removed+EXCLUDED.removed;
         DELETE FROM cleanup_rows WHERE rel=r.rel;
         progress:=progress+1;
       EXCEPTION WHEN foreign_key_violation THEN NULL;

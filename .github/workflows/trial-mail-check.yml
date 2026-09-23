@@ -1,4 +1,4 @@
-name: TRAXUP - diagnostico SMTP
+name: TRAXUP - diagnostico limitado onboarding
 on:
   push:
     branches: [fix/trial-mail-diagnostics]
@@ -24,9 +24,23 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/homologacao
           chmod 600 ~/.ssh/homologacao
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-      - name: Consultar status limitado do e-mail de teste autorizado
+      - name: Consultar somente causa tecnica do onboarding autorizado
         run: |
           ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" 'bash -s' <<'SH'
           set -Eeuo pipefail
-          docker exec traxup-homologacao-postgres-1 psql -U traxup_homologacao -d traxup_homologacao -c "SELECT status,attempts,last_error FROM trial_activation_emails WHERE trial_id='96b95718-1012-4132-a28c-a518cbbaf293'"
+          python3 - <<'PY'
+          import subprocess,re,json
+          result=subprocess.run(['docker','logs','--since','45m','--tail','5000','traxup-homologacao-backend-1'],capture_output=True,text=True)
+          logs=result.stdout+result.stderr
+          blocks=re.split(r'(?=\d{4}-\d\d-\d\dT[^\n]* (?:ERROR|WARN) )',logs)
+          found=[]
+          for block in blocks:
+              if 'OnboardingService.concluir' not in block: continue
+              classes=sorted(set(re.findall(r'([a-zA-Z][\w.]+(?:Exception|Error))(?=[:\s])',block)))
+              causes=[]
+              for pattern in [r'null value in column "([a-z_]+)"',r'violates foreign key constraint "([a-z_]+)"',r'violates unique constraint "([a-z_]+)"',r'column "([a-z_]+)" does not exist',r'SQLState: ([0-9A-Z]{5})',r'could not initialize proxy',r'No value present']:
+                  causes+=re.findall(pattern,block)
+              found.append({'classes':classes,'causes':causes})
+          print(json.dumps({'onboarding_errors':found[-3:]},ensure_ascii=True))
+          PY
           SH

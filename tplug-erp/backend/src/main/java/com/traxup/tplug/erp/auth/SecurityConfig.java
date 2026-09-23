@@ -39,6 +39,8 @@ public class SecurityConfig {
                                 "/api/public/trials",
                                 "/api/public/trials/reenviar-ativacao",
                                 "/api/v1/auth/ativacao-admin/confirmar",
+                                "/api/v1/auth/recuperacao-senha/solicitar",
+                                "/api/v1/auth/recuperacao-senha/confirmar",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html")

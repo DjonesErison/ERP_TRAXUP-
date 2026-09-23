@@ -40,11 +40,14 @@ class TrialEmailIntegrationTest {
         assertThat(trials.existsByTenantId(first.tenantId())).isTrue();
         assertThat(first.ativacaoToken()).isNull();assertThat(first.proximoPasso()).isEqualTo("VERIFICAR_EMAIL");
         assertThat(again.trialId()).isEqualTo(first.trialId());
+        assertThat(first.codigoEmpresa()).matches("[0-9]{4}");
+        assertThat(again.codigoEmpresa()).isEqualTo(first.codigoEmpresa());
         assertThat(jdbc.queryForObject("select count(*) from trial_activation_emails where trial_id=?",Integer.class,first.trialId())).isEqualTo(1);
         assertThat(state(first.trialId())).isEqualTo("PENDING");
     }
     @Test void ativacaoPublicaPermiteLoginEInvalidaTodosOsLinks() throws Exception {
         var trial=create();var d=queue.prepare().orElseThrow();queue.sent(d);
+        assertThat(d.codigoEmpresa()).isEqualTo(trial.codigoEmpresa());
         var userId=jdbc.queryForObject("select administrador_id from trials_saas where id=?",UUID.class,trial.trialId());
         jdbc.update("update trial_activation_emails set last_requested_at=NOW()-INTERVAL '2 minutes' where trial_id=?",trial.trialId());
         queue.resend(trial.tenantId(),"ANA@example.test");var second=queue.prepare().orElseThrow();

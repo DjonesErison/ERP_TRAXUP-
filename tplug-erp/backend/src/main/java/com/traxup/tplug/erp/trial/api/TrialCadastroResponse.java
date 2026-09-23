@@ -6,6 +6,7 @@ import java.util.UUID;
 public record TrialCadastroResponse(
         UUID trialId,
         UUID tenantId,
+        String codigoEmpresa,
         Instant expiraEm,
         String status,
         String proximoPasso,

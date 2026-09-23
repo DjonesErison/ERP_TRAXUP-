@@ -32,7 +32,7 @@ try {
     assert.equal(await trialPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no trial');
     await trialPage.screenshot({ path: `${out}/trial-${viewport.width}.png`, fullPage: true });
     await trialPage.close();
-    await page.getByLabel('Empresa', { exact: true }).fill('00000000-0000-4000-8000-000000000001');
+    await page.getByLabel('Empresa (4 dígitos)', { exact: true }).fill('0042');
     await page.getByLabel('E-mail', { exact: true }).fill('visual@example.test');
     await page.getByLabel('Senha', { exact: true }).fill('somente-teste-visual');
     await page.getByRole('button', { name: 'Mostrar senha' }).click();
@@ -46,7 +46,7 @@ try {
       const url = route.request().url();
       if (url.endsWith('/auth/login')) {
         const payload = route.request().postDataJSON();
-        assert.equal(payload.tenantId, '00000000-0000-4000-8000-000000000001');
+        assert.equal(payload.codigoEmpresa, '0042');
         return route.fulfill({ status: accepted ? 200 : 401, json: accepted ? { accessToken: 'visual-only', refreshToken: 'visual-only', tokenType: 'Bearer', expiresIn: 300 } : {} });
       }
       if (url.endsWith('/auth/refresh')) {
@@ -118,7 +118,7 @@ try {
     assert.equal(await page.evaluate(() => localStorage.getItem('tplug_access_token')), null);
     assert.equal(await page.evaluate(() => localStorage.getItem('traxup_filial_ativa')), null);
     const hint = await page.evaluate(() => JSON.parse(localStorage.getItem('traxup_login_hint')));
-    assert.deepEqual(hint, { tenantId: '00000000-0000-4000-8000-000000000001', email: 'visual@example.test' });
+    assert.deepEqual(hint, { codigoEmpresa: '0042', email: 'visual@example.test' });
     await page.reload();
     await page.getByRole('heading', { name: 'Acesse seu ERP' }).waitFor();
     assert.equal(await page.getByLabel('E-mail', { exact: true }).inputValue(), 'visual@example.test');

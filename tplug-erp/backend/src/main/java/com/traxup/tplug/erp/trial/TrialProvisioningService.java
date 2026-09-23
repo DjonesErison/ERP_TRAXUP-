@@ -86,7 +86,7 @@ public class TrialProvisioningService {
     }
 
     private TrialCadastroResponse response(TrialSaas trial, String ativacaoToken) {
-        return new TrialCadastroResponse(trial.getId(), trial.getTenantId(), trial.getExpiraEm(),
+        return new TrialCadastroResponse(trial.getId(), trial.getTenantId(), trial.getCodigoEmpresa(), trial.getExpiraEm(),
                 trial.getStatus(), emailEnabled ? "VERIFICAR_EMAIL" : "ATIVAR_ADMINISTRADOR", ativacaoToken);
     }
 

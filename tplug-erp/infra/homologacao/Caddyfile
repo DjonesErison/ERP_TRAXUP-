@@ -3,3 +3,8 @@
 apphomologacao.traxup.com.br {
     reverse_proxy 127.0.0.1:8082
 }
+
+# Captacao publica do Trial; usa o mesmo frontend/API do ambiente homologado.
+captacaoclientes.traxup.com.br {
+    reverse_proxy 127.0.0.1:8082
+}

@@ -5,6 +5,7 @@ import com.traxup.tplug.erp.tenant.Tenant;
 import com.traxup.tplug.erp.tenant.TenantRepository;
 import com.traxup.tplug.erp.usuario.Usuario;
 import com.traxup.tplug.erp.usuario.UsuarioApplicationService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,6 +35,12 @@ class BootstrapAdminIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @BeforeEach
+    void limparTenantsCriadosPorOutrosTestes() {
+        tenantRepository.deleteAll();
+        tenantRepository.flush();
+    }
 
     @Test
     void deveCriarPrimeiroTenantAdminEConcederPermissoes() {

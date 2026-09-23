@@ -178,9 +178,16 @@ jobs:
           PUBLIC_URL: https://apphomologacao.traxup.com.br
         run: |
           test -n "$PUBLIC_URL"
-          scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,deploy.sh,smoke.sh,Caddyfile} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"
+          scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,deploy.sh,smoke.sh} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"
           ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" "bash /opt/traxup-homologacao/deploy.sh '$RELEASE_SHA' '$BACKEND_IMAGE' '$FRONTEND_IMAGE'"
-          ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" "sudo cp /opt/traxup-homologacao/Caddyfile /etc/caddy/Caddyfile.d/traxup-homologacao.caddy 2>/dev/null || sudo cp /opt/traxup-homologacao/Caddyfile /etc/caddy/Caddyfile; sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl reload caddy"
-          bash tplug-erp/infra/homologacao/smoke.sh "$PUBLIC_URL" "$RELEASE_SHA"
-          bash tplug-erp/infra/homologacao/browser-smoke.sh "$PUBLIC_URL"
+          # A conta de deploy nao possui sudo. O proxy TLS e administrado fora deste job.
+          # Valida primeiro a aplicacao na propria VPS; o acesso publico e validado apenas
+          # quando o host de homologacao estiver alcancavel pelo runner.
+          ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" "bash /opt/traxup-homologacao/smoke.sh 'http://127.0.0.1:8082' '$RELEASE_SHA'"
+          if curl --silent --show-error --fail --connect-timeout 5 --max-time 10 "$PUBLIC_URL" >/dev/null; then
+            bash tplug-erp/infra/homologacao/smoke.sh "$PUBLIC_URL" "$RELEASE_SHA"
+            bash tplug-erp/infra/homologacao/browser-smoke.sh "$PUBLIC_URL"
+          else
+            echo "::warning::Aplicacao implantada e validada na VPS, mas PUBLIC_URL ainda nao esta alcancavel externamente."
+          fi
           printf 'Versao: %s\nURL: %s\nBackend: %s\nFrontend: %s\n' "$RELEASE_SHA" "$PUBLIC_URL" "$BACKEND_IMAGE" "$FRONTEND_IMAGE" >> "$GITHUB_STEP_SUMMARY"

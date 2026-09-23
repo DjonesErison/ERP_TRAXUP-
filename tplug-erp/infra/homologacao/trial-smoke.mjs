@@ -57,6 +57,42 @@ try {
     assert.deepEqual(errors,[]);
     await context.close();
   }
+  // Email-first signup and deep links, including mobile, expiration and retry.
+  for (const width of [390,1280]) {
+    const context=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block'});
+    const page=await context.newPage();
+    const tenant='a8d3e764-1e2b-4eb5-8b23-a6fd71192350'; const email='ana+teste@example.test'; const token='a'.repeat(43);
+    await page.route('**/api/public/trials',route=>route.fulfill({status:201,json:{trialId:'test',tenantId:tenant,expiraEm:'2026-09-30',status:'ATIVO',proximoPasso:'VERIFICAR_EMAIL',ativacaoToken:null}}));
+    await page.goto(`${base}/teste`);await fill(page);await page.locator('.create').click();
+    await page.getByText('Vamos enviar o link de ativação', {exact:false}).waitFor();
+    assert.equal(await page.getByRole('heading',{name:'Crie sua senha'}).count(),0);
+    let resendPayload;
+    await page.route('**/api/public/trials/reenviar-ativacao',route=>{resendPayload=route.request().postDataJSON();return route.fulfill({status:202,body:''});});
+    await page.getByRole('button',{name:'Reenviar link de ativação'}).click();await page.getByRole('status').waitFor();
+    assert.equal(resendPayload.tenantId,tenant);
+    await page.screenshot({path:`${out}/trial-email-${width}.png`,fullPage:true});
+    let activationPayload;let activationStatus=401;
+    await page.route('**/api/v1/auth/ativacao-admin/confirmar',route=>{activationPayload=route.request().postDataJSON();return route.fulfill({status:activationStatus,body:''});});
+    await page.goto(`${base}/ativar#token=${token}&empresa=${tenant}&email=${encodeURIComponent(email)}`);
+    await page.getByRole('heading',{name:'Crie sua senha'}).waitFor();
+    assert.equal(new URL(page.url()).hash,'','Token removed from address/history');
+    await page.locator('[name=senha]').fill('SenhaTeste123!');await page.locator('[name=confirmacao]').fill('SenhaTeste123!');
+    await page.getByRole('button',{name:'Criar senha e continuar →'}).click();
+    await page.getByRole('heading',{name:'Reenviar ativação'}).waitFor();
+    assert.deepEqual(activationPayload,{token,novaSenha:'SenhaTeste123!'});
+    assert.equal(await page.locator('[name=emailAtivacao]').inputValue(),email);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    await page.screenshot({path:`${out}/activation-${width}.png`,fullPage:true});
+    activationStatus=204;await page.getByRole('button',{name:'Criar senha e continuar →'}).click();
+    await page.getByRole('heading',{name:'Acesse seu ERP'}).waitFor();
+    assert.equal(await page.locator('[name=tenantId]').inputValue(),tenant);
+    assert.equal(await page.locator('[name=email]').inputValue(),email);
+    await page.goto(`${base}/entrar#empresa=${tenant}&email=${encodeURIComponent(email)}`);
+    await page.getByRole('heading',{name:'Acesse seu ERP'}).waitFor();
+    assert.equal(await page.locator('[name=email]').inputValue(),email);
+    await page.goto(`${base}/ativar`);await page.getByRole('heading',{name:'Reenviar ativação'}).waitFor();
+    await context.close();
+  }
   const context=await browser.newContext(); const page=await context.newPage();
   await page.goto(`${base}/teste`);
   await page.locator('.product-art img').evaluate(i=>i.decode());

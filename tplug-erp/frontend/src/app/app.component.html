@@ -1,4 +1,4 @@
-<app-ativacao-admin *ngIf="!autenticado && ativacaoAdminToken" [token]="ativacaoAdminToken" (concluida)="concluirAtivacaoAdmin()"></app-ativacao-admin>
+<app-ativacao-admin *ngIf="!autenticado && ativacaoAdminToken" [token]="ativacaoAdminToken" [tenantId]="loginTenantId" [email]="loginEmail" (concluida)="concluirAtivacaoAdmin()"></app-ativacao-admin>
 <app-trial *ngIf="!autenticado && exibindoTrial && !ativacaoAdminToken" (voltarLogin)="exibindoTrial = false" (ativarAdmin)="iniciarAtivacaoAdmin($event)"></app-trial>
 <div class="login-shell" *ngIf="!autenticado && !exibindoTrial && !ativacaoAdminToken">
   <section class="login-brand" aria-label="TRAXUP ERP">
@@ -10,14 +10,16 @@
     <img class="mobile-logo" src="assets/traxup-logo.webp" alt="TRAXUP" width="180" height="120">
     <form class="login-card" (ngSubmit)="entrar()" [attr.aria-busy]="loginLoading">
       <div class="login-heading"><h2>Acesse seu ERP</h2><p class="subtitle">Entre com seus dados para acessar o sistema</p></div>
-      <div class="alert" role="alert" *ngIf="loginError">{{ loginError }}</div>
+      <div class="alert" role="status" *ngIf="ativacaoMensagem">{{ativacaoMensagem}}</div><div class="alert" role="alert" *ngIf="loginError">{{ loginError }}</div>
       <label for="login-company">Empresa</label><div class="input-icon"><app-icon name="building" /><input id="login-company" name="tenantId" type="text" [(ngModel)]="loginTenantId" required placeholder="Código da empresa" autocomplete="organization"></div>
       <label for="login-email">E-mail</label><div class="input-icon"><app-icon name="user" /><input id="login-email" name="email" type="email" [(ngModel)]="loginEmail" required placeholder="seu@email.com" autocomplete="username"></div>
       <label for="login-password">Senha</label><div class="input-icon password-field"><app-icon name="lock" /><input id="login-password" name="senha" [type]="mostrarSenha ? 'text' : 'password'" [(ngModel)]="loginSenha" required maxlength="72" placeholder="Sua senha" autocomplete="current-password"><button class="password-toggle" type="button" (click)="mostrarSenha = !mostrarSenha" [attr.aria-label]="mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'"><app-icon name="eye" /></button></div>
       <div class="login-options"><label class="remember"><input type="checkbox" name="lembrarAcesso" [(ngModel)]="lembrarAcesso">Lembrar empresa e e-mail</label><button type="button" class="text-action" (click)="abrirRecuperacao()">Esqueci minha senha</button></div>
       <button class="login-button" type="submit" [disabled]="loginLoading || !loginTenantId.trim() || !loginEmail.trim() || !loginSenha">{{ loginLoading ? 'Entrando...' : 'Entrar' }} <app-icon *ngIf="!loginLoading" name="arrow" /></button>
       <small class="security-note"><app-icon name="lock" /> Seus dados estão protegidos</small><button type="button" class="text-action" (click)="exibindoTrial = true">Ainda não é cliente? Teste grátis por 7 dias</button><p class="login-footer">TRAXUP ERP · Tecnologia que impulsiona negócios</p>
+      <button type="button" class="text-action" (click)="reenviarAtivacao = !reenviarAtivacao">Não recebi o e-mail de ativação</button>
     </form>
+    <app-reenviar-ativacao *ngIf="reenviarAtivacao" [tenantId]="loginTenantId" [email]="loginEmail" />
   </div></section>
 </div>
 

@@ -26,15 +26,15 @@ class TrialProvisioningServiceTest {
         when(tenants.save(any())).thenAnswer(i -> i.getArgument(0));
         when(empresas.save(any())).thenAnswer(i -> i.getArgument(0));
         when(usuarios.save(any())).thenAnswer(i -> i.getArgument(0));
-        when(trials.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(trials.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
         when(trials.findByIdempotencyKey("req-1")).thenReturn(Optional.empty());
 
-        var service = new TrialProvisioningService(tenants, empresas, usuarios, trials, encoder, auth);
+        var service = new TrialProvisioningService(tenants, empresas, usuarios, trials, encoder, auth, mock(com.traxup.tplug.erp.trial.mail.TrialEmailQueue.class), true);
         var request = new TrialCadastroRequest("Ana", "Loja", "Loja LTDA", "12345678000199",
                 "87999999999", "ana@loja.com", "Varejo", 1, true, "2026-09", "req-1");
         service.provisionar(request);
 
         verify(tenants, times(1)).save(any());
-        verify(trials, times(1)).save(any());
+        verify(trials, times(1)).saveAndFlush(any());
     }
 }

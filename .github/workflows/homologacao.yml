@@ -179,7 +179,7 @@ jobs:
           PUBLIC_URL: https://apphomologacao.traxup.com.br
         run: |
           test -n "$PUBLIC_URL"
-          scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,deploy.sh,smoke.sh} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"
+          scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,compose.mail.yml,deploy.sh,smoke.sh} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"
           ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" "bash /opt/traxup-homologacao/deploy.sh '$RELEASE_SHA' '$BACKEND_IMAGE' '$FRONTEND_IMAGE'"
           # A conta de deploy nao possui sudo. O proxy TLS e administrado fora deste job.
           # Valida primeiro a aplicacao na propria VPS; o acesso publico e validado apenas

@@ -10,7 +10,12 @@ import org.springframework.web.bind.annotation.*;
 public class TrialController {
     private final TrialProvisioningService service;
 
-    public TrialController(TrialProvisioningService service) { this.service = service; }
+    private final com.traxup.tplug.erp.trial.mail.TrialEmailQueue emails;
+    public TrialController(TrialProvisioningService service,com.traxup.tplug.erp.trial.mail.TrialEmailQueue emails) { this.service = service; this.emails=emails; }
+    @PostMapping("/reenviar-ativacao")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void reenviar(@Valid @RequestBody TrialReenviarRequest request) { emails.resend(request.tenantId(),request.email()); }
+
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

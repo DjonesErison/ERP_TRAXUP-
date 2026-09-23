@@ -29,18 +29,22 @@ public class TrialProvisioningService {
     private final PasswordEncoder passwordEncoder;
     private final AuthApplicationService authApplicationService;
     private final Clock clock;
+    private final com.traxup.tplug.erp.trial.mail.TrialEmailQueue emails;
+    private final boolean emailEnabled;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Autowired
     public TrialProvisioningService(TenantRepository tenantRepository, EmpresaRepository empresaRepository,
                                     UsuarioRepository usuarioRepository, TrialSaasRepository trialRepository,
-                                    PasswordEncoder passwordEncoder, AuthApplicationService authApplicationService) {
-        this(tenantRepository, empresaRepository, usuarioRepository, trialRepository, passwordEncoder, authApplicationService, Clock.systemUTC());
+                                    PasswordEncoder passwordEncoder, AuthApplicationService authApplicationService,
+                                    com.traxup.tplug.erp.trial.mail.TrialEmailQueue emails, @org.springframework.beans.factory.annotation.Value("${trial.mail.enabled:false}") boolean emailEnabled) {
+        this(tenantRepository, empresaRepository, usuarioRepository, trialRepository, passwordEncoder, authApplicationService, Clock.systemUTC(), emails, emailEnabled);
     }
 
     TrialProvisioningService(TenantRepository tenantRepository, EmpresaRepository empresaRepository,
                              UsuarioRepository usuarioRepository, TrialSaasRepository trialRepository,
-                             PasswordEncoder passwordEncoder, AuthApplicationService authApplicationService, Clock clock) {
+                             PasswordEncoder passwordEncoder, AuthApplicationService authApplicationService, Clock clock, com.traxup.tplug.erp.trial.mail.TrialEmailQueue emails, boolean emailEnabled) {
+        this.emails=emails; this.emailEnabled=emailEnabled;
         this.tenantRepository = tenantRepository;
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
@@ -73,16 +77,17 @@ public class TrialProvisioningService {
         Usuario admin = usuarioRepository.save(new Usuario(tenant, request.nomeCompleto().trim(), email,
                 passwordEncoder.encode(segredoAleatorio())));
 
-        TrialSaas trial = trialRepository.save(new TrialSaas(tenant, empresa, admin, email, documento, telefone,
+        TrialSaas trial = trialRepository.saveAndFlush(new TrialSaas(tenant, empresa, admin, email, documento, telefone,
                 normalizarOpcional(request.segmento()), request.quantidadeLojas(), request.termosVersao().trim(),
                 idempotencyKey, agora));
-        String ativacaoToken = authApplicationService.criarAtivacaoAdministrador(admin);
+        emails.enqueue(trial);
+        String ativacaoToken = emailEnabled ? null : authApplicationService.criarAtivacaoAdministrador(admin);
         return response(trial, ativacaoToken);
     }
 
     private TrialCadastroResponse response(TrialSaas trial, String ativacaoToken) {
         return new TrialCadastroResponse(trial.getId(), trial.getTenantId(), trial.getExpiraEm(),
-                trial.getStatus(), "ATIVAR_ADMINISTRADOR", ativacaoToken);
+                trial.getStatus(), emailEnabled ? "VERIFICAR_EMAIL" : "ATIVAR_ADMINISTRADOR", ativacaoToken);
     }
 
     private String segredoAleatorio() {

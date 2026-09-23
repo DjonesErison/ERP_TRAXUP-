@@ -53,6 +53,17 @@ button { cursor:pointer; font:inherit; }
 .lgpd { display:flex; align-items:center; justify-content:center; gap:8px; color:#68768a; font-size:clamp(11px,.8vw,16px); }
 .lgpd app-icon { color:#00a66a; font-size:17px; }
 .alert { padding:12px; margin-bottom:16px; background:#fff0f0; color:#a31d1d; border-radius:6px; }
+
+.recovery-panel { margin:0 0 24px; padding:16px; border:1px solid #d8e6fa; border-radius:12px; background:#f3f8ff; }
+.recovery-description { margin:0 0 14px; color:#42526c; font-size:14px; line-height:1.5; }
+.recover-access { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:48px; padding:12px 16px; border:1px solid #0758be; border-radius:9px; background:#0758be; color:#fff; font-size:15px; font-weight:700; line-height:1.4; box-shadow:0 3px 8px #0758be18; transition:background .15s ease,box-shadow .15s ease; }
+.recover-access app-icon { width:20px; height:20px; }
+.recover-access span { min-width:0; }
+.recover-access .recovery-arrow { margin-left:auto; }
+.recover-access:hover:not(:disabled) { background:#064a9f; box-shadow:0 4px 12px #0758be28; }
+.recover-access:focus-visible { outline:3px solid #77b8ff; outline-offset:3px; }
+.recover-access:disabled { cursor:wait; opacity:.7; box-shadow:none; }
+.recovery-feedback { margin:14px 0 0; padding-top:12px; border-top:1px solid #d8e6fa; color:#344866; font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
 .success { text-align:center; }
 .steps { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:25px 3.7%; }
 .steps>div:not(.ai) { display:flex; align-items:center; gap:18px; }

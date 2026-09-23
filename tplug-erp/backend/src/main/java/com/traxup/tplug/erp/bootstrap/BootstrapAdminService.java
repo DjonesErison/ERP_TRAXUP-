@@ -33,14 +33,14 @@ public class BootstrapAdminService {
 
     @Transactional
     public void executar(String tenantNome, String adminNome, String adminEmail, String adminSenha) {
-        if (tenantRepository.count() > 0) {
-            throw new IllegalStateException("Bootstrap recusado: ja existe tenant cadastrado");
-        }
-
         validarTexto(tenantNome, "BOOTSTRAP_ADMIN_TENANT_NAME");
         validarTexto(adminNome, "BOOTSTRAP_ADMIN_NAME");
         validarTexto(adminEmail, "BOOTSTRAP_ADMIN_EMAIL");
         validarSenha(adminSenha);
+
+        if (tenantRepository.count() > 0) {
+            throw new IllegalStateException("Bootstrap recusado: ja existe tenant cadastrado");
+        }
 
         Tenant tenant = tenantRepository.save(new Tenant(tenantNome.trim()));
         Usuario admin = usuarioApplicationService.criar(

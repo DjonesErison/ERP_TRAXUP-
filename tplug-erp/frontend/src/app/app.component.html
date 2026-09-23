@@ -1,4 +1,4 @@
-<app-ativacao-admin *ngIf="!autenticado && ativacaoAdminToken" [token]="ativacaoAdminToken" [codigoEmpresa]="loginCodigoEmpresa" [email]="loginEmail" (concluida)="concluirAtivacaoAdmin()"></app-ativacao-admin>
+<app-ativacao-admin *ngIf="!autenticado && ativacaoAdminToken" [recuperacao]="redefinindoSenha" [token]="ativacaoAdminToken" [codigoEmpresa]="loginCodigoEmpresa" [email]="loginEmail" (concluida)="concluirAtivacaoAdmin()"></app-ativacao-admin>
 <app-trial *ngIf="!autenticado && exibindoTrial && !ativacaoAdminToken" (acessoCriado)="loginCodigoEmpresa = $event.codigoEmpresa; loginEmail = $event.email" (voltarLogin)="exibindoTrial = false" (ativarAdmin)="iniciarAtivacaoAdmin($event)"></app-trial>
 <div class="login-shell" *ngIf="!autenticado && !exibindoTrial && !ativacaoAdminToken">
   <section class="login-brand" aria-label="TRAXUP ERP">

@@ -46,9 +46,17 @@ try {
     await page.getByRole('alert').filter({hasText:'Confira os dados'}).waitFor();
     status=503; await page.locator('.create').click();
     await page.getByRole('alert').filter({hasText:'Não foi possível iniciar'}).waitFor();
+    status=409; await page.locator('.create').click();
+    await page.getByRole('alert').filter({hasText:'Empresa já cadastrada'}).waitFor();
+    let recovery;
+    await page.route('**/api/public/trials/recuperar-acesso',route=>{recovery=route.request().postDataJSON();return route.fulfill({status:202,body:''});});
+    await page.getByRole('button',{name:'Recuperar acesso',exact:true}).click();
+    await page.getByRole('status').filter({hasText:'Se os dados corresponderem'}).waitFor();
+    assert.equal(recovery.email,'trial@example.test');
+    assert.equal(recovery.documento,'11.222.333/0001-81');
     status=200; await page.locator('.create').click();
     await page.getByRole('heading',{name:'Seu teste começou!'}).waitFor();
-    assert.equal(calls.length,3);
+    assert.equal(calls.length,4);
     await page.getByText('0042', {exact:true}).waitFor();
     assert.equal(await page.getByText('tenant-test', {exact:true}).count(),0);
     assert.equal(calls[0].nomeCompleto,'Teste Visual'); assert.equal(calls[0].documento,'11222333000181'); assert.equal(calls[0].telefone,'11961234567');
@@ -122,6 +130,26 @@ try {
     await page.getByRole('heading',{name:'Acesse seu ERP'}).waitFor();
     assert.equal(await page.locator('[name=email]').inputValue(),email);
     await page.goto(`${base}/ativar`);await page.getByRole('heading',{name:'Reenviar ativação'}).waitFor();
+    await context.close();
+  }
+  // Recovery links clear prior sessions, keep secrets out of history and use the recovery API.
+  {
+    const context=await browser.newContext({serviceWorkers:'block'}); const page=await context.newPage();
+    let payload; let code=401;
+    await page.route('**/api/v1/auth/recuperacao-senha/confirmar',route=>{payload=route.request().postDataJSON();return route.fulfill({status:code,body:''});});
+    await page.addInitScript(()=>{localStorage.setItem('tplug_access_token','old-token');localStorage.setItem('tplug_refresh_token','old-refresh');});
+    await page.goto(`${base}/recuperar#token=${'r'.repeat(43)}&empresa=0042&email=ana%40example.test`);
+    await page.getByText('Recuperação de acesso',{exact:true}).waitFor();
+    assert.equal(new URL(page.url()).hash,'');
+    assert.equal(await page.evaluate(()=>localStorage.getItem('tplug_access_token')),null);
+    await page.locator('[name=senha]').fill('NovaSenha123!');await page.locator('[name=confirmacao]').fill('NovaSenha123!');
+    await page.getByRole('button',{name:'Criar senha e continuar →'}).click();
+    await page.getByText('O link é inválido ou expirou.',{exact:false}).waitFor();
+    assert.equal(await page.locator('app-reenviar-ativacao').count(),0);
+    code=204; await page.getByRole('button',{name:'Criar senha e continuar →'}).click();
+    await page.getByRole('heading',{name:'Acesse seu ERP'}).waitFor();
+    assert.deepEqual(payload,{token:'r'.repeat(43),novaSenha:'NovaSenha123!'});
+    assert.equal(await page.locator('#login-company').inputValue(),'0042');
     await context.close();
   }
   const context=await browser.newContext(); const page=await context.newPage();

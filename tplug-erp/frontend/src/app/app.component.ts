@@ -20,6 +20,7 @@ import { OnboardingService } from './onboarding.service';
 
 @Component({ selector: 'app-root', standalone: true, imports: [ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
+  redefinindoSenha = false;
   area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false; ativacaoAdminToken = '';
   readonly menu = [
     { label: 'Visão Geral', icon: 'home', area: 'dashboard' }, { label: 'Vendas', icon: 'cart', area: 'vendas' }, { label: 'Produtos', icon: 'box', area: '' },
@@ -40,22 +41,23 @@ export class AppComponent implements OnInit {
     const publicPath = window.location.pathname.replace(/\/+$/, '');
     // Email links must not reuse credentials from a previous account in this browser.
     const linkParams = new URLSearchParams(window.location.hash.slice(1));
-    if (publicPath === '/ativar' || (publicPath === '/entrar' && linkParams.has('empresa'))) {
+    if ((publicPath === '/ativar' || publicPath === '/recuperar') || (publicPath === '/entrar' && linkParams.has('empresa'))) {
       this.auth.limparSessao(); this.contexto.limpar();
     }
-    if ((window.location.hostname === 'captacaoclientes.traxup.com.br' && !['/ativar','/entrar'].includes(publicPath)) || publicPath === '/teste' || publicPath === '/trial') this.exibindoTrial = true;
+    if ((window.location.hostname === 'captacaoclientes.traxup.com.br' && !['/ativar','/entrar','/recuperar'].includes(publicPath)) || publicPath === '/teste' || publicPath === '/trial') this.exibindoTrial = true;
     this.loginCodigoEmpresa = ''; this.autenticado = this.auth.autenticado; this.filialAtiva = this.contexto.filialAtiva;
     this.selecionandoFilial = this.autenticado && !this.filialAtiva; if (this.autenticado) this.verificarOnboarding(); else if (this.selecionandoFilial) this.carregarFiliais();
     try { const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null'); if (salvo && typeof salvo.codigoEmpresa === 'string' && /^[0-9]{4}$/.test(salvo.codigoEmpresa) && typeof salvo.email === 'string') { this.loginCodigoEmpresa = salvo.codigoEmpresa; this.loginEmail = salvo.email; this.lembrarAcesso = true; } } catch { localStorage.removeItem('traxup_login_hint'); }
-    if (publicPath === '/ativar' || publicPath === '/entrar') {
+    if ((publicPath === '/ativar' || publicPath === '/recuperar') || publicPath === '/entrar') {
       const params = new URLSearchParams(window.location.hash.slice(1));
       const tenantId = params.get('empresa') || ''; const email = params.get('email') || '';
       if (/^[0-9]{4}$/.test(tenantId)) this.loginCodigoEmpresa = tenantId;
       if (email.length <= 254) this.loginEmail = email;
-      if (publicPath === '/ativar') {
+      if ((publicPath === '/ativar' || publicPath === '/recuperar')) {
+        this.redefinindoSenha = publicPath === '/recuperar';
         const token = params.get('token') || '';
         if (/^[A-Za-z0-9_-]{43}$/.test(token)) this.ativacaoAdminToken = token;
-        else { this.reenviarAtivacao = true; this.loginError = 'Link de ativação incompleto. Solicite um novo link abaixo.'; }
+        else { this.reenviarAtivacao = !this.redefinindoSenha; this.loginError = 'Link incompleto. Solicite um novo link de acesso.'; }
       }
       // Keep credentials out of URLs, referrers and browser history after opening.
       window.history.replaceState(null, '', '/entrar');

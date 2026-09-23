@@ -44,6 +44,8 @@ jobs:
           cache-dependency-path: tplug-erp/backend/pom.xml
       - name: Executar testes e validar migrations
         run: bash mvnw --batch-mode --no-transfer-progress clean verify
+      - name: Testar limpeza isolada e preservacao de dados tecnicos
+        run: bash ../infra/homologacao/cleanup-test.sh
       - name: Validar build da imagem Docker
         run: docker build --tag tplug-erp-backend:ci .
   frontend:
@@ -179,7 +181,7 @@ jobs:
           PUBLIC_URL: https://apphomologacao.traxup.com.br
         run: |
           test -n "$PUBLIC_URL"
-          scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,compose.mail.yml,deploy.sh,smoke.sh} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"
+          scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,compose.mail.yml,deploy.sh,smoke.sh,cleanup-simulations.sh,cleanup-simulations.sql} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"
           ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" "bash /opt/traxup-homologacao/deploy.sh '$RELEASE_SHA' '$BACKEND_IMAGE' '$FRONTEND_IMAGE'"
           # A conta de deploy nao possui sudo. O proxy TLS e administrado fora deste job.
           # Valida primeiro a aplicacao na propria VPS; o acesso publico e validado apenas

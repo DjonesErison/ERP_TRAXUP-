@@ -18,6 +18,9 @@ public class AuthController {
         this.authApplicationService = authApplicationService;
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.traxup.tplug.erp.auth.AccessRecoveryQueue recovery;
+
     @PostMapping("/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
         return TokenResponse.from(authApplicationService.loginPorEmpresa(request.codigoEmpresa(), request.tenantId(), request.email(), request.senha()));
@@ -38,7 +41,7 @@ public class AuthController {
     public ResponseEntity<Void> solicitarRecuperacao(@Valid @RequestBody RecuperacaoSenhaSolicitarRequest request) {
         // Resposta intencionalmente neutra: nao revela se o e-mail existe no tenant.
         authApplicationService.resolverTenant(request.codigoEmpresa(), request.tenantId())
-                .ifPresent(id -> authApplicationService.solicitarRecuperacao(id, request.email()));
+                .ifPresent(id -> recovery.requestTenant(id, request.email()));
         return ResponseEntity.accepted().build();
     }
 

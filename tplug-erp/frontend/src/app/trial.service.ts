@@ -15,6 +15,9 @@ export class TrialService {
   reenviar(codigoEmpresa: string, email: string): Observable<void> {
     return this.http.post<void>('/api/public/trials/reenviar-ativacao', {codigoEmpresa, email});
   }
+  recuperar(documento: string, email: string): Observable<void> {
+    return this.http.post<void>('/api/public/trials/recuperar-acesso', {documento, email});
+  }
   cadastrar(payload: TrialCadastroPayload): Observable<TrialCadastroResponse> {
     return this.http.post<TrialCadastroResponse>('/api/public/trials', payload);
   }

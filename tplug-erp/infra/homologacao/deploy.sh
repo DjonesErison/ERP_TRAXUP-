@@ -34,6 +34,7 @@ rollback() {
   exit "$code"
 }
 trap rollback ERR
+bash cleanup-simulations.sh
 docker compose --env-file .env -f compose.yml -f compose.mail.yml up -d
 # Porta efetiva vem da configuracao Compose, sem executar o arquivo de segredos.
 port=$(docker compose --env-file .env -f compose.yml -f compose.mail.yml port frontend 80)

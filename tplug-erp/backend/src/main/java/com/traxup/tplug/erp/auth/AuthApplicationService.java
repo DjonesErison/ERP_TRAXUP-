@@ -114,7 +114,7 @@ public class AuthApplicationService {
     public String criarAtivacaoAdministrador(Usuario usuario) {
         String token = gerarTokenAleatorio();
         ativacaoAdminTokenRepository.save(new AtivacaoAdminToken(usuario.getTenant(), usuario, hash(token),
-                Instant.now().plus(24, ChronoUnit.HOURS)));
+                Instant.now().plus(30, ChronoUnit.MINUTES)));
         return token;
     }
 

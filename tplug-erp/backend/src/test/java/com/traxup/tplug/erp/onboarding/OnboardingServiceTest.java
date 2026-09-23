@@ -20,11 +20,11 @@ class OnboardingServiceTest {
   Tenant tenant=new Tenant("Demo"); Empresa empresa=new Empresa(tenant,"Demo LTDA","Demo","12345678000199");
   when(context.tenantId()).thenReturn(tenantId); when(context.usuarioIdOuNulo()).thenReturn(usuarioId);
   when(empresas.findAllByTenantId(tenantId)).thenReturn(List.of(empresa)); when(filiais.findAllByTenantIdAndEmpresaId(eq(tenantId),any())).thenReturn(List.of());
-  when(filiais.save(any())).thenAnswer(i->i.getArgument(0));
+  when(filiais.saveAndFlush(any())).thenAnswer(i->i.getArgument(0));
   var service=new OnboardingService(context,empresas,filiais,trials,jdbc);
   var status=service.concluir("Matriz","12.345.678/0001-99");
   assertThat(status.concluido()).isTrue(); assertThat(status.filialConfigurada()).isTrue();
-  verify(filiais).save(any(Filial.class)); verify(jdbc).update(startsWith("insert into usuario_filiais"),eq(tenantId),eq(usuarioId),any());
+  verify(filiais).saveAndFlush(any(Filial.class)); verify(jdbc).update(startsWith("insert into usuario_filiais"),eq(tenantId),eq(usuarioId),any());
   verify(jdbc).update(startsWith("update trials_saas"),eq(tenantId));
  }
 }

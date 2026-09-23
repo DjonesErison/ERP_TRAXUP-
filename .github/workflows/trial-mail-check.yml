@@ -24,41 +24,9 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/homologacao
           chmod 600 ~/.ssh/homologacao
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-      - name: Verificar TLS e autenticacao sem enviar e-mail
-        continue-on-error: true
-        run: |
-          ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" 'docker run --rm -i --user 10001:10001 --network traxup-homologacao_default --mount type=bind,src=/opt/traxup-homologacao/secrets/smtp-password,dst=/smtp-password,readonly python:3.12-alpine python -' <<'PY'
-          import pathlib, smtplib, ssl, sys
-          try:
-              password = pathlib.Path('/smtp-password').read_text()
-              if password != password.rstrip('\r\n'):
-                  print('REMOVING_TRAILING_NEWLINE_FOR_AUTH_CHECK', flush=True)
-                  password = password.rstrip('\r\n')
-              print('SECRET_READ_OK', flush=True)
-              with smtplib.SMTP_SSL('smtp.hostinger.com',465,timeout=15,context=ssl.create_default_context()) as client:
-                  client.login('naoresponda@traxup.com.br',password)
-                  print('SMTP_AUTH_OK', flush=True)
-          except smtplib.SMTPResponseException as e:
-              print('SMTP_RESPONSE_ERROR',e.smtp_code, type(e).__name__, flush=True)
-              sys.exit(1)
-          except Exception as e:
-              print('SMTP_CHECK_FAILED',type(e).__name__, flush=True)
-              sys.exit(1)
-          PY
-      - name: Verificar inicializacao isolada sem publicar portas ou enviar mensagens
+      - name: Consultar status limitado do e-mail de teste autorizado
         run: |
           ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" 'bash -s' <<'SH'
           set -Eeuo pipefail
-          cd /opt/traxup-homologacao
-          export BACKEND_IMAGE=ghcr.io/djoneserison/traxup-erp-backend@sha256:ec10c8ac918c666eb4fc39d3853dcfefa433dbd2aa18d672fc94a5ac24cfc24e
-          export FRONTEND_IMAGE=ghcr.io/djoneserison/traxup-erp-frontend@sha256:734fc4cdf53b4b2aa507afab50efb2eef4a9939ae56b0c240107d2ce06363925
-          probe=traxup-mail-startup-check
-          trap 'docker rm -f "$probe" >/dev/null 2>&1 || true' EXIT
-          docker compose --env-file .env -f compose.yml -f compose.mail.yml run -d --no-deps --name "$probe" -e TRIAL_MAIL_ENABLED=false -e BOOTSTRAP_ADMIN_ENABLED=false -e JAVA_OPTS='-Dspring.mail.test-connection=true -Dserver.port=0' backend
-          for i in {1..30}; do
-            if [[ "$(docker inspect --format '{{.State.Running}}' "$probe")" != true ]]; then break; fi
-            if docker logs "$probe" 2>&1 | grep -q 'Started TPlugErpBackendApplication'; then break; fi
-            sleep 2
-          done
-          docker logs "$probe" 2>&1 | grep -E 'Caused by:|APPLICATION FAILED|Mail server|Started TPlugErpBackendApplication|Application run failed|Description:|could not|Could not|Permission denied' | tail -30 || true
+          docker exec traxup-homologacao-postgres-1 psql -U traxup_homologacao -d traxup_homologacao -c "SELECT status,attempts,last_error FROM trial_activation_emails WHERE trial_id='96b95718-1012-4132-a28c-a518cbbaf293'"
           SH

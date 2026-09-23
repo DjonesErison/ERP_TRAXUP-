@@ -9,12 +9,15 @@ import { ContabilidadeComponent } from './contabilidade.component';
 import { ConciliacaoFinanceiraComponent } from './conciliacao-financeira.component';
 import { VendasComponent } from './vendas.component';
 import { ComprasComponent } from './compras.component';
+import { TrialComponent } from './trial.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent],
+  imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, TrialComponent],
   template: `
+    <app-trial *ngIf="modoTrial"></app-trial>
+    <ng-container *ngIf="!modoTrial">
     <div class="login-shell" *ngIf="!autenticado">
       <section class="login-brand">
         <div class="login-mark">T</div>
@@ -169,10 +172,12 @@ import { ComprasComponent } from './compras.component';
         </ng-container>
       </main>
     </div>
+    </ng-container>
   `,
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
+  modoTrial = window.location.hostname === 'captacaoclientes.traxup.com.br' || window.location.pathname === '/trial';
   area: 'crm' | 'contabilidade' | 'financeiro' | 'vendas' | 'compras' = 'crm';
   autenticado = false;
   loginTenantId = '';
@@ -193,6 +198,7 @@ export class AppComponent implements OnInit {
   constructor(private readonly crm: CrmService, private readonly auth: AuthService) {}
 
   ngOnInit(): void {
+    if (this.modoTrial) return;
     this.loginTenantId = this.auth.tenantId ?? '';
     this.autenticado = this.auth.autenticado;
     if (this.autenticado) this.carregar();

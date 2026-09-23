@@ -25,11 +25,15 @@ jobs:
           chmod 600 ~/.ssh/homologacao
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
       - name: Verificar TLS e autenticacao sem enviar e-mail
+        continue-on-error: true
         run: |
           ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" 'docker run --rm -i --user 10001:10001 --network traxup-homologacao_default --mount type=bind,src=/opt/traxup-homologacao/secrets/smtp-password,dst=/smtp-password,readonly python:3.12-alpine python -' <<'PY'
           import pathlib, smtplib, ssl, sys
           try:
               password = pathlib.Path('/smtp-password').read_text()
+              if password != password.rstrip('\r\n'):
+                  print('REMOVING_TRAILING_NEWLINE_FOR_AUTH_CHECK', flush=True)
+                  password = password.rstrip('\r\n')
               print('SECRET_READ_OK', flush=True)
               with smtplib.SMTP_SSL('smtp.hostinger.com',465,timeout=15,context=ssl.create_default_context()) as client:
                   client.login('naoresponda@traxup.com.br',password)

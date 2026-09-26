@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 
 public record CriarTrialRequest(
         @NotBlank @Size(max=200) String empresa,
+        @Size(max=200) String razaoSocial,
         @Size(max=14) String documento,
         @NotBlank @Size(max=150) String responsavel,
         @NotBlank @Email @Size(max=254) String email,

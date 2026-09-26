@@ -116,3 +116,15 @@ footer { display:flex; justify-content:space-between; gap:20px; min-height:55px;
   .product-art img{width:100%;height:auto;max-height:430px;object-fit:contain;object-position:center}
   .signup{padding:24px 28px 36px!important}
 }
+
+/* UI-014: 1024px ainda não comporta a composição desktop sem colisão. */
+@media (min-width:1001px) and (max-width:1120px){
+  .hero{grid-template-columns:1fr!important}
+  .marketing{display:flex;flex-direction:column;min-height:0!important;padding:40px 36px 24px!important;overflow:hidden}
+  .marketing-copy{flex:0 0 auto}
+  .modules{position:relative!important;z-index:2;width:min(620px,100%)!important;grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:28px}
+  .product-art{position:relative!important;inset:auto!important;right:auto!important;bottom:auto!important;width:min(650px,82%)!important;height:auto!important;min-height:380px;margin:0 auto;z-index:1;order:2}
+  .product-art img{width:100%;height:auto;max-height:460px;object-fit:contain;object-position:center}
+  .signup{padding:28px 36px 42px!important}
+  .trial-card{width:min(600px,100%)}
+}

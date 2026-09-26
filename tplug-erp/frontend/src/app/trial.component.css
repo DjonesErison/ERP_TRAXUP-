@@ -106,3 +106,13 @@ footer { display:flex; justify-content:space-between; gap:20px; min-height:55px;
   .modules{position:relative;z-index:5;width:min(575px,100%);grid-template-columns:repeat(3,minmax(0,1fr))}
   .product-art{z-index:1;width:min(610px,82%);height:430px;right:3%;bottom:8px}
 }
+
+/* UI-014 tablet: arte participa do fluxo para impossibilitar colisão com módulos */
+@media (min-width:651px) and (max-width:1000px){
+  .marketing{display:flex;flex-direction:column;min-height:0!important;padding:40px 28px 20px!important;overflow:hidden}
+  .marketing-copy{flex:0 0 auto}
+  .modules{position:relative!important;z-index:2;width:min(575px,100%)!important;grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:24px}
+  .product-art{position:relative!important;inset:auto!important;right:auto!important;bottom:auto!important;width:min(610px,92%)!important;height:auto!important;min-height:360px;margin:0 auto;z-index:1;order:2}
+  .product-art img{width:100%;height:auto;max-height:430px;object-fit:contain;object-position:center}
+  .signup{padding:24px 28px 36px!important}
+}

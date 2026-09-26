@@ -82,3 +82,20 @@ footer { display:flex; justify-content:space-between; gap:20px; min-height:55px;
 @media (min-width:701px) and (max-width:850px) { .modules { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:700px) { .top { min-height:76px; padding:12px 18px; gap:12px; }.top img { width:155px; height:44px; }.actions { gap:12px; }.top button { font-size:13px; }.actions .test { padding:12px; }.hero { display:flex; flex-direction:column; }.marketing { display:flex; flex-direction:column; padding:30px 22px 16px; }.marketing-copy { width:100%; }.kicker { white-space:normal; font-size:10px; line-height:1.6; margin-bottom:17px; }.marketing h1 { width:100%; font-size:clamp(34px,7.8vw,52px); line-height:1.06; margin-bottom:20px; }.subtitle { width:100%; font-size:16px; }.subtitle br { display:none; }.checks { gap:13px 18px; margin-bottom:28px; }.checks li { font-size:12px; }.modules { grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px 10px; }.modules li { flex-direction:column; gap:6px; }.modules p { margin:0; }.modules i { width:46px; height:49px; }.modules b { font-size:14px; }.modules small { font-size:11px; }.product-art { width:100%; max-width:510px; margin:28px auto 0; }.signup { padding:8px 14px 28px; }.trial-card { padding:26px 20px; border-radius:16px; }.trial-card h2 { font-size:29px; }.trial-card>p { font-size:16px; margin-bottom:26px; }.grid { grid-template-columns:1fr; gap:19px; }.grid label { font-size:14px; }.grid input,.grid select { height:48px; }.terms { font-size:13px; }.existing { font-size:13px; }.lgpd { font-size:11px; }.steps { padding:26px 22px; gap:26px; }.steps>div:not(.ai) { flex-basis:100%; }.ai { margin:0 auto; }.robot { width:44px; height:44px; }footer { flex-direction:column; text-align:center; gap:10px; padding:20px; font-size:9px; } }
 @media (max-width:360px) { .top { padding-inline:12px; }.top img { width:133px; }.actions { gap:8px; }.actions .test { padding:11px 8px; }.marketing { padding-inline:18px; }.trial-card { padding-inline:16px; } }
+
+/* UI-014 aprovada: composição sem cabeçalho/faixa inferior, formulário funcional à direita */
+.trial-page{min-height:100vh;overflow-x:hidden;background:linear-gradient(135deg,#f8fcff 0%,#e9f7ff 72%,#f7fbff 100%)}
+.hero{min-height:100vh;grid-template-columns:minmax(0,67%) minmax(430px,33%);background:radial-gradient(circle at 53% 30%,#d9f1ff 0,transparent 42%),linear-gradient(135deg,#f8fcff,#edf9ff 68%,#f7fbff)}
+.marketing{padding:5.8vh 3.4vw 2vh;overflow:visible}
+.marketing-copy{position:relative;z-index:2}
+.marketing h1{font-size:clamp(54px,4.55vw,82px);line-height:1.03;max-width:720px;margin:6vh 0 5vh}
+.checks{gap:28px;margin-bottom:36px}
+.modules{grid-template-columns:repeat(3,175px);gap:26px 22px;width:575px}
+.product-art{right:-1.5%;bottom:-1%;width:61%;height:76%;z-index:1;display:flex;align-items:flex-end;justify-content:center}
+.product-art img{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom}
+.signup{padding:5.5vh 1.1vw 4vh 0;align-items:center}
+.trial-card{width:min(570px,96%);padding:30px 28px;border-radius:18px}
+.trial-card h2{font-size:34px}
+@media(max-width:1200px){.hero{grid-template-columns:62% 38%}.marketing h1{font-size:55px}.product-art{width:60%;height:70%}.modules{grid-template-columns:repeat(3,150px);width:500px}}
+@media(max-width:1000px){.hero{grid-template-columns:1fr}.marketing{min-height:760px;padding:40px 28px}.marketing h1{margin:20px 0 30px}.product-art{width:55%;height:58%;right:1%}.signup{padding:30px}.trial-card{width:min(600px,100%)}}
+@media(max-width:650px){.marketing{min-height:900px;padding:30px 20px}.marketing h1{font-size:42px}.modules{grid-template-columns:1fr 1fr;width:auto}.product-art{width:96%;height:42%;right:2%}.signup{padding:18px 12px}.trial-card{width:100%}}

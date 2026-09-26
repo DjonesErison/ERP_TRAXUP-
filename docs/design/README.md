@@ -33,7 +33,7 @@ Este diretório reúne as referências visuais do projeto TraxUp ERP, incluindo 
 | UI-011 | PDV Desktop | `10-pdv/pdv-desktop.webp` | Aprovada como direção visual |
 | UI-012 | Aplicativo do cliente | `11-aplicativos/aplicativo-cliente.webp` | Aprovada como direção visual |
 | UI-013 | Aplicativo do vendedor | `11-aplicativos/aplicativo-vendedor.webp` | Aprovada como direção visual |
-| UI-014 | Captação do trial de 7 dias | `12-trial-admin/trial-7-dias.webp` | Proposta para revisão funcional |
+| UI-014 | Captação e trial de sete dias | `12-trial-admin/UI-014-captacao-trial-sete-dias-traxup.webp` | ✅ Visual aprovado |
 | UI-015 | Administração de clientes SaaS | `12-trial-admin/admin-clientes-saas.webp` | Proposta para revisão funcional |
 | UI-016 | Login do TraxUp ERP | `01-traxup-erp/UI-016-login-traxup-erp.webp` | ✅ Visual aprovado |
 | UI-017 | Recuperação de senha do TraxUp ERP | `01-traxup-erp/UI-017-recuperacao-senha-traxup-erp.webp` | ✅ Visual aprovado |

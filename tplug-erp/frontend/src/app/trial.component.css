@@ -128,3 +128,26 @@ footer { display:flex; justify-content:space-between; gap:20px; min-height:55px;
   .signup{padding:28px 36px 42px!important}
   .trial-card{width:min(600px,100%)}
 }
+
+/* UI-014 estrutural: conteúdo, módulos e arte nunca compartilham a mesma região geométrica */
+.marketing{display:grid!important;grid-template-columns:minmax(0,54%) minmax(0,46%)!important;grid-template-rows:auto 1fr!important;column-gap:18px!important;align-items:start!important;overflow:hidden!important}
+.marketing-copy{grid-column:1!important;grid-row:1 / span 2!important;position:relative!important;z-index:2!important;min-width:0!important}
+.modules{position:relative!important;width:100%!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:24px 14px!important}
+.product-art{grid-column:2!important;grid-row:1 / span 2!important;position:relative!important;inset:auto!important;right:auto!important;bottom:auto!important;width:100%!important;height:100%!important;min-height:520px!important;margin:0!important;z-index:1!important;display:flex!important;align-items:flex-end!important;justify-content:center!important}
+.product-art img{width:100%!important;height:auto!important;max-height:640px!important;object-fit:contain!important;object-position:center bottom!important}
+@media(max-width:1120px){
+ .hero{grid-template-columns:1fr!important}
+ .marketing{display:flex!important;flex-direction:column!important;padding:40px 28px 20px!important;min-height:0!important}
+ .marketing-copy{width:100%!important}
+ .modules{grid-template-columns:repeat(3,minmax(0,1fr))!important;width:min(620px,100%)!important;margin-bottom:28px!important}
+ .product-art{width:min(650px,92%)!important;height:auto!important;min-height:360px!important;margin:0 auto!important}
+ .product-art img{max-height:460px!important}
+ .signup{padding:28px!important}
+}
+@media(max-width:650px){
+ .marketing{padding:30px 20px 18px!important}
+ .modules{grid-template-columns:1fr 1fr!important}
+ .product-art{width:100%!important;min-height:300px!important}
+ .product-art img{max-height:380px!important}
+ .signup{padding:18px 12px 28px!important}
+}

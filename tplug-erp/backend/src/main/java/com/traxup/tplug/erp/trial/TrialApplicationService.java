@@ -40,8 +40,10 @@ public class TrialApplicationService {
     String doc = limparDocumento(r.documento());
 
     jdbc.update("insert into tenants(id,nome,ativo) values (?,?,true)", tenantId, r.empresa().trim());
+    String razaoSocial = r.razaoSocial() == null || r.razaoSocial().isBlank()
+        ? r.empresa().trim() : r.razaoSocial().trim();
     jdbc.update("insert into empresas(id,tenant_id,razao_social,nome_fantasia,cnpj,ativo) values (?,?,?,?,?,true)",
-        empresaId, tenantId, r.empresa().trim(), r.empresa().trim(), doc);
+        empresaId, tenantId, razaoSocial, r.empresa().trim(), doc);
     jdbc.update("insert into filiais(id,tenant_id,empresa_id,nome,cnpj,ativo) values (?,?,?,?,?,true)",
         filialId, tenantId, empresaId, "Matriz", doc);
     jdbc.update("insert into usuarios(id,tenant_id,nome,email,senha_hash,ativo) values (?,?,?,?,?,true)",

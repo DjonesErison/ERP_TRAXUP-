@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,12 +37,15 @@ class BootstrapAdminIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @BeforeEach
     void limparTenantsCriadosPorOutrosTestes() {
         // O bootstrap testa explicitamente um banco sem tenants. Com a captacao publica,
-        // outros testes podem criar tenants na mesma suite antes desta classe.
-        tenantRepository.deleteAll();
-        tenantRepository.flush();
+        // outros testes podem criar tenants e registros dependentes na mesma suite.
+        // O CASCADE mantém esta preparação restrita ao banco efêmero de integração.
+        jdbcTemplate.execute("truncate table tenants cascade");
     }
 
     @Test

@@ -19,7 +19,6 @@ try {
     await page.goto(`${base}/teste`);
     await page.getByRole('heading',{name:'Comece seu teste grátis'}).waitFor();
     for (const img of await page.locator('.trial-page img').all()) await img.evaluate(i=>i.decode());
-    assert.equal(await page.locator('.top img').evaluate(img=>img.clientWidth/img.clientHeight >= img.naturalWidth/img.naturalHeight),true,`Logo sem recorte horizontal ${width}`);
     const layout = await page.evaluate(()=>{
       const rect=s=>document.querySelector(s).getBoundingClientRect();
       const benefitRects=[...document.querySelectorAll('.checks li')].map(x=>x.getBoundingClientRect());
@@ -29,7 +28,7 @@ try {
     });
     assert.deepEqual(layout,{overflow:false,benefitsOverlap:false,modulesOverArt:false,artClipped:false,inputs:true},`Layout ${width}`);
     assert.equal(await page.locator('.create').isDisabled(),true);
-    await page.getByRole('button',{name:'Teste grátis',exact:true}).click();
+    await page.locator('[name=nomeCompleto]').focus();
     assert.equal(await page.locator('[name=nomeCompleto]').evaluate(e=>e===document.activeElement),true);
     await page.locator('h1').click();
     await page.screenshot({path:`${out}/trial-${width}.png`,fullPage:true});

@@ -99,3 +99,10 @@ footer { display:flex; justify-content:space-between; gap:20px; min-height:55px;
 @media(max-width:1200px){.hero{grid-template-columns:62% 38%}.marketing h1{font-size:55px}.product-art{width:60%;height:70%}.modules{grid-template-columns:repeat(3,150px);width:500px}}
 @media(max-width:1000px){.hero{grid-template-columns:1fr}.marketing{min-height:760px;padding:40px 28px}.marketing h1{margin:20px 0 30px}.product-art{width:55%;height:58%;right:1%}.signup{padding:30px}.trial-card{width:min(600px,100%)}}
 @media(max-width:650px){.marketing{min-height:900px;padding:30px 20px}.marketing h1{font-size:42px}.modules{grid-template-columns:1fr 1fr;width:auto}.product-art{width:96%;height:42%;right:2%}.signup{padding:18px 12px}.trial-card{width:100%}}
+
+/* UI-014: tablet/intermediário — mantém módulos e arte em áreas separadas */
+@media (min-width:651px) and (max-width:1000px){
+  .marketing{min-height:1040px;padding-bottom:470px}
+  .modules{position:relative;z-index:5;width:min(575px,100%);grid-template-columns:repeat(3,minmax(0,1fr))}
+  .product-art{z-index:1;width:min(610px,82%);height:430px;right:3%;bottom:8px}
+}

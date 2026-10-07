@@ -25,7 +25,7 @@ try {
     await trialPage.getByText('PDV completo', { exact: true }).waitFor();
     await trialPage.getByText('Gestão integrada', { exact: true }).waitFor();
     await trialPage.getByText('Acesso em qualquer lugar', { exact: true }).waitFor();
-    await trialPage.locator('.trial-preview img').evaluate(image => image.decode());
+    await trialPage.locator('.trial-logo').evaluate(image => image.decode());
     assert.equal(await trialPage.locator('.existing').count(), 0, 'Trial 2.0 não deve exibir bloco Entrar');
     assert.equal(await trialPage.getByRole('button', { name: 'Criar conta de teste' }).isDisabled(), true);
     assert.equal(await trialPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no trial');

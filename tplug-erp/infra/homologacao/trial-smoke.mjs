@@ -108,7 +108,7 @@ try {
     const tenant='a8d3e764-1e2b-4eb5-8b23-a6fd71192350'; const codigo='0042'; const email='ana+teste@example.test'; const token='a'.repeat(43);
     await page.route('**/api/public/trials',route=>route.fulfill({status:201,json:{trialId:'test',tenantId:tenant,codigoEmpresa:codigo,expiraEm:'2026-09-30',status:'ATIVO',proximoPasso:'VERIFICAR_EMAIL',ativacaoToken:null}}));
     await page.goto(`${base}/teste`);await fill(page);await page.locator('.create').click();
-    await page.getByText('Vamos enviar o link de ativação', {exact:false}).waitFor();
+    await page.getByText('Enviaremos o link de ativação', {exact:false}).waitFor();
     assert.equal(await page.getByRole('heading',{name:'Crie sua senha'}).count(),0);
     let resendPayload;
     await page.route('**/api/public/trials/reenviar-ativacao',route=>{resendPayload=route.request().postDataJSON();return route.fulfill({status:202,body:''});});

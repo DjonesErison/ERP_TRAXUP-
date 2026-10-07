@@ -17,16 +17,22 @@ try {
     const page = await context.newPage();
     const errors=[]; page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`${base}/teste`);
-    await page.getByRole('heading',{name:'Comece seu teste grátis'}).waitFor();
-    for (const img of await page.locator('.trial-page img').all()) await img.evaluate(i=>i.decode());
+    await page.getByRole('heading',{name:'Comece seu teste gratuito'}).waitFor();
+    for (const img of await page.locator('.trial-v2 img').all()) await img.evaluate(i=>i.decode());
     const layout = await page.evaluate(()=>{
-      const rect=s=>document.querySelector(s).getBoundingClientRect();
-      const benefitRects=[...document.querySelectorAll('.checks li')].map(x=>x.getBoundingClientRect());
-      const overlap=(a,b)=>a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
-      const modules=rect('.modules'),art=rect('.product-art');
-      return {overflow:document.documentElement.scrollWidth>innerWidth,benefitsOverlap:benefitRects.some((a,i)=>benefitRects.slice(i+1).some(b=>overlap(a,b))),modulesOverArt:overlap(modules,art),artClipped:art.right>innerWidth||art.left<0,inputs:[...document.querySelectorAll('.grid input,.grid select')].every(x=>x.getBoundingClientRect().width>100)};
+      const fields=[...document.querySelectorAll('.fields input,.fields select')];
+      const card=document.querySelector('.trial-card')?.getBoundingClientRect();
+      return {
+        overflow:document.documentElement.scrollWidth>innerWidth,
+        fieldCount:fields.length,
+        inputs:fields.every(x=>x.getBoundingClientRect().width>100 && x.getBoundingClientRect().height>=44),
+        cardVisible:!!card && card.width>280 && card.left>=0 && card.right<=innerWidth+1
+      };
     });
-    assert.deepEqual(layout,{overflow:false,benefitsOverlap:false,modulesOverArt:false,artClipped:false,inputs:true},`Layout ${width}`);
+    assert.deepEqual(layout,{overflow:false,fieldCount:8,inputs:true,cardVisible:true},`Trial 2.0 layout ${width}`);
+    assert.equal(await page.locator('.existing').count(),0,'Trial 2.0 não exibe login no cadastro');
+    await page.getByRole('link',{name:'Políticas de Privacidade'}).waitFor();
+    await page.getByRole('link',{name:'Termos de uso'}).waitFor();
     assert.equal(await page.locator('.create').isDisabled(),true);
     await page.locator('[name=nomeCompleto]').focus();
     assert.equal(await page.locator('[name=nomeCompleto]').evaluate(e=>e===document.activeElement),true);
@@ -61,7 +67,7 @@ try {
     assert.equal(calls[0].nomeCompleto,'Teste Visual'); assert.equal(calls[0].documento,'11222333000181'); assert.equal(calls[0].telefone,'11961234567');
     assert.equal(calls[0].aceitouTermos,true); assert.equal(calls[0].termosVersao,'2026-09');
     assert.ok(calls[0].idempotencyKey); assert.equal(calls[0].idempotencyKey,calls[2].idempotencyKey);
-    await page.getByRole('button',{name:'Continuar →',exact:true}).click();
+    await page.getByRole('button',{name:'Continuar',exact:true}).click();
     await page.getByRole('heading',{name:'Crie sua senha'}).waitFor();
     assert.deepEqual(errors,[]);
     await context.close();
@@ -102,7 +108,7 @@ try {
     const tenant='a8d3e764-1e2b-4eb5-8b23-a6fd71192350'; const codigo='0042'; const email='ana+teste@example.test'; const token='a'.repeat(43);
     await page.route('**/api/public/trials',route=>route.fulfill({status:201,json:{trialId:'test',tenantId:tenant,codigoEmpresa:codigo,expiraEm:'2026-09-30',status:'ATIVO',proximoPasso:'VERIFICAR_EMAIL',ativacaoToken:null}}));
     await page.goto(`${base}/teste`);await fill(page);await page.locator('.create').click();
-    await page.getByText('Vamos enviar o link de ativação', {exact:false}).waitFor();
+    await page.getByText('Enviaremos o link de ativação', {exact:false}).waitFor();
     assert.equal(await page.getByRole('heading',{name:'Crie sua senha'}).count(),0);
     let resendPayload;
     await page.route('**/api/public/trials/reenviar-ativacao',route=>{resendPayload=route.request().postDataJSON();return route.fulfill({status:202,body:''});});
@@ -153,16 +159,16 @@ try {
   }
   const context=await browser.newContext(); const page=await context.newPage();
   await page.goto(`${base}/teste`);
-  await page.locator('.product-art img').evaluate(i=>i.decode());
+  await page.locator('.trial-preview img').evaluate(i=>i.decode());
   await page.evaluate(()=>navigator.serviceWorker.ready);
   await page.reload();
-  await page.locator('.product-art img').evaluate(i=>i.decode());
+  await page.locator('.trial-preview img').evaluate(i=>i.decode());
   const manifest=await page.evaluate(async()=>await (await fetch('/manifest.webmanifest')).json());
   assert.equal(manifest.display,'standalone'); assert.equal(manifest.scope,'/');
   await page.waitForFunction(async()=>!!(await caches.match('/assets/trial-hero-devices.webp')));
   await context.setOffline(true); await page.reload();
-  await page.getByRole('heading',{name:'Comece seu teste grátis'}).waitFor();
-  await page.locator('.product-art img').evaluate(i=>i.decode());
+  await page.getByRole('heading',{name:'Comece seu teste gratuito'}).waitFor();
+  await page.locator('.trial-preview img').evaluate(i=>i.decode());
   await fill(page); await page.locator('.create').click();
   await page.getByRole('alert').filter({hasText:'Não foi possível iniciar'}).waitFor();
   assert.equal(await page.getByRole('heading',{name:'Seu teste começou!'}).count(),0);

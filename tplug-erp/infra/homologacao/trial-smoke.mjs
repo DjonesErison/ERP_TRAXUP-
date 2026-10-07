@@ -61,7 +61,7 @@ try {
     assert.equal(calls[0].nomeCompleto,'Teste Visual'); assert.equal(calls[0].documento,'11222333000181'); assert.equal(calls[0].telefone,'11961234567');
     assert.equal(calls[0].aceitouTermos,true); assert.equal(calls[0].termosVersao,'2026-09');
     assert.ok(calls[0].idempotencyKey); assert.equal(calls[0].idempotencyKey,calls[2].idempotencyKey);
-    await page.getByRole('button',{name:'Continuar →',exact:true}).click();
+    await page.getByRole('button',{name:'Continuar',exact:true}).click();
     await page.getByRole('heading',{name:'Crie sua senha'}).waitFor();
     assert.deepEqual(errors,[]);
     await context.close();

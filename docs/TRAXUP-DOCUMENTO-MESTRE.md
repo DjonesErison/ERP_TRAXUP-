@@ -488,3 +488,25 @@ O núcleo de backend, banco, segurança, compras, financeiro, contabilidade, CRM
 
 A Fase 2 de auditoria está encerrada. A próxima etapa de execução é a **Fase 3 — Correção e Conclusão**, iniciando pelo frontend ERP, salvo decisão diferente do responsável pelo projeto.
 
+## 41. Reinício visual — Identidade Visual TRAXUP 2.0
+
+Em 07/10/2026 foi iniciado o reinício controlado da identidade visual antes da Fase 3 funcional.
+
+### Marca definida
+- símbolo: barras de crescimento azuis + seta ascendente laranja;
+- wordmark: **TRAX** em azul + **UP** em laranja;
+- assinatura: **Tecnologia que impulsiona negócios**;
+- uso preferencial da marca em PNG/transparência, sem caixa branca ou halo artificial;
+- paleta-base: azul #0066FF, azul escuro #0033A0, laranja #FF8A00 e destaque #FFC107.
+
+### Organização
+Foi criada a área `docs/design/13-identidade-visual-2.0/` para concentrar exclusivamente a nova geração visual. O catálogo antigo permanece como histórico até que cada substituição seja aprovada.
+
+### Primeira tela
+O primeiro redesenho é a tela de **Trial**, com diretriz de interface limpa, pouco texto, menor carga visual e foco na criação da conta de teste de sete dias.
+
+A primeira proposta permanece **EM REVISÃO** e não substitui a UI-014 até aprovação explícita.
+
+### Regra
+Nenhuma tela antiga será excluída antes de existir substituta aprovada. Após aprovação, a nova referência será registrada na pasta 2.0 e passará a orientar a implementação.
+

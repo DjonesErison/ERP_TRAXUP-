@@ -111,3 +111,18 @@ Consentimento exibido abaixo do CTA: “Ao se cadastrar você concorda com as Po
 - Termos de uso: https://www.connectplug.com.br/termos_de_uso
 
 Fluxo de implementação: primeira tela limpa → criação/confirmação de senha em etapa seguinte → criação do ambiente Trial → primeiro acesso/onboarding.
+
+
+## 10. Política obrigatória de assets — Identidade Visual 2.0
+
+`docs/design/13-identidade-visual-2.0/` é a **única fonte oficial de imagens aprovadas** para telas da Identidade Visual 2.0.
+
+1. Nenhuma tela 2.0 pode reutilizar imagens, logos, mockups ou ilustrações do catálogo visual anterior.
+2. Assets existentes em `tplug-erp/frontend/src/assets/` não são considerados aprovados para a Identidade 2.0 apenas por existirem no repositório.
+3. Uma imagem só pode ser usada numa tela 2.0 depois de existir nesta pasta oficial e estar marcada como **APROVADA**.
+4. Se o asset aprovado ainda não estiver gravado nesta pasta, a tela deve permanecer sem a imagem em vez de usar um substituto legado ou recriado.
+5. O Login/ERP legado pode manter temporariamente seus assets atuais até ser redesenhado; isso não autoriza seu uso nas novas telas 2.0.
+
+### Estado atual
+
+Os arquivos binários da logo transparente e da referência visual final ainda precisam ser incorporados ao repositório. Até isso ocorrer, a Trial 2.0 não deve exibir logo/imagem substituta da identidade anterior.

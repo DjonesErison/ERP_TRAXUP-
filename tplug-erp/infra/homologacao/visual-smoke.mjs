@@ -27,7 +27,7 @@ try {
     await trialPage.getByText('Acesso em qualquer lugar', { exact: true }).waitFor();
     await trialPage.locator('.trial-logo').evaluate(image => image.decode());
     assert.equal(await trialPage.locator('.existing').count(), 0, 'Trial 2.0 não deve exibir bloco Entrar');
-    assert.equal(await trialPage.getByRole('button', { name: 'Criar conta de teste' }).isDisabled(), true);
+    assert.equal(await trialPage.getByRole('button', { name: 'Criar conta de teste' }).isDisabled(), false);
     assert.equal(await trialPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no trial');
     await trialPage.screenshot({ path: `${out}/trial-${viewport.width}.png`, fullPage: true });
     await trialPage.close();

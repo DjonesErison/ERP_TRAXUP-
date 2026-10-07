@@ -1,11 +1,11 @@
 <div class="trial-v2">
   <section class="trial-brand" aria-label="Conheça a TRAXUP">
+    <img class="trial-logo" src="assets/traxup-logo.webp" alt="TRAXUP — Tecnologia que impulsiona negócios">
     <div class="trial-copy">
       <h1>Seu negócio<br><strong>mais simples,<br>mais eficiente.</strong></h1>
       <p>Experimente o TRAXUP por 7 dias<br>e descubra uma nova forma de crescer.</p>
       <ul><li>PDV completo</li><li>Gestão integrada</li><li>Acesso em qualquer lugar</li><li>Seguro e confiável</li></ul>
     </div>
-    <figure class="trial-preview"><img src="assets/trial-hero-devices.webp" alt="TRAXUP ERP e PDV"></figure>
   </section>
   <section class="trial-form-area" aria-label="Cadastro do teste grátis">
     <div class="trial-card" *ngIf="!sucesso">
@@ -24,8 +24,7 @@
           <input #nomeInput autocomplete="name" name="nomeCompleto" [(ngModel)]="nomeCompleto" required placeholder="Nome do responsável">
           <select name="quantidadeLojas" [(ngModel)]="quantidadeLojas" required><option [ngValue]="1">1 loja</option><option [ngValue]="2">2 lojas</option><option [ngValue]="3">3 lojas</option><option [ngValue]="5">4 ou mais</option></select>
         </div>
-        <label class="terms"><input name="aceitouTermos" type="checkbox" [(ngModel)]="aceitouTermos"><span>Li e aceito os termos para iniciar o teste.</span></label>
-        <button class="create" type="submit" [disabled]="loading||!aceitouTermos">{{loading?'Criando sua conta...':'Criar conta de teste'}}</button>
+        <button class="create" type="submit" [disabled]="loading">{{loading?'Criando sua conta...':'Criar conta de teste'}}</button>
         <p class="legal">Ao se cadastrar você concorda com as <a href="https://institucional.locaweb.com.br/politicas/" target="_blank" rel="noopener noreferrer">Políticas de Privacidade</a> e com os <a href="https://www.connectplug.com.br/termos_de_uso" target="_blank" rel="noopener noreferrer">Termos de uso</a>.</p>
         <div class="reassurance"><span><b>7 dias</b><small>de teste gratuito</small></span><span><b>Sem cartão</b><small>de crédito</small></span><span><b>Acesso rápido</b><small>e sem burocracia</small></span></div>
       </form>

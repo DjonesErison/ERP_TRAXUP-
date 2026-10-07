@@ -12,12 +12,12 @@ export class TrialComponent {
   @Output() voltarLogin = new EventEmitter<void>();
   @Output() ativarAdmin = new EventEmitter<string>();
   @Output() acessoCriado = new EventEmitter<{codigoEmpresa:string;email:string}>();
-  nomeCompleto=''; nomeEmpresa=''; razaoSocial=''; documento=''; telefone=''; email=''; segmento=''; quantidadeLojas=1; aceitouTermos=false;
+  nomeCompleto=''; nomeEmpresa=''; razaoSocial=''; documento=''; telefone=''; email=''; segmento=''; quantidadeLojas=1;
   duplicada=false; recuperando=false; recuperacaoMensagem='';
   loading=false; error=''; sucesso=false; codigoEmpresa=''; expiraEm=''; ativacaoToken='';
   constructor(private readonly trial: TrialService) {}
   cadastrar(): void {
-    if (this.loading || !this.aceitouTermos) return;
+    if (this.loading) return;
     this.loading=true; this.error=''; this.duplicada=false;
     this.trial.cadastrar({nomeCompleto:this.nomeCompleto.trim(),nomeEmpresa:this.nomeEmpresa.trim(),razaoSocial:this.razaoSocial.trim(),
       documento:this.documento.replace(/\D/g,''),telefone:this.telefone.replace(/\D/g,''),email:this.email.trim(),segmento:this.segmento.trim()||undefined,

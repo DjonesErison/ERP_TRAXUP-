@@ -8,88 +8,60 @@ import { TrialResponse, TrialService } from './trial.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <main class="trial-page">
-      <header class="brand-header">
-        <img src="/assets/traxup-logo.webp" alt="TraxUp" class="brand-logo">
-      </header>
-
-      <section class="hero">
-        <div class="presentation">
-          <h1>Transforme a gestão<br>da sua empresa<br>com a <strong>TraxUp</strong></h1>
-
-          <div class="benefits" aria-label="Benefícios do teste">
-            <span><i>✓</i> 7 dias grátis</span>
-            <span><i>✓</i> Sem compromisso</span>
-            <span><i>✓</i> Configuração guiada</span>
-          </div>
-
-          <div class="modules" aria-label="Módulos disponíveis">
-            <article><b class="module-icon blue">▥</b><div><strong>ERP</strong><small>Gestão completa<br>do seu negócio</small></div></article>
-            <article><b class="module-icon green">🛒</b><div><strong>PDV</strong><small>Vendas mais<br>rápidas e seguras</small></div></article>
-            <article><b class="module-icon orange">▤</b><div><strong>Fiscal</strong><small>Conformidade<br>e segurança</small></div></article>
-            <article><b class="module-icon purple">◉</b><div><strong>Financeiro</strong><small>Mais controle<br>e lucratividade</small></div></article>
-            <article><b class="module-icon cyan">♙</b><div><strong>CRM</strong><small>Relacionamento<br>que gera vendas</small></div></article>
-            <article><b class="module-icon navy">▟</b><div><strong>BI</strong><small>Decisões baseadas<br>em dados</small></div></article>
-          </div>
-
-          <div class="growth-art" aria-hidden="true">
-            <span class="bar bar-one"></span><span class="bar bar-two"></span><span class="bar bar-three"></span>
-            <span class="arrow">➜</span>
-          </div>
-
-          <div class="device-stage">
-            <div class="laptop">
-              <div class="screen"><img src="/assets/ui-001-dashboard-traxup-erp.webp" alt="Dashboard do TraxUp ERP"></div>
-              <div class="base"></div>
-            </div>
-            <div class="phone"><div class="phone-title">TraxUp PDV</div><div class="phone-search"></div><div class="product" *ngFor="let item of produtos"><span></span><small>{{item}}</small></div><button type="button" tabindex="-1">Finalizar venda</button></div>
-          </div>
+    <main class="trial-v2">
+      <section class="trial-brand">
+        <img src="/assets/traxup-logo.webp" alt="TRAXUP" class="trial-logo">
+        <div class="trial-copy">
+          <h1>Seu negócio<br><strong>mais simples,<br>mais eficiente.</strong></h1>
+          <p>Experimente o TRAXUP por 7 dias<br>e descubra uma nova forma de crescer.</p>
+          <ul><li>PDV completo</li><li>Gestão integrada</li><li>Acesso em qualquer lugar</li><li>Seguro e confiável</li></ul>
         </div>
+        <div class="trial-preview" aria-hidden="true">
+          <img src="/assets/ui-001-dashboard-traxup-erp.webp" alt="">
+        </div>
+      </section>
 
+      <section class="trial-form-area">
         <section class="signup-card" *ngIf="!resultado">
           <ng-container *ngIf="etapa === 1; else passwordStep">
-            <div class="card-heading"><h2>Comece seu teste grátis</h2><p>Tenha acesso à plataforma por 7 dias</p></div>
+            <header><h2>Comece seu teste gratuito</h2><p>Preencha os dados abaixo para criar sua conta de 7 dias.</p></header>
             <form #captacaoForm="ngForm" (ngSubmit)="avancar(captacaoForm)" novalidate>
-              <div class="form-grid">
-                <label>Nome completo <em>*</em><input name="responsavel" [(ngModel)]="m.responsavel" required maxlength="150" placeholder="Seu nome completo"></label>
-                <label>Nome da empresa <em>*</em><input name="empresa" [(ngModel)]="m.empresa" required maxlength="200" placeholder="Nome da empresa"></label>
-                <label>Razão social <em>*</em><input name="razaoSocial" [(ngModel)]="m.razaoSocial" required maxlength="200" placeholder="Razão social da empresa"></label>
-                <label>CNPJ/CPF <em>*</em><input name="documento" [(ngModel)]="m.documento" required maxlength="18" placeholder="00.000.000/0000-00"></label>
-                <label>Telefone/WhatsApp <em>*</em><input name="telefone" [(ngModel)]="m.telefone" required maxlength="30" placeholder="(11) 96123-4567"></label>
-                <label>E-mail profissional <em>*</em><input name="email" type="email" [(ngModel)]="m.email" required maxlength="254" placeholder="seu@empresa.com.br"></label>
-                <label>Segmento da empresa <em>*</em><select name="segmento" [(ngModel)]="m.segmento" required><option value="" disabled>Selecione o segmento</option><option>Comércio</option><option>Serviços</option><option>Alimentação</option><option>Imobiliário</option><option>Outro</option></select></label>
-                <label>Quantidade de lojas <em>*</em><select name="quantidadeLojas" [(ngModel)]="m.quantidadeLojas" required><option *ngFor="let quantidade of quantidades" [ngValue]="quantidade">{{quantidade}}{{quantidade === 10 ? '+' : ''}}</option></select></label>
+              <div class="fields">
+                <input name="empresa" [(ngModel)]="m.empresa" required maxlength="200" placeholder="Nome fantasia">
+                <input name="documento" [(ngModel)]="m.documento" required maxlength="18" placeholder="CNPJ">
+                <input name="razaoSocial" [(ngModel)]="m.razaoSocial" required maxlength="200" placeholder="Razão social">
+                <input name="email" type="email" [(ngModel)]="m.email" required maxlength="254" placeholder="E-mail">
+                <input name="telefone" [(ngModel)]="m.telefone" required maxlength="30" placeholder="Telefone / WhatsApp">
+                <select name="segmento" [(ngModel)]="m.segmento" required>
+                  <option value="" disabled>Segmento do seu negócio</option><option>Comércio</option><option>Serviços</option><option>Alimentação</option><option>Imobiliário</option><option>Outro</option>
+                </select>
+                <input name="responsavel" [(ngModel)]="m.responsavel" required maxlength="150" placeholder="Nome do responsável">
+                <select name="quantidadeLojas" [(ngModel)]="m.quantidadeLojas" required>
+                  <option *ngFor="let quantidade of quantidades" [ngValue]="quantidade">{{quantidade}} {{quantidade === 1 ? 'loja' : 'lojas'}}{{quantidade === 10 ? ' ou mais' : ''}}</option>
+                </select>
               </div>
-
-              <label class="terms"><input type="checkbox" name="aceiteTermos" [(ngModel)]="m.aceiteTermos" required><span>Li e aceito os <a href="/termos" target="_blank">Termos de Uso</a> e a <a href="/privacidade" target="_blank">Política de Privacidade</a>.</span></label>
               <p class="form-error" *ngIf="erro">{{erro}}</p>
-              <button class="primary-action" type="submit">Criar minha conta grátis <span>→</span></button>
-              <div class="privacy-note"><b>♙</b> Seus dados protegidos conforme a LGPD</div>
+              <button class="primary-action" type="submit">Criar conta de teste</button>
+              <p class="legal">Ao se cadastrar você concorda com as <a href="https://institucional.locaweb.com.br/politicas/" target="_blank" rel="noopener noreferrer">Políticas de Privacidade</a> e com os <a href="https://www.connectplug.com.br/termos_de_uso" target="_blank" rel="noopener noreferrer">Termos de uso</a>.</p>
+              <div class="reassurance"><span><b>7 dias</b><small>de teste gratuito</small></span><span><b>Sem cartão</b><small>de crédito</small></span><span><b>Acesso rápido</b><small>e sem burocracia</small></span></div>
             </form>
           </ng-container>
-
           <ng-template #passwordStep>
             <div class="password-step">
               <button class="back" type="button" (click)="etapa = 1">← Voltar</button>
-              <p class="step-label">ÚLTIMO PASSO</p>
-              <h2>Proteja seu acesso</h2>
-              <p>Crie a senha do administrador para entrar no seu novo ambiente TraxUp.</p>
+              <h2>Crie sua senha</h2><p>Último passo para ativar seu ambiente TRAXUP.</p>
               <form #senhaForm="ngForm" (ngSubmit)="enviar(senhaForm)">
-                <label>Senha <em>*</em><input name="senha" type="password" minlength="12" maxlength="72" [(ngModel)]="m.senha" required placeholder="Mínimo 12 caracteres" autocomplete="new-password"></label>
-                <label>Confirme a senha <em>*</em><input name="confirmacao" type="password" minlength="12" maxlength="72" [(ngModel)]="confirmacaoSenha" required autocomplete="new-password"></label>
+                <input name="senha" type="password" minlength="12" maxlength="72" [(ngModel)]="m.senha" required placeholder="Senha — mínimo 12 caracteres" autocomplete="new-password">
+                <input name="confirmacao" type="password" minlength="12" maxlength="72" [(ngModel)]="confirmacaoSenha" required placeholder="Confirme sua senha" autocomplete="new-password">
                 <p class="form-error" *ngIf="erro">{{erro}}</p>
-                <button class="primary-action" type="submit" [disabled]="enviando">{{enviando ? 'Criando seu ambiente...' : 'Ativar meu teste grátis →'}}</button>
+                <button class="primary-action" type="submit" [disabled]="enviando">{{enviando ? 'Criando seu ambiente...' : 'Ativar meu teste grátis'}}</button>
               </form>
             </div>
           </ng-template>
         </section>
-
         <section class="signup-card success" *ngIf="resultado">
-          <div class="success-icon">✓</div><p class="step-label">AMBIENTE CRIADO</p><h2>Seu trial começou.</h2>
-          <p>Seu acesso está liberado por sete dias. Entre no ERP com seu e-mail e a senha criada.</p>
-          <div class="tenant"><span>Ambiente</span><code>{{resultado.tenantId}}</code></div>
-          <div class="next"><b>Próximas etapas</b><span>1. Revisar os dados da empresa e filial</span><span>2. Configurar operação e fiscal</span><span>3. Baixar e configurar o PDV</span></div>
-          <button class="primary-action" type="button" (click)="irParaErp()">Ir para o primeiro acesso →</button>
+          <div class="success-icon">✓</div><h2>Seu TRAXUP está pronto.</h2><p>Seu teste gratuito de 7 dias começou.</p>
+          <button class="primary-action" type="button" (click)="irParaErp()">Continuar para o primeiro acesso</button>
         </section>
       </section>
     </main>
@@ -97,7 +69,6 @@ import { TrialResponse, TrialService } from './trial.service';
   styleUrl: './trial.component.css'
 })
 export class TrialComponent {
-  readonly produtos = ['Camiseta', 'Calça Jeans', 'Tênis', 'Boné'];
   readonly quantidades = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   etapa = 1;
   confirmacaoSenha = '';
@@ -110,9 +81,9 @@ export class TrialComponent {
 
   avancar(form: NgForm) {
     this.erro = '';
-    if (form.invalid || !this.m.aceiteTermos) {
+    if (form.invalid) {
       form.control.markAllAsTouched();
-      this.erro = 'Preencha os campos obrigatórios e aceite os termos para continuar.';
+      this.erro = 'Preencha os campos obrigatórios para continuar.';
       return;
     }
     this.etapa = 2;

@@ -295,3 +295,196 @@ Nenhum desses estados deve ser inferido apenas de uma imagem, documento, percent
 ## 29. Objetivo final
 
 Entregar um ecossistema único no qual compra, estoque, venda, recebimento, fiscal, financeiro, relacionamento, análise e contabilidade estejam conectados, com operação offline onde necessário, administração SaaS, segurança multi-tenant e integrações extensíveis, permitindo que o TRAXUP cresça por módulos sem perder consistência operacional.
+
+---
+
+# PARTE II — ESTADO AUDITADO DO PROJETO
+
+> **Auditoria consolidada em 07/10/2026.** Esta parte prevalece sobre percentuais históricos quando houver divergência. **Status global oficial pós-auditoria: 68%.**
+
+## 30. Governança de branches auditada
+
+- `main`: atualmente concentra a Central TRAXUP, documentação e catálogo visual. Não representa sozinho toda a implementação do ERP.
+- `develop`: concentra a principal implementação funcional auditada do ERP. Foram identificados aproximadamente 974 itens na árvore, 606 arquivos Java, 104 migrations Flyway e 207 entradas na estrutura de testes.
+- `homologacao`: possui fluxo específico de homologação do ERP.
+- Diversos PRs funcionais históricos foram merged em `develop`. Não executar merge amplo `develop → main` sem plano de consolidação, testes e validação.
+
+## 31. Matriz oficial de progresso
+
+| Módulo | % auditado | Diagnóstico |
+|---|---:|---|
+| Banco / Flyway | 94% | Forte |
+| Arquitetura / Multi-tenant | 92% | Forte |
+| Autenticação / RBAC | 92% | Forte |
+| Compras | 88% | Avançado |
+| Financeiro | 84% | Avançado |
+| Contabilidade | 84% | Avançado |
+| Vendas | 82% | Backend forte; frontend parcial |
+| CRM | 82% | Implementação real |
+| Trial / Captação | 76% | Criação real; onboarding/publicação pendentes |
+| Estoque / Inventário | 76% | Backend + inventário móvel; ERP parcial |
+| Fiscal | 72% | Estrutura forte; SEFAZ real pendente |
+| Produtos | 70% | Backend forte; frontend ERP pendente |
+| Clientes | 68% | Backend existente; frontend ERP pendente |
+| PDV completo | 58% | Backend/sync parcial; terminal offline pendente |
+| Frontend ERP geral | 55% | Principal gargalo |
+| BI / Relatórios gerais | 30% | Inicial |
+| Administração SaaS | 15% | Inicial |
+| Apps Cliente/Vendedor | 15% | Inicial |
+
+**Progresso global oficial: 68%.** Este percentual mede progresso técnico proporcional ao escopo; não significa prontidão equivalente para produção.
+
+## 32. Evidência por módulo
+
+### 32.1 Autenticação e segurança — 92%
+Implementados JWT, refresh, login, logout, interceptor frontend, RBAC, permissões, tenant derivado do contexto autenticado, auditoria e escopo por filial. Há testes de integração. Antes da produção, revisar o armazenamento de access/refresh tokens em `localStorage` e executar revisão final de segurança/E2E.
+
+### 32.2 Clientes — 68%
+Existem migrations de pessoas, endereços e contatos e APIs de listar, buscar, criar e desativar. CRM reutiliza esses dados. UI-021 e UI-022 estão aprovadas como referência, mas não foram encontradas como telas operacionais equivalentes no frontend ERP auditado.
+
+### 32.3 Produtos — 70%
+Backend implementa cadastro, grades, combos fixos, grupos/opções, vigência e disponibilidade, com migrations e testes. UI-023/UI-024 e abas de Preço/Estoque/Fiscal precisam ser convertidas no frontend ERP completo.
+
+### 32.4 Estoque e Inventário — 76%
+Há saldos, movimentações, integração de recebimento de compra, inventário, contagem cega, divergências e ajuste. O Inventário Mobile possui frontend funcional com código de barras/câmera quando suportada. Falta completar a tela ERP de estoque e fluxos avançados.
+
+### 32.5 Compras — 88%
+Fluxo avançado implementado: pedido → filial/fornecedor → produtos/grades → itens → abertura → recebimento/conferência → integração ao estoque. Há backend, migrations, testes e frontend. Pendem integração fiscal/financeira ponta a ponta e homologação operacional completa.
+
+### 32.6 Vendas — 82%
+Backend possui pedidos, itens, descontos, combos, pagamento, prévia financeira e consultas, com cobertura relevante de testes. O frontend atual é principalmente consulta de últimas vendas/detalhes; a operação completa de venda ainda precisa ser implementada.
+
+### 32.7 Financeiro — 84%
+Implementados contas a pagar/receber, pagamentos/recebimentos, contas financeiras, movimentos, tesouraria, condições/formas de pagamento, conciliação, integrações financeiras e OFX. Existem telas de conciliação/integrações. PIX e boleto não foram localizados como implementações concretas equivalentes ao escopo final.
+
+### 32.8 Fiscal — 72%
+Há perfil fiscal, validações, numeração, documentos, XML, regras, tentativas, rejeições, correções, certificado, storage S3, download e exportação contábil. Entretanto, a auditoria identificou `FiscalAssinaturaSimuladaAdapter` e `FiscalTransmissaoSimuladaAdapter`; o próprio código caracteriza a autorização como simulada e sem validade fiscal. **SEFAZ real, DANFE e emissão NF-e/NFC-e de produção não estão comprovados.**
+
+### 32.9 Contabilidade — 84%
+Implementados repositório/exportação fiscal, acesso dedicado, Livro Caixa, inventário, SPED, worker/fila, storage/download, reprocessamento, cancelamento, retenção, fechamento/pacote mensal, relatórios e frontend. Falta homologação real das obrigações e operação final com usuários reais.
+
+### 32.10 CRM — 82%
+Implementados clientes inativos, RFV, follow-ups, interações e retorno de clientes, com APIs, testes e painel frontend. Campanhas/fidelização e automações avançadas permanecem no roadmap.
+
+### 32.11 PDV — 58%
+Backend possui terminal, configuração, caixa/sessões, rascunho, fechamento, pós-venda, sincronização e estruturas de itens offline (migrations V62–V68). **Nenhuma implementação SQLite foi localizada.** Também não foram comprovados terminal desktop instalável, impressão, segunda tela, mesas, delivery e operação offline real ponta a ponta.
+
+### 32.12 Trial — 76%
+O Trial não é apenas formulário: o backend cria tenant, empresa, filial Matriz, administrador, perfil/permissões e registro com expiração em sete dias. Há migration V104, API e frontend em duas etapas. Faltam testes dedicados, onboarding completo, configuração inicial/PDV e validação contínua da publicação pública.
+
+### 32.13 BI/Relatórios — 30%
+Relatórios específicos existem, sobretudo contábeis, mas não foi encontrado domínio BI completo equivalente ao Dashboard ERP e ao escopo gerencial definido.
+
+### 32.14 Administração SaaS — 15%
+Trial existe, mas não foi localizado domínio completo de planos, assinaturas, mensalidades, cobrança SaaS, inadimplência, bloqueio/reativação e gestão dos assinantes.
+
+### 32.15 Apps — 15% Cliente/Vendedor
+Apps Cliente e Vendedor permanecem essencialmente em design/planejamento. O Inventário Mobile é exceção e possui implementação funcional parcial.
+
+## 33. Catálogo visual oficial
+
+Referências versionadas em `docs/design/` incluem:
+- UI-001 — Dashboard ERP;
+- UI-014 — Captação e Trial de sete dias;
+- UI-016 — Login ERP;
+- UI-017 — Recuperação de senha;
+- UI-018 — Seleção empresa/filial;
+- UI-019 — Onboarding;
+- UI-020 — Usuários/permissões;
+- UI-021 — Cadastro Cliente;
+- UI-022 — Visão 360º Cliente;
+- UI-023 — Cadastro Produto;
+- UI-024 — Produto/Preços;
+- referências para Estoque, Vendas, Financeiro, Fiscal, CRM, Relatórios, Configurações, PDV, App Cliente/Vendedor e Administração SaaS.
+
+**Regra:** design aprovado é referência de implementação, não prova de funcionalidade entregue.
+
+## 34. CI, testes e homologação
+
+Backend ERP possui workflow Java 21 + PostgreSQL 17 executando `clean verify` e Docker build. A última execução auditada em 26/09/2026 terminou com sucesso após correção do isolamento do teste de bootstrap afetado pela inclusão do Trial.
+
+Frontend ERP possui CI Angular 19/Node 20 com build de produção aprovado.
+
+A Central possui CI, Docker/GHCR e deploy próprios no `main`.
+
+Há workflow `TRAXUP ERP - Homologacao` com histórico de correções e execuções finais de sucesso em 26/09/2026. Sucesso do pipeline comprova execução do fluxo, não garante sozinho que todos os domínios públicos estejam acessíveis no momento atual.
+
+## 35. Infraestrutura conhecida
+
+- VPS Linux;
+- Docker / Docker Compose;
+- PostgreSQL;
+- containers separados para frontend/backend/banco em homologação;
+- Nginx no projeto e Caddy utilizado como reverse proxy na VPS;
+- GitHub Actions;
+- GitHub Container Registry para a Central;
+- domínios/subdomínios de homologação e captação.
+
+Foi registrado incidente no Caddy com conflito na porta 80 (`bind: address already in use`), que afetou a publicação/validação da captação. Infraestrutura só será considerada validada quando serviço, proxy, TLS, health check e aplicação forem confirmados juntos.
+
+## 36. Principais lacunas para produção
+
+1. Frontend ERP ainda não cobre visualmente todo o backend existente.
+2. PDV desktop/offline real não está completo; SQLite não foi localizado.
+3. Fiscal utiliza assinatura/transmissão simuladas; falta SEFAZ real.
+4. Dashboard/BI/relatórios gerenciais estão incompletos.
+5. Administração SaaS está em estágio inicial.
+6. Apps Cliente/Vendedor ainda não estão implementados como aplicações completas.
+7. Trial precisa de onboarding e validação pública ponta a ponta.
+8. PIX/boleto e integrações externas devem ser comprovados por provedor real antes de serem declarados entregues.
+9. Branches `main`, `develop` e `homologacao` precisam de política de promoção clara.
+
+## 37. Roadmap de conclusão pós-auditoria
+
+### 68% → 80%
+- implementar Dashboard ERP;
+- implementar UI de Clientes e Visão 360º;
+- implementar UI de Produtos/Preço/Estoque/Fiscal;
+- completar Estoque e Vendas no frontend;
+- finalizar Trial/onboarding;
+- consolidar estratégia de branches e homologação.
+
+### 80% → 90%
+- entregar PDV desktop funcional;
+- implementar SQLite/offline/sincronização real;
+- integrar Fiscal real com SEFAZ;
+- completar Financeiro frontend;
+- BI/Relatórios principais;
+- Administração SaaS básica.
+
+### 90% → 100%
+- Apps Cliente/Vendedor;
+- PIX/boleto e integrações finais;
+- mesas/delivery/segunda tela/impressão;
+- testes E2E, segurança, carga e performance;
+- homologação fiscal real;
+- operação/monitoramento/backup/restore de produção;
+- documentação operacional final.
+
+## 38. Ordem de execução da Fase 3
+
+Prioridade recomendada:
+**Dashboard → Clientes → Produtos → Estoque → Vendas → Financeiro → Fiscal → Configurações → PDV → BI/Relatórios → SaaS Admin → Apps.**
+
+Cada módulo deve seguir:
+**evidência existente → implementação/correção → build/testes → homologação → validação visual/funcional → aprovação → promoção controlada.**
+
+## 39. Fonte única e manutenção
+
+Este arquivo passa a ser a **fonte documental mestre do TRAXUP**. Documentos especializados em `docs/` podem continuar existindo como evidências técnicas e históricas, mas divergências de escopo/status devem ser resolvidas aqui.
+
+A cada etapa aprovada:
+1. atualizar o estado do módulo;
+2. anexar evidência (PR/commit/teste/deploy);
+3. recalcular percentual somente quando o escopo realmente mudar;
+4. registrar pendências;
+5. manter a distinção entre planejado, implementado, testado e publicado.
+
+## 40. Status oficial em 07/10/2026
+
+**TRAXUP — 68% auditado.**
+
+O núcleo de backend, banco, segurança, compras, financeiro, contabilidade, CRM e partes de vendas/estoque está avançado. O caminho crítico para comercialização é **frontend ERP completo + PDV real + Fiscal SEFAZ real + homologação ponta a ponta**.
+
+A Fase 2 de auditoria está encerrada. A próxima etapa de execução é a **Fase 3 — Correção e Conclusão**, iniciando pelo frontend ERP, salvo decisão diferente do responsável pelo projeto.
+

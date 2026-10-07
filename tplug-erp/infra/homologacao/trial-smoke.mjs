@@ -17,14 +17,14 @@ try {
     const page = await context.newPage();
     const errors=[]; page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`${base}/teste`);
-    await page.getByRole('heading',{name:'Comece seu teste grátis'}).waitFor();
-    for (const img of await page.locator('.trial-page img').all()) await img.evaluate(i=>i.decode());
+    await page.getByRole('heading',{name:'Comece seu teste gratuito'}).waitFor();
+    for (const img of await page.locator('.trial-v2 img').all()) await img.evaluate(i=>i.decode());
     const layout = await page.evaluate(()=>{
       const rect=s=>document.querySelector(s).getBoundingClientRect();
-      const benefitRects=[...document.querySelectorAll('.checks li')].map(x=>x.getBoundingClientRect());
+      const benefitRects=[...document.querySelectorAll('.trial-copy li')].map(x=>x.getBoundingClientRect());
       const overlap=(a,b)=>a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
-      const modules=rect('.modules'),art=rect('.product-art');
-      return {overflow:document.documentElement.scrollWidth>innerWidth,benefitsOverlap:benefitRects.some((a,i)=>benefitRects.slice(i+1).some(b=>overlap(a,b))),modulesOverArt:overlap(modules,art),artClipped:art.right>innerWidth||art.left<0,inputs:[...document.querySelectorAll('.grid input,.grid select')].every(x=>x.getBoundingClientRect().width>100)};
+      const modules=rect('.trial-copy'),art=rect('.trial-preview');
+      return {overflow:document.documentElement.scrollWidth>innerWidth,benefitsOverlap:benefitRects.some((a,i)=>benefitRects.slice(i+1).some(b=>overlap(a,b))),modulesOverArt:overlap(modules,art),artClipped:art.right>innerWidth||art.left<0,inputs:[...document.querySelectorAll('.fields input,.fields select')].every(x=>x.getBoundingClientRect().width>100)};
     });
     assert.deepEqual(layout,{overflow:false,benefitsOverlap:false,modulesOverArt:false,artClipped:false,inputs:true},`Layout ${width}`);
     assert.equal(await page.locator('.create').isDisabled(),true);
@@ -153,16 +153,16 @@ try {
   }
   const context=await browser.newContext(); const page=await context.newPage();
   await page.goto(`${base}/teste`);
-  await page.locator('.product-art img').evaluate(i=>i.decode());
+  await page.locator('.trial-preview img').evaluate(i=>i.decode());
   await page.evaluate(()=>navigator.serviceWorker.ready);
   await page.reload();
-  await page.locator('.product-art img').evaluate(i=>i.decode());
+  await page.locator('.trial-preview img').evaluate(i=>i.decode());
   const manifest=await page.evaluate(async()=>await (await fetch('/manifest.webmanifest')).json());
   assert.equal(manifest.display,'standalone'); assert.equal(manifest.scope,'/');
   await page.waitForFunction(async()=>!!(await caches.match('/assets/trial-hero-devices.webp')));
   await context.setOffline(true); await page.reload();
-  await page.getByRole('heading',{name:'Comece seu teste grátis'}).waitFor();
-  await page.locator('.product-art img').evaluate(i=>i.decode());
+  await page.getByRole('heading',{name:'Comece seu teste gratuito'}).waitFor();
+  await page.locator('.trial-preview img').evaluate(i=>i.decode());
   await fill(page); await page.locator('.create').click();
   await page.getByRole('alert').filter({hasText:'Não foi possível iniciar'}).waitFor();
   assert.equal(await page.getByRole('heading',{name:'Seu teste começou!'}).count(),0);

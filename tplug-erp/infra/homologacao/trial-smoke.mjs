@@ -20,13 +20,19 @@ try {
     await page.getByRole('heading',{name:'Comece seu teste gratuito'}).waitFor();
     for (const img of await page.locator('.trial-v2 img').all()) await img.evaluate(i=>i.decode());
     const layout = await page.evaluate(()=>{
-      const rect=s=>document.querySelector(s).getBoundingClientRect();
-      const benefitRects=[...document.querySelectorAll('.trial-copy li')].map(x=>x.getBoundingClientRect());
-      const overlap=(a,b)=>a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
-      const modules=rect('.trial-copy'),art=rect('.trial-preview');
-      return {overflow:document.documentElement.scrollWidth>innerWidth,benefitsOverlap:benefitRects.some((a,i)=>benefitRects.slice(i+1).some(b=>overlap(a,b))),modulesOverArt:overlap(modules,art),artClipped:art.right>innerWidth||art.left<0,inputs:[...document.querySelectorAll('.fields input,.fields select')].every(x=>x.getBoundingClientRect().width>100)};
+      const fields=[...document.querySelectorAll('.fields input,.fields select')];
+      const card=document.querySelector('.trial-card')?.getBoundingClientRect();
+      return {
+        overflow:document.documentElement.scrollWidth>innerWidth,
+        fieldCount:fields.length,
+        inputs:fields.every(x=>x.getBoundingClientRect().width>100 && x.getBoundingClientRect().height>=44),
+        cardVisible:!!card && card.width>280 && card.left>=0 && card.right<=innerWidth+1
+      };
     });
-    assert.deepEqual(layout,{overflow:false,benefitsOverlap:false,modulesOverArt:false,artClipped:false,inputs:true},`Layout ${width}`);
+    assert.deepEqual(layout,{overflow:false,fieldCount:8,inputs:true,cardVisible:true},`Trial 2.0 layout ${width}`);
+    assert.equal(await page.locator('.existing').count(),0,'Trial 2.0 não exibe login no cadastro');
+    await page.getByRole('link',{name:'Políticas de Privacidade'}).waitFor();
+    await page.getByRole('link',{name:'Termos de uso'}).waitFor();
     assert.equal(await page.locator('.create').isDisabled(),true);
     await page.locator('[name=nomeCompleto]').focus();
     assert.equal(await page.locator('[name=nomeCompleto]').evaluate(e=>e===document.activeElement),true);

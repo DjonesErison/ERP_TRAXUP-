@@ -54,9 +54,9 @@ Direção:
 - menos conteúdo que a UI-014 anterior.
 
 ### Estado
-**Primeira proposta criada — EM REVISÃO.**
+**APROVADA em 07/10/2026 — referência oficial para implementação.**
 
-A imagem não deve substituir definitivamente a UI-014 anterior até aprovação explícita do responsável pelo projeto.
+A nova Trial 2.0 substitui a UI-014 como referência visual ativa. A UI-014 anterior permanece apenas como legado/histórico.
 
 ## 6. Estrutura desta pasta
 
@@ -87,3 +87,27 @@ Não excluir referências antigas antes da aprovação da substituta.
 4. Criar Dashboard ERP.
 5. Redesenhar os módulos restantes.
 6. Somente depois substituir/arquivar as referências visuais antigas.
+
+
+## 9. Especificação aprovada — Trial 2.0
+
+Ordem dos campos:
+1. Nome fantasia
+2. CNPJ
+3. Razão social
+4. E-mail
+5. Telefone / WhatsApp
+6. Segmento do negócio
+7. Nome do responsável
+8. Quantidade de lojas
+
+A tela não possui o bloco “Já tem uma conta? / Entrar”.
+
+CTA: **Criar conta de teste**.
+
+Consentimento exibido abaixo do CTA: “Ao se cadastrar você concorda com as Políticas de Privacidade e com os Termos de uso.”
+
+- Políticas de Privacidade: https://institucional.locaweb.com.br/politicas/
+- Termos de uso: https://www.connectplug.com.br/termos_de_uso
+
+Fluxo de implementação: primeira tela limpa → criação/confirmação de senha em etapa seguinte → criação do ambiente Trial → primeiro acesso/onboarding.

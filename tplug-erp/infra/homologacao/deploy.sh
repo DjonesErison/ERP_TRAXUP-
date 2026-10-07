@@ -38,6 +38,14 @@ bash cleanup-simulations.sh
 docker compose --env-file .env -f compose.yml -f compose.mail.yml up -d
 # Porta efetiva vem da configuracao Compose, sem executar o arquivo de segredos.
 port=$(docker compose --env-file .env -f compose.yml -f compose.mail.yml port frontend 80)
-bash smoke.sh "http://$port" "$sha"
+if ! bash smoke.sh "http://$port" "$sha"; then
+  echo 'Estado dos containers no momento da falha:' >&2
+  docker compose --env-file .env -f compose.yml -f compose.mail.yml ps >&2 || true
+  echo 'Ultimas linhas do backend:' >&2
+  docker compose --env-file .env -f compose.yml -f compose.mail.yml logs --tail=80 backend >&2 || true
+  echo 'Ultimas linhas do frontend:' >&2
+  docker compose --env-file .env -f compose.yml -f compose.mail.yml logs --tail=40 frontend >&2 || true
+  false
+fi
 trap - ERR
 printf 'BACKEND_IMAGE=%s\nFRONTEND_IMAGE=%s\nRELEASE_SHA=%s\n' "$backend" "$frontend" "$sha" > release.env

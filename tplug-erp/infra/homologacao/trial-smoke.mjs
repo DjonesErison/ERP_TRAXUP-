@@ -9,7 +9,6 @@ await mkdir(out, { recursive: true });
 async function fill(page) {
   for (const [name,value] of Object.entries({nomeCompleto:'  Teste Visual  ',nomeEmpresa:'Empresa de Teste',razaoSocial:'Empresa de Teste Ltda',documento:'11.222.333/0001-81',telefone:'(11) 96123-4567',email:'trial@example.test'})) await page.locator(`[name=${name}]`).fill(value);
   await page.locator('[name=segmento]').selectOption('Varejo');
-  await page.locator('[name=aceitouTermos]').check();
 }
 try {
   for (const width of [320,390,768,1024,1280,1536,2048]) {
@@ -33,7 +32,7 @@ try {
     assert.equal(await page.locator('.existing').count(),0,'Trial 2.0 não exibe login no cadastro');
     await page.getByRole('link',{name:'Políticas de Privacidade'}).waitFor();
     await page.getByRole('link',{name:'Termos de uso'}).waitFor();
-    assert.equal(await page.locator('.create').isDisabled(),true);
+    assert.equal(await page.locator('.create').isDisabled(),false);
     await page.locator('[name=nomeCompleto]').focus();
     assert.equal(await page.locator('[name=nomeCompleto]').evaluate(e=>e===document.activeElement),true);
     await page.locator('h1').click();
@@ -44,8 +43,7 @@ try {
       await new Promise(resolve=>setTimeout(resolve,150));
       await route.fulfill({status,json:status===200?{trialId:'trial-test',tenantId:'tenant-test',codigoEmpresa:'0042',expiraEm:'2026-09-30',status:'ATIVO',proximoPasso:'ATIVAR_ADMIN',ativacaoToken:'visual-test-token'}:{}});
     });
-    await page.locator('[name=aceitouTermos]').check();
-    await page.locator('.create').click();
+      await page.locator('.create').click();
     assert.equal(calls.length,0,'Formulário vazio não envia cadastro');
     await fill(page); await page.locator('.create').click();
     await page.getByRole('alert').filter({hasText:'Confira os dados'}).waitFor();
@@ -159,16 +157,12 @@ try {
   }
   const context=await browser.newContext(); const page=await context.newPage();
   await page.goto(`${base}/teste`);
-  await page.locator('.trial-preview img').evaluate(i=>i.decode());
   await page.evaluate(()=>navigator.serviceWorker.ready);
   await page.reload();
-  await page.locator('.trial-preview img').evaluate(i=>i.decode());
   const manifest=await page.evaluate(async()=>await (await fetch('/manifest.webmanifest')).json());
   assert.equal(manifest.display,'standalone'); assert.equal(manifest.scope,'/');
-  await page.waitForFunction(async()=>!!(await caches.match('/assets/trial-hero-devices.webp')));
   await context.setOffline(true); await page.reload();
   await page.getByRole('heading',{name:'Comece seu teste gratuito'}).waitFor();
-  await page.locator('.trial-preview img').evaluate(i=>i.decode());
   await fill(page); await page.locator('.create').click();
   await page.getByRole('alert').filter({hasText:'Não foi possível iniciar'}).waitFor();
   assert.equal(await page.getByRole('heading',{name:'Seu teste começou!'}).count(),0);

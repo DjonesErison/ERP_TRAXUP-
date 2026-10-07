@@ -38,6 +38,27 @@ bash cleanup-simulations.sh
 docker compose --env-file .env -f compose.yml -f compose.mail.yml up -d
 # Porta efetiva vem da configuracao Compose, sem executar o arquivo de segredos.
 port=$(docker compose --env-file .env -f compose.yml -f compose.mail.yml port frontend 80)
+# O frontend pode iniciar antes de o Spring Boot terminar migrations/JPA.
+# Aguarda explicitamente a API ficar pronta para evitar 502 durante o smoke.
+api_ready=false
+for attempt in {1..40}; do
+  status=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 -H 'Content-Type: application/json' -d '{}' "http://$port/api/v1/auth/login" || true)
+  if [[ "$status" == 400 ]]; then
+    echo "Backend pronto para receber trafego apos tentativa $attempt."
+    api_ready=true
+    break
+  fi
+  if (( attempt == 1 || attempt % 5 == 0 )); then
+    echo "Aguardando backend: tentativa $attempt/40, HTTP=${status:-indisponivel}" >&2
+  fi
+  sleep 3
+done
+if [[ "$api_ready" != true ]]; then
+  echo 'Backend nao ficou pronto dentro da janela de inicializacao.' >&2
+  docker compose --env-file .env -f compose.yml -f compose.mail.yml ps >&2 || true
+  docker compose --env-file .env -f compose.yml -f compose.mail.yml logs --tail=120 backend >&2 || true
+  false
+fi
 if ! bash smoke.sh "http://$port" "$sha"; then
   echo 'Estado dos containers no momento da falha:' >&2
   docker compose --env-file .env -f compose.yml -f compose.mail.yml ps >&2 || true

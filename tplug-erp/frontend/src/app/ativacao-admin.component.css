@@ -1,2 +1,23 @@
-:host{display:block}.activation{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 30%,#d9efff,transparent 45%),#f6fbff;color:#08134a}.card{width:min(500px,100%);background:#fff;border:1px solid #dbe8f5;border-radius:18px;padding:38px;box-shadow:0 24px 70px #0b4c8c1c}.card img{display:block;width:160px;height:80px;object-fit:contain;margin:auto}.eyebrow{text-align:center;color:#0870e6;font-weight:800;font-size:12px;letter-spacing:.12em}.card h1{text-align:center;font-size:34px;margin:8px}.card>p:not(.eyebrow){text-align:center;color:#64748b;line-height:1.5}form{display:grid;gap:14px;margin-top:25px}label{display:grid;gap:7px;font-size:12px;font-weight:700}input{min-height:46px;border:1px solid #cbd8e7;border-radius:8px;padding:10px;font:inherit}button{min-height:52px;border:0;border-radius:8px;background:linear-gradient(100deg,#ffad00,#ff5b00);color:#fff;font-weight:800;font-size:16px}button:disabled{opacity:.55}.alert{background:#fff0f0;color:#9b1c1c;padding:11px;border-radius:8px}small{color:#9b1c1c}
-.card{min-width:0}input{width:100%;min-width:0}@media(max-width:480px){.activation{padding:16px}.card{padding:24px}.card h1{font-size:28px}}
+:host{display:block;font-family:Arial,Helvetica,sans-serif;color:#0a214c}
+*{box-sizing:border-box}
+.activation{display:grid;grid-template-columns:minmax(0,50%) minmax(0,50%);min-height:100vh;background:#f6faff}
+.brand{background:linear-gradient(145deg,#06254d,#0756b1 65%,#052b61);color:#fff;padding:clamp(30px,5vw,85px);display:flex;flex-direction:column;min-width:0;border-radius:0 24px 24px 0}
+.logo{width:min(310px,80%);height:auto;object-fit:contain;align-self:flex-start;border-radius:12px}
+.brand h2{font-size:clamp(32px,3.8vw,58px);line-height:1.13;margin:34px 0 12px}.brand h2 strong{display:block;color:#43a4ff}
+.brand>p{font-size:clamp(16px,1.5vw,22px);line-height:1.5;max-width:580px}
+.brand ul{list-style:none;padding:0;display:grid;gap:22px;margin:28px 0}.brand li{display:grid;gap:6px}.brand li b{font-size:18px}.brand li span{color:#e1efff}
+.brand .slogan{margin-top:auto;font-size:15px;color:#d4e9ff}
+.form-area{display:grid;place-items:center;padding:32px;min-width:0}
+.card{background:#fff;width:min(610px,100%);padding:clamp(24px,3vw,48px);border-radius:24px;box-shadow:0 12px 45px #143b6a12;min-width:0}
+.secure{text-align:right;color:#315684;font-size:13px;margin:0 0 26px}
+.steps{display:flex;justify-content:space-between;gap:10px;color:#627897;font-size:13px;margin-bottom:38px}.steps span{padding:7px}.steps .active{color:#0065e9;font-weight:700;border-bottom:2px solid #0065e9}
+.card h1{font-size:clamp(30px,2.8vw,40px);margin:0 0 8px}.intro{color:#587198;line-height:1.5;margin:0 0 28px}
+form{display:grid;gap:14px}label{display:grid;gap:7px;font-size:14px;font-weight:700}input{font:inherit;color:#132c53;width:100%;min-width:0;height:49px;padding:0 14px;border:1px solid #b9cbe3;border-radius:9px;background:#fff}input[readonly]{background:#f3f6fb;color:#657c9c}input:focus{outline:2px solid #1676f0;outline-offset:0}input[aria-invalid=true]{border-color:#cf3434}
+.password-field{position:relative;display:block}.password-field input{padding-right:88px}.eye{position:absolute;right:6px;top:6px;border:0;background:transparent;color:#28558e;height:36px;cursor:pointer;padding:0 8px}
+.strength{display:grid;gap:6px;font-size:12px;font-weight:700}.track{height:8px;border-radius:9px;background:#e4eaf2;overflow:hidden}.fill{height:100%;transition:width .2s,background .2s}
+.requirements{display:grid;gap:7px;font-size:12px;color:#6b7f9c}.requirements .ok{color:#15803d;font-weight:700}
+.field-error{color:#b42318;font-size:12px}.alert{background:#fff0f0;color:#9b1c1c;padding:12px;border-radius:9px}
+.submit{height:54px;background:#086cf0;color:#fff;font-size:17px;font-weight:700;border:0;border-radius:9px;cursor:pointer;margin-top:10px}.submit:disabled{opacity:.6}
+.support{text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #dbe5f0;color:#5b7193;font-size:14px}.support a{display:block;margin-top:14px;color:#066ce8}
+@media(max-width:900px){.activation{grid-template-columns:1fr}.brand{padding:30px 7%;border-radius:0 0 24px 24px}.brand h2{font-size:32px}.brand .slogan{margin-top:20px}.form-area{padding:16px}.card{padding:26px 20px}}
+@media(max-width:390px){.steps{font-size:11px}.card{padding:22px 14px}}

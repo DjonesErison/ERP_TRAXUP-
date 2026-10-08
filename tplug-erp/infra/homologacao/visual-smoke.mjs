@@ -25,6 +25,20 @@ try {
     await trialPage.getByText('PDV completo', { exact: true }).waitFor();
     await trialPage.getByText('Gestão integrada', { exact: true }).waitFor();
     await trialPage.getByText('Acesso em qualquer lugar', { exact: true }).waitFor();
+    const fields = await trialPage.locator('.fields > input, .fields > select').evaluateAll(elements => elements.map(el => ({ name: el.getAttribute('name'), placeholder: el.getAttribute('placeholder') })));
+    assert.deepEqual(fields.map(field => field.name), [
+      'nomeEmpresa', 'documento', 'razaoSocial', 'email', 'telefone', 'segmento', 'nomeCompleto', 'quantidadeLojas'
+    ], 'Ordem dos oito campos deve seguir Trial.png');
+    assert.equal(fields[0].placeholder, 'Nome fantasia');
+    assert.equal(fields[1].placeholder, 'CNPJ');
+    assert.equal(fields[2].placeholder, 'Razão social');
+    assert.equal(fields[3].placeholder, 'E-mail');
+    assert.equal(fields[4].placeholder, 'Telefone / WhatsApp');
+    assert.equal(fields[6].placeholder, 'Nome do responsável');
+    assert.equal(await trialPage.locator('.trial-v2 img').count(), 0, 'Não reutilizar imagens antigas na Trial');
+    assert.equal(await trialPage.locator('input[type="checkbox"]').count(), 0, 'Trial aprovada não contém checkbox adicional');
+    assert.equal(await trialPage.getByRole('link', { name: 'Políticas de Privacidade' }).getAttribute('href'), 'https://institucional.locaweb.com.br/politicas/');
+    assert.equal(await trialPage.getByRole('link', { name: 'Termos de uso' }).getAttribute('href'), 'https://www.connectplug.com.br/termos_de_uso');
     assert.equal(await trialPage.locator('.existing').count(), 0, 'Trial 2.0 não deve exibir bloco Entrar');
     assert.equal(await trialPage.getByRole('button', { name: 'Criar conta de teste' }).isDisabled(), false);
     assert.equal(await trialPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no trial');

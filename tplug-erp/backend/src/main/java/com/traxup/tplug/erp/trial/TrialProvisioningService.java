@@ -69,9 +69,11 @@ public class TrialProvisioningService {
     private TrialCadastroResponse criar(TrialCadastroRequest request, String idempotencyKey) {
         String documento = somenteDigitos(request.documento());
         if (trialRepository.existsByDocumento(documento))
-            throw new com.traxup.tplug.erp.shared.exception.RecursoConflitanteException("Empresa já cadastrada");
+            throw new com.traxup.tplug.erp.shared.exception.RecursoConflitanteException("CNPJ_JA_CADASTRADO");
         String telefone = somenteDigitos(request.telefone());
         String email = request.email().trim().toLowerCase(Locale.ROOT);
+        if (trialRepository.existsByEmailIgnoreCase(email))
+            throw new com.traxup.tplug.erp.shared.exception.RecursoConflitanteException("EMAIL_JA_CADASTRADO");
         Instant agora = clock.instant();
 
         Tenant tenant = tenantRepository.save(new Tenant(request.nomeEmpresa().trim()));

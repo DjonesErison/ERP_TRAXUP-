@@ -18,14 +18,22 @@ export class TrialComponent {
   constructor(private readonly trial: TrialService) {}
 
   fieldErrors: Record<string,string>={};
-  formatarCnpj():void {
-    const n=this.documento.replace(/\D/g,'').slice(0,14);
-    this.documento=n.replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\d{4})(\d)/,'$1-$2');
+  atualizarCnpj(valor:string):void {
+    const n=String(valor||'').replace(/\D/g,'').slice(0,14);
+    let v=n.slice(0,2);
+    if(n.length>2)v+='.'+n.slice(2,5);
+    if(n.length>5)v+='.'+n.slice(5,8);
+    if(n.length>8)v+='/'+n.slice(8,12);
+    if(n.length>12)v+='-'+n.slice(12,14);
+    this.documento=v;
     delete this.fieldErrors['documento'];
   }
-  formatarTelefone():void {
-    const n=this.telefone.replace(/\D/g,'').slice(0,11);
-    this.telefone=n.replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{4,5})(\d{4})$/,'$1-$2');
+  atualizarTelefone(valor:string):void {
+    const n=String(valor||'').replace(/\D/g,'').slice(0,11);
+    const ddd=n.slice(0,2);
+    const local=n.slice(2);
+    const split=local.length>8?5:4;
+    this.telefone=n.length<=2?n:(`(${ddd}) `+local.slice(0,split)+(local.length>split?'-'+local.slice(split):''));
     delete this.fieldErrors['telefone'];
   }
   private validar():boolean {

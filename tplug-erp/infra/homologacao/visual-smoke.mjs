@@ -25,7 +25,7 @@ try {
     await trialPage.getByText('PDV completo', { exact: true }).waitFor({ state: 'attached' });
     await trialPage.getByText('Gestão integrada', { exact: true }).waitFor({ state: 'attached' });
     await trialPage.getByText('Acesso em qualquer lugar', { exact: true }).waitFor({ state: 'attached' });
-    const fields = await trialPage.locator('.fields > input, .fields > select').evaluateAll(elements => elements.map(el => ({ name: el.getAttribute('name'), placeholder: el.getAttribute('placeholder') })));
+    const fields = await trialPage.locator('.fields input, .fields select').evaluateAll(elements => elements.map(el => ({ name: el.getAttribute('name'), placeholder: el.getAttribute('placeholder') })));
     assert.deepEqual(fields.map(field => field.name), [
       'nomeEmpresa', 'documento', 'razaoSocial', 'email', 'telefone', 'segmento', 'nomeCompleto', 'quantidadeLojas'
     ], 'Ordem dos oito campos deve seguir Trial.png');

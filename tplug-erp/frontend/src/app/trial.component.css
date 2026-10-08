@@ -43,3 +43,31 @@
 .trial-brand .trial-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 }
 @media(max-width:480px){.reassurance span{column-gap:4px}.reassurance span app-icon{font-size:14px;padding:5px}.fields .field-with-icon{gap:8px;padding:0 10px}}
+
+/* Ajuste de resolucao: manter proporcao intrinseca (1536x1024) do Trial.png.
+   Nunca aplicar background-size com largura E altura forcadas simultaneamente. */
+.trial-v2{width:100%;max-width:100%;overflow-x:clip}
+.trial-form-area,.trial-card,.fields,.field-with-icon{min-width:0}
+@media(min-width:901px){
+  .trial-brand{
+    background-size:max(209%, 150vh) auto;
+    background-position:left top;
+    background-color:#074994;
+  }
+}
+@media(max-width:900px){
+  .trial-brand{
+    width:100%;
+    aspect-ratio:735/1024;
+    background-size:209% auto;
+    background-position:left top;
+    background-color:#074994;
+  }
+}
+@media(max-width:600px){
+  .trial-form-area{padding:18px 12px}
+  .trial-card{width:100%;max-width:100%}
+  .fields .field-with-icon{width:100%;max-width:100%}
+  .reassurance{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){.trial-v2 *{scroll-behavior:auto}}

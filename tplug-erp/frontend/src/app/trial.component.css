@@ -71,3 +71,31 @@
   .reassurance{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){.trial-v2 *{scroll-behavior:auto}}
+
+/* Revisão 1880x1050: foco único, sem contorno laranja no input interno. */
+.fields .field-with-icon input:focus,
+.fields .field-with-icon select:focus,
+.fields .field-with-icon input:focus-visible,
+.fields .field-with-icon select:focus-visible{
+  outline:none!important;
+  box-shadow:none!important;
+}
+.fields .field-with-icon:focus-within{
+  outline:none;
+  border-color:#0878e8;
+  box-shadow:0 0 0 1px rgba(8,120,232,.25);
+}
+/* Mobile: usar a arte institucional completa, preservando proporção.
+   O PNG oficial inclui o formulário na metade direita; a escala de 200%
+   apresenta apenas a metade institucional, sem duplicar campos estáticos. */
+@media(max-width:900px){
+  .trial-brand{
+    aspect-ratio:940 / 1050;
+    height:auto;
+    min-height:0;
+    background-image:url('https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Trial-1880x1050.png');
+    background-size:200% 100%;
+    background-position:left top;
+    background-repeat:no-repeat;
+  }
+}

@@ -99,3 +99,27 @@
     background-repeat:no-repeat;
   }
 }
+
+/* Arte institucional aprovada, recortada SEM formulario: 900x1024.
+   O arquivo deve ser publicado na pasta oficial antes do merge.
+   A imagem nao e ampliada em 200% nem cortada na metade. */
+.trial-v2{grid-template-columns:minmax(0,50%) minmax(0,50%);align-items:start}
+.trial-brand{
+  position:relative;
+  width:100%;
+  height:auto;
+  min-height:0;
+  aspect-ratio:900/1024;
+  background-image:url('https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/TRAXUP_Trial_Painel_Institucional_Oficial.png');
+  background-position:center top;
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-color:#074994;
+  border-radius:0 24px 24px 0;
+  pointer-events:none;
+}
+.trial-form-area{position:relative;z-index:1;min-width:0}
+@media(max-width:900px){
+  .trial-v2{grid-template-columns:minmax(0,1fr)}
+  .trial-brand{aspect-ratio:900/1024;background-size:contain;border-radius:0 0 24px 24px}
+}

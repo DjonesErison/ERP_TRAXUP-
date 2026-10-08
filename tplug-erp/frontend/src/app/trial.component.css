@@ -118,3 +118,8 @@
  .trial-v2{grid-template-columns:minmax(0,1fr)}
  .trial-brand{aspect-ratio:768/1024;min-height:0;background-size:200% auto}
 }
+
+/* Isolamento de hit testing: arte institucional nao pode cobrir formulario. */
+.trial-v2{position:relative}
+.trial-brand{position:relative;z-index:0;pointer-events:none;overflow:hidden}
+.trial-form-area{position:relative;z-index:1;isolation:isolate}

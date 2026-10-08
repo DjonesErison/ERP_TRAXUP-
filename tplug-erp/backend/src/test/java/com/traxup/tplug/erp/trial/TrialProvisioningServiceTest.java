@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -36,5 +37,21 @@ class TrialProvisioningServiceTest {
 
         verify(tenants, times(1)).save(any());
         verify(trials, times(1)).saveAndFlush(any());
+    }
+
+    @Test
+    void informaCampoDuplicadoSemCriarTenant() {
+        TenantRepository tenants=mock(TenantRepository.class);
+        EmpresaRepository empresas=mock(EmpresaRepository.class);
+        UsuarioRepository usuarios=mock(UsuarioRepository.class);
+        TrialSaasRepository trials=mock(TrialSaasRepository.class);
+        var service=new TrialProvisioningService(tenants,empresas,usuarios,trials,mock(PasswordEncoder.class),mock(AuthApplicationService.class),mock(com.traxup.tplug.erp.trial.mail.TrialEmailQueue.class),true);
+        var request=new TrialCadastroRequest("Ana","Loja","Loja LTDA","12345678000199","87999999999","ana@loja.com","Varejo",1,true,"2026-09","req-2");
+        when(trials.existsByDocumento("12345678000199")).thenReturn(true);
+        assertThatThrownBy(()->service.provisionar(request)).hasMessage("CNPJ_JA_CADASTRADO");
+        when(trials.existsByDocumento("12345678000199")).thenReturn(false);
+        when(trials.existsByEmailIgnoreCase("ana@loja.com")).thenReturn(true);
+        assertThatThrownBy(()->service.provisionar(request)).hasMessage("EMAIL_JA_CADASTRADO");
+        verify(tenants,never()).save(any());
     }
 }

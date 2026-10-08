@@ -28,3 +28,18 @@
 .fields input,.fields select{height:54px}
 }
 @media(max-width:900px){.trial-brand{background:linear-gradient(150deg,#0755ad,#001f53);padding:28px 7%;min-height:0}.trial-copy{position:relative;width:auto;height:auto;padding:0;margin:0;overflow:visible;clip:auto;white-space:normal;border:0}.trial-form-area{background:#f8fbff}}
+
+/* Componentes funcionais sobre a referência aprovada. */
+.fields .field-with-icon{display:flex;align-items:center;gap:12px;min-height:54px;border:1px solid #b8c8df;border-radius:10px;background:#fff;padding:0 14px;box-sizing:border-box}
+.field-with-icon app-icon{color:#284a82;font-size:17px}
+.field-control{display:block;min-width:0;flex:1}
+.fields .field-with-icon input,.fields .field-with-icon select{width:100%;height:52px;border:0;background:transparent;padding:0 2px;outline-offset:0}
+.fields .field-with-icon:focus-within{outline:2px solid #0878e8;outline-offset:1px}
+.reassurance span{display:grid;grid-template-columns:auto 1fr;column-gap:9px;align-items:center}
+.reassurance span app-icon{grid-row:1 / span 2;color:#0878e8;border:2px solid #0878e8;border-radius:50%;padding:8px;font-size:20px;box-sizing:content-box}
+.reassurance span b,.reassurance span small{grid-column:2}
+@media(max-width:900px){
+.trial-brand{background-image:url('https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Trial.png');background-repeat:no-repeat;background-position:left top;background-size:100% 100%;aspect-ratio:735/1024;min-height:0;padding:0;border-radius:0 0 24px 24px}
+.trial-brand .trial-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+}
+@media(max-width:480px){.reassurance span{column-gap:4px}.reassurance span app-icon{font-size:14px;padding:5px}.fields .field-with-icon{gap:8px;padding:0 10px}}

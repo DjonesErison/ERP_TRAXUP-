@@ -99,3 +99,26 @@
     background-repeat:no-repeat;
   }
 }
+
+/* Trial oficial 1880x1050: proporcao fixa do painel esquerdo (940x1050).
+   A altura acompanha a largura; nao usar 100vh ou background-size por altura. */
+.trial-v2{align-items:start}
+.trial-brand{
+  aspect-ratio:940 / 1050;
+  width:100%;
+  height:auto;
+  min-height:0;
+  background-color:#064b96;
+  background-image:url('https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Trial-1880x1050.png');
+  background-repeat:no-repeat;
+  background-size:200% auto;
+  background-position:left top;
+}
+@media(min-width:901px){
+  .trial-v2{grid-template-columns:minmax(0,50%) minmax(0,50%)}
+  .trial-brand{min-height:0;background-size:200% auto}
+  .trial-form-area{min-height:100vh}
+}
+@media(max-width:900px){
+  .trial-brand{aspect-ratio:940 / 1050;min-height:0;background-size:200% auto}
+}

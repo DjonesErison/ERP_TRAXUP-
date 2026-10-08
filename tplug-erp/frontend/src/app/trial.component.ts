@@ -50,7 +50,20 @@ export class TrialComponent {
       documento:this.documento.replace(/\D/g,''),telefone:this.telefone.replace(/\D/g,''),email:this.email.trim(),segmento:this.segmento.trim()||undefined,
       quantidadeLojas:this.quantidadeLojas,aceitouTermos:true,termosVersao:'2026-09',idempotencyKey:this.idempotencyKey()}).subscribe({
       next:r=>{this.loading=false;this.sucesso=true;this.codigoEmpresa=r.codigoEmpresa;this.expiraEm=r.expiraEm;this.ativacaoToken=r.ativacaoToken||'';this.acessoCriado.emit({codigoEmpresa:r.codigoEmpresa,email:this.email.trim()});},
-      error:e=>{this.loading=false;this.duplicada=e?.status===409;this.error=this.duplicada?'CNPJ ou e-mail já cadastrado. Recupere o acesso.':e?.status===400?'Dados recusados pelo servidor. Confira as informações.':'Não foi possível iniciar seu teste agora. Tente novamente.';if(this.duplicada){this.fieldErrors['documento']='Verifique se o CNPJ já está cadastrado.';this.fieldErrors['email']='Verifique se o e-mail já está cadastrado.';}}
+      error:e=>{this.loading=false;this.duplicada=e?.status===409;const detail=String(e?.error?.detail||'');
+        if(this.duplicada&&detail==='CNPJ_JA_CADASTRADO'){
+          this.fieldErrors['documento']='Este CNPJ já está cadastrado.';
+          this.error='CNPJ já cadastrado. Você pode recuperar seu acesso.';
+        }else if(this.duplicada&&detail==='EMAIL_JA_CADASTRADO'){
+          this.fieldErrors['email']='Este e-mail já está cadastrado.';
+          this.error='E-mail já cadastrado. Você pode recuperar seu acesso.';
+        }else if(this.duplicada){
+          this.error='Já existe um cadastro com esses dados. Recupere seu acesso.';
+        }else if(e?.status===400){
+          const erros=e?.error?.erros;
+          if(erros&&typeof erros==='object')for(const [campo,mensagem] of Object.entries(erros))this.fieldErrors[campo]=String(mensagem);
+          this.error='Dados recusados pelo servidor. Confira as informações.';
+        }else this.error='Não foi possível iniciar seu teste agora. Tente novamente.';}
     });
   }
   recuperar(): void {

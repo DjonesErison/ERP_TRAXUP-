@@ -46,11 +46,11 @@ try {
       await page.locator('.create').click();
     assert.equal(calls.length,0,'Formulário vazio não envia cadastro');
     await fill(page); await page.locator('.create').click();
-    await page.getByRole('alert').filter({hasText:'Confira os dados'}).waitFor();
+    await page.getByRole('alert').filter({hasText:'Dados recusados pelo servidor'}).waitFor();
     status=503; await page.locator('.create').click();
     await page.getByRole('alert').filter({hasText:'Não foi possível iniciar'}).waitFor();
     status=409; await page.locator('.create').click();
-    await page.getByRole('alert').filter({hasText:'Empresa já cadastrada'}).waitFor();
+    await page.getByRole('alert').filter({hasText:'CNPJ ou e-mail já cadastrado'}).waitFor();
     let recovery;
     await page.route('**/api/public/trials/recuperar-acesso',route=>{recovery=route.request().postDataJSON();return route.fulfill({status:202,body:''});});
     await page.getByRole('button',{name:'Recuperar acesso',exact:true}).click();

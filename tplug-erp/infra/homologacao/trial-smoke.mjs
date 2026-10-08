@@ -50,7 +50,7 @@ try {
     status=503; await page.locator('.create').click();
     await page.getByRole('alert').filter({hasText:'Não foi possível iniciar'}).waitFor();
     status=409; await page.locator('.create').click();
-    await page.getByRole('alert').filter({hasText:'CNPJ ou e-mail já cadastrado'}).waitFor();
+    await page.getByRole('alert').filter({hasText:'Já existe um cadastro com esses dados'}).waitFor();
     let recovery;
     await page.route('**/api/public/trials/recuperar-acesso',route=>{recovery=route.request().postDataJSON();return route.fulfill({status:202,body:''});});
     await page.getByRole('button',{name:'Recuperar acesso',exact:true}).click();

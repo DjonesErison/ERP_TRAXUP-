@@ -31,7 +31,7 @@ class TrialAccessRecoveryIntegrationTest {
     void active(UUID id) { em.flush(); jdbc.update("UPDATE trials_saas SET admin_ativado_em=NOW() WHERE id=?",id); em.clear(); }
     @Test void documentoNormalizadoBloqueiaAntesDeCriarOutroTenant() {
         create(); long before=jdbc.queryForObject("SELECT count(*) FROM tenants",Long.class);
-        assertThatThrownBy(()->provisioning.provisionar(request("12345678901"))).hasMessage("Empresa já cadastrada");
+        assertThatThrownBy(()->provisioning.provisionar(request("12345678901"))).hasMessage("CNPJ_JA_CADASTRADO");
         assertThat(jdbc.queryForObject("SELECT count(*) FROM tenants",Long.class)).isEqualTo(before);
     }
     @Test void recuperacaoNaoEnumeraNemRevelaEmailCodigoTokenOuStatus() throws Exception {

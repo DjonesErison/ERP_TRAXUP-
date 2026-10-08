@@ -16,14 +16,54 @@ export class TrialComponent {
   duplicada=false; recuperando=false; recuperacaoMensagem='';
   loading=false; error=''; sucesso=false; codigoEmpresa=''; expiraEm=''; ativacaoToken='';
   constructor(private readonly trial: TrialService) {}
+
+  fieldErrors: Record<string,string>={};
+  formatarCnpj():void {
+    const n=this.documento.replace(/\D/g,'').slice(0,14);
+    this.documento=n.replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\d{4})(\d)/,'$1-$2');
+    delete this.fieldErrors['documento'];
+  }
+  formatarTelefone():void {
+    const n=this.telefone.replace(/\D/g,'').slice(0,11);
+    this.telefone=n.replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{4,5})(\d{4})$/,'$1-$2');
+    delete this.fieldErrors['telefone'];
+  }
+  private validar():boolean {
+    const e:Record<string,string>={};
+    const n=this.documento.replace(/\D/g,'');
+    const dig=(len:number)=>{let sum=0,w=len-7;for(let i=0;i<len;i++){sum+=Number(n[i])*w--;if(w<2)w=9;}const r=sum%11;return r<2?0:11-r;};
+    if(!this.nomeEmpresa.trim())e['nomeEmpresa']='Informe o nome fantasia.';
+    if(n.length!==14||/^(\d)\1{13}$/.test(n)||dig(12)!==Number(n[12])||dig(13)!==Number(n[13]))e['documento']='CNPJ inválido. Confira os dígitos.';
+    if(!this.razaoSocial.trim())e['razaoSocial']='Informe a razão social.';
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email.trim()))e['email']='Informe um e-mail válido.';
+    if(![10,11].includes(this.telefone.replace(/\D/g,'').length))e['telefone']='Informe telefone com DDD.';
+    if(!this.segmento.trim())e['segmento']='Selecione um segmento.';
+    if(!this.nomeCompleto.trim())e['nomeCompleto']='Informe o responsável.';
+    this.fieldErrors=e;return Object.keys(e).length===0;
+  }
   cadastrar(): void {
     if (this.loading) return;
-    this.loading=true; this.error=''; this.duplicada=false;
+    this.error=''; this.duplicada=false;
+    if(!this.validar())return;
+    this.loading=true;
     this.trial.cadastrar({nomeCompleto:this.nomeCompleto.trim(),nomeEmpresa:this.nomeEmpresa.trim(),razaoSocial:this.razaoSocial.trim(),
       documento:this.documento.replace(/\D/g,''),telefone:this.telefone.replace(/\D/g,''),email:this.email.trim(),segmento:this.segmento.trim()||undefined,
       quantidadeLojas:this.quantidadeLojas,aceitouTermos:true,termosVersao:'2026-09',idempotencyKey:this.idempotencyKey()}).subscribe({
       next:r=>{this.loading=false;this.sucesso=true;this.codigoEmpresa=r.codigoEmpresa;this.expiraEm=r.expiraEm;this.ativacaoToken=r.ativacaoToken||'';this.acessoCriado.emit({codigoEmpresa:r.codigoEmpresa,email:this.email.trim()});},
-      error:e=>{this.loading=false;this.duplicada=e?.status===409;this.error=this.duplicada?'Empresa já cadastrada':e?.status===400?'Confira os dados informados e tente novamente.':'Não foi possível iniciar seu teste agora. Tente novamente.';}
+      error:e=>{this.loading=false;this.duplicada=e?.status===409;const detail=String(e?.error?.detail||'');
+        if(this.duplicada&&detail==='CNPJ_JA_CADASTRADO'){
+          this.fieldErrors['documento']='Este CNPJ já está cadastrado.';
+          this.error='CNPJ já cadastrado. Você pode recuperar seu acesso.';
+        }else if(this.duplicada&&detail==='EMAIL_JA_CADASTRADO'){
+          this.fieldErrors['email']='Este e-mail já está cadastrado.';
+          this.error='E-mail já cadastrado. Você pode recuperar seu acesso.';
+        }else if(this.duplicada){
+          this.error='Já existe um cadastro com esses dados. Recupere seu acesso.';
+        }else if(e?.status===400){
+          const erros=e?.error?.erros;
+          if(erros&&typeof erros==='object')for(const [campo,mensagem] of Object.entries(erros))this.fieldErrors[campo]=String(mensagem);
+          this.error='Dados recusados pelo servidor. Confira as informações.';
+        }else this.error='Não foi possível iniciar seu teste agora. Tente novamente.';}
     });
   }
   recuperar(): void {

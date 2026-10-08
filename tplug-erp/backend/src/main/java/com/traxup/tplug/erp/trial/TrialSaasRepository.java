@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public interface TrialSaasRepository extends JpaRepository<TrialSaas, UUID> {
     boolean existsByDocumento(String documento);
+    boolean existsByEmailIgnoreCase(String email);
     Optional<TrialSaas> findByDocumentoAndEmailIgnoreCase(String documento, String email);
     Optional<TrialSaas> findByIdempotencyKey(String idempotencyKey);
     @org.springframework.data.jpa.repository.Query("select t from TrialSaas t where t.tenant.id=:tenantId and lower(t.email)=lower(:email)")

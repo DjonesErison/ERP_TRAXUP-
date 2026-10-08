@@ -1,1 +1,45 @@
 :host{display:block;min-height:100vh;font-family:Arial,sans-serif;color:#071a42}.trial-v2{min-height:100vh;display:grid;grid-template-columns:minmax(420px,48%) 1fr;background:#f8fbff}.trial-brand{position:relative;overflow:hidden;min-height:100vh;padding:55px 9%;box-sizing:border-box;color:#fff;background:radial-gradient(circle at 90% 10%,#0878e8 0,transparent 36%),linear-gradient(145deg,#082f74,#003b8f 58%,#0066df)}.trial-copy{position:relative;z-index:2;margin-top:0}.trial-copy h1{font-size:clamp(42px,4vw,68px);line-height:1.02;font-weight:300;letter-spacing:-.04em;margin:0}.trial-copy h1 strong{font-weight:800}.trial-copy p{font-size:clamp(18px,1.5vw,25px);line-height:1.5;margin:28px 0}.trial-copy ul{list-style:none;padding:0;margin:28px 0;display:grid;gap:13px}.trial-copy li:before{content:"✓";display:inline-grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#19a5ff;margin-right:12px;font-weight:800}.trial-form-area{display:grid;place-items:center;padding:48px 7%;box-sizing:border-box}.trial-card{width:min(660px,100%);background:#fff;border-radius:24px;padding:36px 42px;box-sizing:border-box;box-shadow:0 18px 60px rgba(21,55,100,.08)}.trial-card h2{font-size:34px;letter-spacing:-.03em;text-align:left;margin:0 0 8px}.trial-card>p{color:#63769a;font-size:18px;margin:0 0 28px}.fields{display:grid;gap:13px}.fields input,.fields select{height:54px;border:1px solid #b8c8df;border-radius:10px;padding:0 18px;font:inherit;color:#17325e;background:#fff;box-sizing:border-box;width:100%}.create{width:100%;min-height:60px;border:0;border-radius:10px;background:linear-gradient(90deg,#0865e8,#1188f4);color:#fff;font-size:19px;font-weight:700;margin-top:18px;cursor:pointer}.create:disabled{opacity:.6}.legal{font-size:14px!important;color:#607392!important;line-height:1.5;text-align:center!important;margin:14px 0!important}.legal a{color:#0066e8}.reassurance{border-top:1px solid #dce5f0;margin-top:25px;padding-top:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.reassurance span{display:grid}.reassurance b{font-size:15px}.reassurance small{color:#7385a1;margin-top:3px}.alert{padding:12px;margin-bottom:16px;background:#fff0f0;color:#a31d1d;border-radius:8px}.recovery-panel{margin:0 0 20px;padding:15px;border:1px solid #d8e6fa;border-radius:12px;background:#f3f8ff}.recovery-description,.recovery-feedback{font-size:13px;line-height:1.45;color:#42526c}.recover-access{width:100%;min-height:46px;border:0;border-radius:9px;background:#0758be;color:#fff;font-weight:700}.success{text-align:center}.success h2{text-align:center}@media(max-width:900px){.trial-v2{grid-template-columns:1fr}.trial-brand{min-height:470px;padding:30px 7%}.trial-copy{margin-top:0;max-width:100%}.trial-copy h1{font-size:44px}.trial-form-area{padding:28px 5%}.trial-card{padding:30px 24px}}@media(max-width:600px){.trial-brand{min-height:420px}.trial-copy h1{font-size:39px}.trial-copy p{font-size:17px}.trial-form-area{padding:18px 12px}.trial-card{border-radius:18px;padding:26px 18px}.trial-card h2{font-size:28px}.reassurance{grid-template-columns:repeat(3,1fr)}.reassurance small{font-size:11px}}
+.trial-wordmark{display:flex;align-items:baseline;font-size:clamp(30px,3vw,43px);font-weight:900;letter-spacing:-.06em;margin-bottom:62px;color:#fff}.trial-wordmark strong{color:#ff991e}.trial-brand{border-radius:0 28px 28px 0}.trial-copy h1{max-width:600px}.trial-form-area{background:#fff}@media(max-width:900px){.trial-wordmark{margin-bottom:30px}.trial-brand{border-radius:0 0 24px 24px}}
+
+/* Trial 2.0: hierarquia visual responsiva, sem reutilizar imagens legadas. */
+.trial-v2{grid-template-columns:minmax(0,48%) minmax(0,52%);align-items:stretch}
+.trial-brand{padding:clamp(32px,4.2vw,72px);display:flex;flex-direction:column;justify-content:flex-start}
+.trial-copy{width:100%;max-width:620px}
+.trial-copy h1{font-size:clamp(38px,4.1vw,64px);line-height:1.1}
+.trial-copy p{max-width:540px}
+.trial-benefits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;row-gap:20px;margin-top:36px!important}
+.trial-benefits li{display:flex;align-items:center;min-width:0}
+.trial-benefits li:before{flex:0 0 23px}
+.trial-form-area{padding:clamp(24px,4vw,70px)}
+.trial-card{box-shadow:none;padding:clamp(16px,2vw,36px);max-width:620px}
+.fields input:focus-visible,.fields select:focus-visible,.create:focus-visible{outline:3px solid #ff9b2f;outline-offset:2px}
+@media(max-width:900px){.trial-v2{grid-template-columns:minmax(0,1fr)}.trial-brand{min-height:0;border-radius:0 0 24px 24px}.trial-benefits{margin-top:20px!important}.trial-form-area{padding:26px 18px}}
+@media(max-width:480px){.trial-brand{padding:30px 22px}.trial-benefits{grid-template-columns:1fr 1fr;font-size:13px;gap:12px}.trial-benefits li:before{margin-right:6px}.trial-wordmark{margin-bottom:24px}.trial-form-area{padding:12px}.trial-card{padding:18px 10px}.reassurance{gap:6px}.reassurance b{font-size:12px}}
+
+/* Fonte visual APROVADA: recorte EXCLUSIVO da coluna institucional do Trial.png.
+   O formulario à direita permanece HTML/Angular, nunca imagem. */
+@media(min-width:901px){
+.trial-v2{grid-template-columns:minmax(0,47.85%) minmax(0,52.15%);background:#f7faff}
+.trial-brand{background-image:url('https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Trial.png');background-size:209% 100%;background-position:left top;background-repeat:no-repeat;border-radius:0 27px 27px 0;padding:0;min-height:100vh}
+.trial-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.trial-form-area{background:#f8fbff}
+.trial-card{max-width:704px;border-radius:24px;box-shadow:0 10px 40px rgba(12,52,108,.06);padding:34px 40px}
+.fields{gap:14px}
+.fields input,.fields select{height:54px}
+}
+@media(max-width:900px){.trial-brand{background:linear-gradient(150deg,#0755ad,#001f53);padding:28px 7%;min-height:0}.trial-copy{position:relative;width:auto;height:auto;padding:0;margin:0;overflow:visible;clip:auto;white-space:normal;border:0}.trial-form-area{background:#f8fbff}}
+
+/* Componentes funcionais sobre a referência aprovada. */
+.fields .field-with-icon{display:flex;align-items:center;gap:12px;min-height:54px;border:1px solid #b8c8df;border-radius:10px;background:#fff;padding:0 14px;box-sizing:border-box}
+.field-with-icon app-icon{color:#284a82;font-size:17px}
+.field-control{display:block;min-width:0;flex:1}
+.fields .field-with-icon input,.fields .field-with-icon select{width:100%;height:52px;border:0;background:transparent;padding:0 2px;outline-offset:0}
+.fields .field-with-icon:focus-within{outline:2px solid #0878e8;outline-offset:1px}
+.reassurance span{display:grid;grid-template-columns:auto 1fr;column-gap:9px;align-items:center}
+.reassurance span app-icon{grid-row:1 / span 2;color:#0878e8;border:2px solid #0878e8;border-radius:50%;padding:8px;font-size:20px;box-sizing:content-box}
+.reassurance span b,.reassurance span small{grid-column:2}
+@media(max-width:900px){
+.trial-brand{background-image:url('https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Trial.png');background-repeat:no-repeat;background-position:left top;background-size:100% 100%;aspect-ratio:735/1024;min-height:0;padding:0;border-radius:0 0 24px 24px}
+.trial-brand .trial-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+}
+@media(max-width:480px){.reassurance span{column-gap:4px}.reassurance span app-icon{font-size:14px;padding:5px}.fields .field-with-icon{gap:8px;padding:0 10px}}

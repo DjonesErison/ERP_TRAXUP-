@@ -125,12 +125,12 @@ Fluxo de implementação: primeira tela limpa → criação/confirmação de sen
 
 ### Estado atual
 
-A referência aprovada vigente é `Trial-1880x1050.png`. Imagens anteriores não são fontes autorizadas para a Trial.
+A referência aprovada vigente é `Trial-1880x1050-OFICIAL.png`. Imagens anteriores não são fontes autorizadas para a Trial.
 
 
 ## 11. Referência oficial da Trial — VIGENTE
 
-**Única arte aprovada:** `docs/design/13-identidade-visual-2.0/Trial-1880x1050.png`.
+**Única arte aprovada:** `docs/design/13-identidade-visual-2.0/Trial-1880x1050-OFICIAL.png`.
 
 **Revogadas:** `Trial.png` e `docs/design/12-trial-admin/UI-014-captacao-trial-sete-dias-traxup.webp`. Não restaurar, referenciar, distribuir nem usar como comparação visual.
 
@@ -139,3 +139,12 @@ A arte oficial tem dimensões nominais de 1880 × 1050 e contém elementos insti
 As capturas `trial-1536.png` e `trial-390.png` são **evidências de teste** produzidas pelo CI, não artes aprovadas. Devem ser comparadas com a referência vigente e associadas ao SHA da execução.
 
 **Atenção:** um recorte de 50% do PNG não assegura que o notebook apareça completo. Não aprovar o layout apenas por CI verde: inspecionar capturas reais em desktop e celular antes do merge.
+
+
+## 12. Nova arte oficial aprovada — 08/10/2026
+
+**Única referência visual autorizada:** `docs/design/13-identidade-visual-2.0/Trial-1880x1050-OFICIAL.png`.
+
+O arquivo `Trial-1880x1050-old.png` é obsoleto e não deve ser utilizado pelo frontend, por testes de comparação ou por novas telas. O formulário da direita permanece HTML/Angular interativo; a arte é somente referência e fonte da composição institucional.
+
+A imagem aprovada enviada tem proporção de 1536 × 1024; o nome 1880x1050 não deve ser interpretado como suas dimensões reais. Evitar redimensionamento não proporcional, cortes do notebook/celular e duplicação de campos estáticos do PNG.

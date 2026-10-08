@@ -15,3 +15,16 @@
 .fields input:focus-visible,.fields select:focus-visible,.create:focus-visible{outline:3px solid #ff9b2f;outline-offset:2px}
 @media(max-width:900px){.trial-v2{grid-template-columns:minmax(0,1fr)}.trial-brand{min-height:0;border-radius:0 0 24px 24px}.trial-benefits{margin-top:20px!important}.trial-form-area{padding:26px 18px}}
 @media(max-width:480px){.trial-brand{padding:30px 22px}.trial-benefits{grid-template-columns:1fr 1fr;font-size:13px;gap:12px}.trial-benefits li:before{margin-right:6px}.trial-wordmark{margin-bottom:24px}.trial-form-area{padding:12px}.trial-card{padding:18px 10px}.reassurance{gap:6px}.reassurance b{font-size:12px}}
+
+/* Fonte visual APROVADA: recorte EXCLUSIVO da coluna institucional do Trial.png.
+   O formulario à direita permanece HTML/Angular, nunca imagem. */
+@media(min-width:901px){
+.trial-v2{grid-template-columns:minmax(0,47.85%) minmax(0,52.15%);background:#f7faff}
+.trial-brand{background-image:url('https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Trial.png');background-size:209% 100%;background-position:left top;background-repeat:no-repeat;border-radius:0 27px 27px 0;padding:0;min-height:100vh}
+.trial-copy{opacity:0;pointer-events:none}
+.trial-form-area{background:#f8fbff}
+.trial-card{max-width:704px;border-radius:24px;box-shadow:0 10px 40px rgba(12,52,108,.06);padding:34px 40px}
+.fields{gap:14px}
+.fields input,.fields select{height:54px}
+}
+@media(max-width:900px){.trial-brand{background:linear-gradient(150deg,#0755ad,#001f53);padding:28px 7%;min-height:0}.trial-copy{opacity:1}.trial-form-area{background:#f8fbff}}

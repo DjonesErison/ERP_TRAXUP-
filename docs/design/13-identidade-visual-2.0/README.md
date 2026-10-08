@@ -125,33 +125,17 @@ Fluxo de implementação: primeira tela limpa → criação/confirmação de sen
 
 ### Estado atual
 
-Os arquivos binários da logo transparente e da referência visual final ainda precisam ser incorporados ao repositório. Até isso ocorrer, a Trial 2.0 não deve exibir logo/imagem substituta da identidade anterior.
+A referência aprovada vigente é `Trial-1880x1050.png`. Imagens anteriores não são fontes autorizadas para a Trial.
 
 
-## 11. Referência oficial da Trial 2.0 — APROVADA
+## 11. Referência oficial da Trial — VIGENTE
 
-A referência visual aprovada pelo responsável do projeto em 07/10/2026 é o arquivo **Trial.png** fornecido na conversa do projeto.
+**Única arte aprovada:** `docs/design/13-identidade-visual-2.0/Trial-1880x1050.png`.
 
-Destino obrigatório no repositório quando o upload binário estiver disponível:
+**Revogadas:** `Trial.png` e `docs/design/12-trial-admin/UI-014-captacao-trial-sete-dias-traxup.webp`. Não restaurar, referenciar, distribuir nem usar como comparação visual.
 
-`docs/design/13-identidade-visual-2.0/trial/Trial.png`
+A arte oficial tem dimensões nominais de 1880 × 1050 e contém elementos institucionais e uma representação do formulário. O formulário real deve continuar implementado em HTML/Angular; não usar o formulário desenhado no PNG como interface.
 
-### Composição obrigatória
+As capturas `trial-1536.png` e `trial-390.png` são **evidências de teste** produzidas pelo CI, não artes aprovadas. Devem ser comparadas com a referência vigente e associadas ao SHA da execução.
 
-- painel institucional azul à esquerda, com cantos arredondados;
-- logomarca TRAXUP transparente no topo esquerdo;
-- título “Seu negócio mais simples, mais eficiente.”;
-- texto curto sobre teste por 7 dias;
-- quatro benefícios: PDV completo, Gestão integrada, Acesso em qualquer lugar, Seguro e confiável;
-- composição de notebook + celular na base esquerda, usando somente arte aprovada da Identidade 2.0;
-- formulário branco à direita;
-- oito campos, nesta ordem: Nome fantasia, CNPJ, Razão social, E-mail, Telefone / WhatsApp, Segmento do seu negócio, Nome do responsável, Quantidade de lojas;
-- CTA “Criar conta de teste”;
-- Políticas de Privacidade e Termos de uso abaixo do CTA;
-- faixa inferior com 7 dias de teste gratuito, Sem cartão de crédito e Acesso rápido e sem burocracia;
-- não exibir checkbox extra de aceite;
-- não exibir “Já tem uma conta? / Entrar”.
-
-### Regra de fidelidade
-
-A implementação deve reproduzir esta referência visual e não pode substituir a logo, notebook/celular, ícones ou demais elementos por assets da identidade anterior. Na ausência do binário aprovado no repositório, o elemento deve permanecer ausente em vez de receber substituto legado.
+**Atenção:** um recorte de 50% do PNG não assegura que o notebook apareça completo. Não aprovar o layout apenas por CI verde: inspecionar capturas reais em desktop e celular antes do merge.

@@ -123,3 +123,5 @@
   .trial-v2{grid-template-columns:minmax(0,1fr)}
   .trial-brand{aspect-ratio:900/1024;background-size:contain;border-radius:0 0 24px 24px}
 }
+
+.field-error{display:block;color:#b42318;font-size:12px;line-height:1.4;margin:-7px 0 4px 8px}.field-error+ .field-with-icon{margin-top:2px}

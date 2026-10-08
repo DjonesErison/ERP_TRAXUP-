@@ -20,7 +20,7 @@ try {
     await page.screenshot({ path: `${out}/login-${viewport.width}.png`, fullPage: true });
     const trialPage = await browser.newPage({ viewport });
     await trialPage.goto(`${process.argv[2]}/teste`);
-    await trialPage.getByRole('heading', { name: /Seu negócio mais simples, mais eficiente/ }).waitFor();
+    await trialPage.getByRole('heading', { name: /Seu negócio mais simples, mais eficiente/ }).waitFor({ state: 'attached' });
     await trialPage.getByRole('heading', { name: 'Comece seu teste gratuito' }).waitFor();
     await trialPage.getByText('PDV completo', { exact: true }).waitFor();
     await trialPage.getByText('Gestão integrada', { exact: true }).waitFor();

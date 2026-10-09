@@ -122,7 +122,7 @@ try {
     const officialLogo=page.locator('.activation .logo');
     await officialArt.evaluate(image=>image.decode());
     await officialLogo.evaluate(image=>image.decode());
-    assert.match(await officialArt.getAttribute('src'),/\/13-identidade-visual-2\.0\/Ativa%C3%A7%C3%A3o%20de%20Conta%20TRAXUP\.png$/);
+    assert.match(await officialArt.getAttribute('src'),/^assets\/Ativacao-de-Conta-TRAXUP\.png$/);
     assert.match(await officialLogo.getAttribute('src'),/^assets\/Logo\.png$/);
     assert.deepEqual(await officialLogo.evaluate(image=>[image.naturalWidth,image.naturalHeight]),[1536,1024]);
     assert.equal(await page.locator('.steps [aria-current=step]').innerText(),'2\nAtivação');
@@ -161,7 +161,14 @@ try {
     await page.goto(`${base}/entrar#empresa=${codigo}&email=${encodeURIComponent(email)}`);
     await page.getByRole('heading',{name:'Acesse seu ERP'}).waitFor();
     assert.equal(await page.locator('[name=email]').inputValue(),email);
-    await page.goto(`${base}/ativar`);await page.getByRole('heading',{name:'Reenviar ativação'}).waitFor();
+    await page.goto(`${base}/ativar`);await page.getByRole('heading',{name:'Ative sua conta'}).waitFor();
+    await page.getByRole('heading',{name:'Reenviar ativação'}).waitFor();
+    assert.equal(new URL(page.url()).pathname,'/ativar','Acesso direto deve manter a tela de ativação');
+    assert.equal(await page.getByRole('heading',{name:'Acesse seu ERP'}).count(),0);
+    assert.equal(await page.getByRole('button',{name:'Ativar minha conta →'}).isDisabled(),true,'Sem token não permite ativar');
+    await page.locator('.activation .official-art').evaluate(image=>image.decode());
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    await page.screenshot({path:`${out}/activation-direct-${width}.png`,fullPage:true});
     await context.close();
   }
   // Recovery links clear prior sessions, keep secrets out of history and use the recovery API.

@@ -21,7 +21,7 @@ import { OnboardingService } from './onboarding.service';
 @Component({ selector: 'app-root', standalone: true, imports: [ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
   redefinindoSenha = false;
-  area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false; ativacaoAdminToken = '';
+  area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false; ativacaoAdminToken = ''; exibindoAtivacao = false;
   readonly menu = [
     { label: 'Visão Geral', icon: 'home', area: 'dashboard' }, { label: 'Vendas', icon: 'cart', area: 'vendas' }, { label: 'Produtos', icon: 'box', area: '' },
     { label: 'Inventário', icon: 'stock', area: 'inventario' }, { label: 'Clientes', icon: 'users', area: '' }, { label: 'CRM', icon: 'users', area: 'crm' },
@@ -55,17 +55,18 @@ export class AppComponent implements OnInit {
       if (email.length <= 254) this.loginEmail = email;
       if ((publicPath === '/ativar' || publicPath === '/recuperar')) {
         this.redefinindoSenha = publicPath === '/recuperar';
+        this.exibindoAtivacao = !this.redefinindoSenha;
         const token = params.get('token') || '';
         if (/^[A-Za-z0-9_-]{43}$/.test(token)) this.ativacaoAdminToken = token;
         else { this.reenviarAtivacao = !this.redefinindoSenha; this.loginError = 'Link incompleto. Solicite um novo link de acesso.'; }
       }
       // Keep credentials out of URLs, referrers and browser history after opening.
-      window.history.replaceState(null, '', '/entrar');
+      window.history.replaceState(null, '', this.exibindoAtivacao ? '/ativar' : '/entrar');
     }
   }
 
-  iniciarAtivacaoAdmin(token: string): void { this.ativacaoAdminToken = token; this.exibindoTrial = false; }
-  concluirAtivacaoAdmin(): void { this.ativacaoAdminToken = ''; this.exibindoTrial = false; this.loginError = ''; this.ativacaoMensagem = 'Senha criada! Entre para configurar sua empresa.'; }
+  iniciarAtivacaoAdmin(token: string): void { this.exibindoAtivacao = true; this.ativacaoAdminToken = token; this.exibindoTrial = false; }
+  concluirAtivacaoAdmin(): void { this.exibindoAtivacao = false; window.history.replaceState(null, '', '/entrar'); this.ativacaoAdminToken = ''; this.exibindoTrial = false; this.loginError = ''; this.ativacaoMensagem = 'Senha criada! Entre para configurar sua empresa.'; }
 
   abrirRecuperacao(): void { this.recuperacaoCodigoEmpresa = this.loginCodigoEmpresa.trim(); this.recuperacaoEmail = this.loginEmail.trim(); this.recuperacaoMensagem = ''; this.recuperacaoError = ''; this.recuperacaoAberta = true; }
   fecharRecuperacao(): void { if (!this.recuperacaoLoading) this.recuperacaoAberta = false; }

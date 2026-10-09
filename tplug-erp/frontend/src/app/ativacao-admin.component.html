@@ -1,6 +1,6 @@
 <section class="activation">
   <aside class="brand" aria-label="TRAXUP — benefícios do teste de sete dias">
-    <img class="official-art" src="https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Ativa%C3%A7%C3%A3o%20de%20Conta%20TRAXUP.png" alt="" aria-hidden="true" width="1536" height="1024">
+    <img class="official-art" src="assets/Ativacao-de-Conta-TRAXUP.png" alt="" aria-hidden="true" width="1536" height="1024">
     <img class="logo" src="assets/Logo.png" alt="Logomarca oficial TRAXUP" width="1536" height="1024">
     <div class="sr-only">
       <h2>Falta apenas ativar sua conta!</h2>
@@ -19,9 +19,10 @@
     <h1>{{recuperacao ? 'Defina uma nova senha' : 'Ative sua conta'}}</h1>
     <p class="intro">{{recuperacao ? 'Crie uma nova senha para recuperar seu acesso.' : 'Defina uma senha de acesso para sua empresa e comece a usar o TRAXUP agora mesmo.'}}</p>
     <div class="alert" role="alert" *ngIf="error">{{error}}</div>
+    <div class="alert" role="status" *ngIf="!token">Abra o link enviado ao seu e-mail para ativar sua conta. Se não recebeu, solicite um novo link abaixo.</div>
     <form (ngSubmit)="ativar()" novalidate>
-      <label *ngIf="email" class="email-label">E-mail
-        <span class="input-field"><app-icon name="mail" /><input [value]="email" readonly autocomplete="email"></span>
+      <label class="email-label">E-mail
+        <span class="input-field"><app-icon name="mail" /><input [value]="email" placeholder="cliente@empresa.com.br" readonly autocomplete="email"></span>
       </label>
       <div class="password-group">
         <label>Nova senha
@@ -43,13 +44,14 @@
         </span>
       </label>
       <small class="field-error" role="alert" *ngIf="(confirmacao||tentou)&&!coincide">As senhas não coincidem.</small>
-      <button class="submit" type="submit" [disabled]="loading">{{loading?'Ativando...':(recuperacao?'Atualizar senha':'Ativar minha conta')}}<span *ngIf="!loading" class="sr-only"> →</span><app-icon *ngIf="!loading" name="arrow" /></button>
+      <button class="submit" type="submit" [disabled]="loading || !token">{{loading?'Ativando...':(recuperacao?'Atualizar senha':'Ativar minha conta')}}<span *ngIf="!loading" class="sr-only"> →</span><app-icon *ngIf="!loading" name="arrow" /></button>
     </form>
     <div class="support">
       <p class="support-heading"><span>Precisa de ajuda?</span></p>
       <button *ngIf="!recuperacao" type="button" class="help-action" (click)="ajudaAberta=!ajudaAberta" [attr.aria-expanded]="ajudaAberta||!!error" aria-controls="activation-help"><app-icon name="headphones" /> Ajuda com a ativação</button>
-      <div id="activation-help" *ngIf="(error||ajudaAberta)&&!recuperacao"><app-reenviar-ativacao [codigoEmpresa]="codigoEmpresa" [email]="email"></app-reenviar-ativacao></div>
+      <div id="activation-help" *ngIf="(error||ajudaAberta||!token)&&!recuperacao"><app-reenviar-ativacao [codigoEmpresa]="codigoEmpresa" [email]="email"></app-reenviar-ativacao></div>
       <a *ngIf="recuperacao" href="/entrar">Voltar ao acesso e solicitar novo link</a>
     </div>
+  <p class="back-login"><a href="/entrar">Já ativou sua conta? Acessar o ERP</a></p>
   </div></main>
 </section>

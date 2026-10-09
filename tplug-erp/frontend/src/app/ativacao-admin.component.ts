@@ -20,5 +20,5 @@ export class AtivacaoAdminComponent{
  get forca(){return ['','Fraca','Razoável','Boa','Forte'][this.pontos];}
  get corForca(){return ['#d1d5db','#dc2626','#f97316','#eab308','#16a34a'][this.pontos];}
  constructor(private readonly service:AtivacaoAdminService, private readonly auth:AuthService){}
- ativar(){this.tentou=true;if(this.loading||!this.forte||!this.coincide)return;this.loading=true;this.error='';(this.recuperacao?this.auth.confirmarRecuperacao(this.token,this.senha):this.service.confirmar(this.token,this.senha)).subscribe({next:()=>{this.loading=false;this.concluida.emit();},error:()=>{this.loading=false;this.error='O link é inválido ou expirou. Solicite um novo acesso.';}});}
+ ativar(){this.tentou=true;if(this.loading||!this.token||!this.forte||!this.coincide)return;this.loading=true;this.error='';(this.recuperacao?this.auth.confirmarRecuperacao(this.token,this.senha):this.service.confirmar(this.token,this.senha)).subscribe({next:()=>{this.loading=false;this.concluida.emit();},error:()=>{this.loading=false;this.error='O link é inválido ou expirou. Solicite um novo acesso.';}});}
 }

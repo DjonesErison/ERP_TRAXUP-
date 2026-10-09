@@ -19,7 +19,6 @@
     <h1>{{recuperacao ? 'Defina uma nova senha' : 'Ative sua conta'}}</h1>
     <p class="intro">{{recuperacao ? 'Crie uma nova senha para recuperar seu acesso.' : 'Defina uma senha de acesso para sua empresa e comece a usar o TRAXUP agora mesmo.'}}</p>
     <div class="alert" role="alert" *ngIf="error">{{error}}</div>
-    <div class="alert" role="status" *ngIf="!token">Abra o link enviado ao seu e-mail para ativar sua conta. Se não recebeu, solicite um novo link abaixo.</div>
     <form (ngSubmit)="ativar()" novalidate>
       <label class="email-label">E-mail
         <span class="input-field"><app-icon name="mail" /><input [value]="email" placeholder="cliente@empresa.com.br" readonly autocomplete="email"></span>
@@ -49,9 +48,8 @@
     <div class="support">
       <p class="support-heading"><span>Precisa de ajuda?</span></p>
       <button *ngIf="!recuperacao" type="button" class="help-action" (click)="ajudaAberta=!ajudaAberta" [attr.aria-expanded]="ajudaAberta||!!error" aria-controls="activation-help"><app-icon name="headphones" /> Ajuda com a ativação</button>
-      <div id="activation-help" *ngIf="(error||ajudaAberta||!token)&&!recuperacao"><app-reenviar-ativacao [codigoEmpresa]="codigoEmpresa" [email]="email"></app-reenviar-ativacao></div>
+      <div id="activation-help" *ngIf="(error||ajudaAberta)&&!recuperacao"><app-reenviar-ativacao [codigoEmpresa]="codigoEmpresa" [email]="email"></app-reenviar-ativacao></div>
       <a *ngIf="recuperacao" href="/entrar">Voltar ao acesso e solicitar novo link</a>
     </div>
-  <p class="back-login"><a href="/entrar">Já ativou sua conta? Acessar o ERP</a></p>
   </div></main>
 </section>

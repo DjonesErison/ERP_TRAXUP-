@@ -44,6 +44,7 @@ export class OnboardingComponent implements OnInit {
    this.loading = true; this.service.terminais(this.dados.filial!.id).subscribe({ next: ts => { this.terminais = ts; this.terminalId = ts[0]?.id || ''; this.loading = false; if (this.terminalId) this.carregarPdv(); }, error: err => this.falha(err) });
   }
  }
+ voltar(): void { if (!this.loading) this.abrir(this.etapa - 1); }
  iniciar(): void { this.abrir(Math.max(0, this.completas.findIndex(v => !v)) + 1); }
  salvarEmpresa(): void {
   if (!this.dados || this.loading) return;

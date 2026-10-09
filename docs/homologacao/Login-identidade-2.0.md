@@ -1,6 +1,6 @@
 # Login TRAXUP 2.0
 
-Padronização autorizada com os componentes da UI-015: painel azul, formulário branco, tipografia, campos de 52 pixels e botão azul. Logo.png atual intacta, sem filtros de brilho no desktop e celular.
+Padronização autorizada com os componentes da UI-015: painel azul, formulário branco, tipografia, campos de 52 pixels e botão azul. Logo.png atual intacta, sem filtros de brilho no desktop e celular. No celular, o painel azul mantém a assinatura branca da marca legível acima do cartão branco.
 
 Preservados autenticação, mostrar senha, lembrar acesso, recuperação, reenvio de ativação e trial. Escopo restrito ao login; UI-015 e main preservadas.
 

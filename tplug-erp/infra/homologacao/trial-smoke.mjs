@@ -123,7 +123,7 @@ try {
     await officialArt.evaluate(image=>image.decode());
     await officialLogo.evaluate(image=>image.decode());
     assert.match(await officialArt.getAttribute('src'),/\/13-identidade-visual-2\.0\/Ativa%C3%A7%C3%A3o%20de%20Conta%20TRAXUP\.png$/);
-    assert.match(await officialLogo.getAttribute('src'),/\/13-identidade-visual-2\.0\/Logo\.png$/);
+    assert.match(await officialLogo.getAttribute('src'),/^assets\/Logo\.png$/);
     assert.deepEqual(await officialLogo.evaluate(image=>[image.naturalWidth,image.naturalHeight]),[1536,1024]);
     assert.equal(await page.locator('.steps [aria-current=step]').innerText(),'2\nAtivação');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Ativação oficial sem overflow');

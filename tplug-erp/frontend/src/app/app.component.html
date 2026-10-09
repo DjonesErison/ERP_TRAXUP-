@@ -2,12 +2,12 @@
 <app-trial *ngIf="!autenticado && exibindoTrial && !ativacaoAdminToken" (acessoCriado)="loginCodigoEmpresa = $event.codigoEmpresa; loginEmail = $event.email" (voltarLogin)="exibindoTrial = false" (ativarAdmin)="iniciarAtivacaoAdmin($event)"></app-trial>
 <div class="login-shell" *ngIf="!autenticado && !exibindoTrial && !ativacaoAdminToken">
   <section class="login-brand" aria-label="TRAXUP ERP">
-    <img class="login-logo" src="https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Logo.png" alt="TRAXUP — Tecnologia que impulsiona negócios" width="240" height="160">
+    <img class="login-logo" src="assets/Logo.png" alt="TRAXUP — Tecnologia que impulsiona negócios" width="240" height="160">
     <div class="brand-copy"><h1>Gestão completa<br>para o seu negócio crescer</h1><p class="brand-description">ERP, PDV, estoque, financeiro e fiscal<br>trabalhando juntos.</p></div>
     <p class="brand-footer">MAIS CONTROLE. MAIS RESULTADOS.</p>
   </section>
   <section class="login-panel"><div class="login-content">
-    <img class="mobile-logo" src="https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Logo.png" alt="TRAXUP" width="180" height="120">
+    <img class="mobile-logo" src="assets/Logo.png" alt="TRAXUP" width="180" height="120">
     <form class="login-card" #loginForm="ngForm" (ngSubmit)="loginForm.valid && entrar()" [attr.aria-busy]="loginLoading">
       <div class="login-heading"><h2>Acesse seu ERP</h2><p class="subtitle">Entre com seus dados para acessar o sistema</p></div>
       <div class="alert" role="status" *ngIf="ativacaoMensagem">{{ativacaoMensagem}}</div><div class="alert" role="alert" *ngIf="loginError">{{ loginError }}</div>

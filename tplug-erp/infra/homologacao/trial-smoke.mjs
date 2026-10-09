@@ -142,7 +142,7 @@ try {
     await page.route('**/api/v1/auth/recuperacao-senha/confirmar',route=>{payload=route.request().postDataJSON();return route.fulfill({status:code,body:''});});
     await page.addInitScript(()=>{localStorage.setItem('tplug_access_token','old-token');localStorage.setItem('tplug_refresh_token','old-refresh');});
     await page.goto(`${base}/recuperar#token=${'r'.repeat(43)}&empresa=0042&email=ana%40example.test`);
-    await page.getByText('Recuperação de acesso',{exact:true}).waitFor();
+    await page.getByRole('heading',{name:'Defina uma nova senha'}).waitFor();
     assert.equal(new URL(page.url()).hash,'');
     assert.equal(await page.evaluate(()=>localStorage.getItem('tplug_access_token')),null);
     await page.locator('[name=senha]').fill('NovaSenha123!');await page.locator('[name=confirmacao]').fill('NovaSenha123!');

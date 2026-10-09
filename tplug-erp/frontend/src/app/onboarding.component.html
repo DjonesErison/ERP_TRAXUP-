@@ -88,6 +88,7 @@
     </div>
     <button type="submit" class="primary" [disabled]="loading || pdvForm.invalid">Salvar configuração <app-icon name="check"></app-icon></button>
    </form>
+   <button type="button" class="secondary return-button" (click)="voltar()" [disabled]="loading">← Voltar</button>
   </section>
   <footer><div class="support"><app-icon name="help"></app-icon><span>Precisa de ajuda?</span><button type="button" (click)="ajuda = !ajuda">Falar com suporte</button></div><p *ngIf="ajuda" class="status">Para obter ajuda, entre em contato com o atendimento TraxUp pelo canal informado no seu cadastro.</p><div class="secure"><app-icon name="lock"></app-icon>Ambiente seguro • TraxUp ERP</div></footer>
  </section>

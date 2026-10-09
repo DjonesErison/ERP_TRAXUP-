@@ -23,7 +23,7 @@ try {
     empresa = { ...empresa, ...body, empresaRevisada: true }; filial = { id: 'filial-test', nome: body.nomeFilial, cnpj: empresa.cnpj };
     return route.fulfill({ json: dados() });
    }
-   if (p === '/api/v1/fiscal/perfis-filial/filial-test') { fiscalConfigurado = true; return route.fulfill({ json: route.request().postDataJSON() }); }
+   if (p === '/api/v1/fiscal/perfis-filial/filial-test') { fiscalConfigurado = true; return route.fulfill({ json: { regimeTributario: 'SIMPLES_NACIONAL', crt: 1, ambiente: 'HOMOLOGACAO', serieNfe: 1, serieNfce: 1 } }); }
    if (p === '/api/v1/usuarios') return route.fulfill({ json: [{ id: 'usuario-test', nome: 'Ana Trial', email: 'ana@example.test', ativo: true }] });
    if (p === '/api/v1/rbac/perfis') return route.fulfill({ json: [{ id: 'perfil-test', nome: 'ADMIN', descricao: 'Administrador' }] });
    if (p === '/api/v1/onboarding/configuracao/adiar') { skipped = true; return route.fulfill({ status: 200 }); }
@@ -61,6 +61,15 @@ try {
   await page.getByRole('heading', { name: '3. Usuários e permissões', exact: true }).waitFor();
   await page.getByText('ana@example.test', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Voltar às etapas' }).click();
+  await page.getByRole('button', { name: /4\. Vendas e PDV/ }).click();
+  await page.getByRole('heading', { name: '4. Vendas e PDV', exact: true }).waitFor();
+  for (const titulo of ['3. Usuários e permissões', '2. Configuração fiscal', '1. Dados da empresa']) {
+   await page.getByRole('button', { name: '← Voltar', exact: true }).click();
+   await page.getByRole('heading', { name: titulo, exact: true }).waitFor();
+  }
+  assert.equal(await page.getByLabel('Endereço', { exact: true }).inputValue(), 'Rua Comércio');
+  await page.getByRole('button', { name: '← Voltar', exact: true }).click();
+  await page.getByRole('button', { name: 'Iniciar configuração' }).waitFor();
   await page.getByRole('button', { name: 'Continuar depois' }).click();
   assert.equal(skipped, true);
   await page.locator('app-onboarding').waitFor({ state: 'detached' });

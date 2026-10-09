@@ -66,7 +66,7 @@ try {
     assert.equal(calls[0].aceitouTermos,true); assert.equal(calls[0].termosVersao,'2026-09');
     assert.ok(calls[0].idempotencyKey); assert.equal(calls[0].idempotencyKey,calls[2].idempotencyKey);
     await page.getByRole('button',{name:'Continuar',exact:true}).click();
-    await page.getByRole('heading',{name:'Crie sua senha'}).waitFor();
+    await page.getByRole('heading',{name:'Ative sua conta'}).waitFor();
     assert.deepEqual(errors,[]);
     await context.close();
   }
@@ -83,7 +83,7 @@ try {
       localStorage.setItem('tplug_tenant_id','11111111-1111-4111-8111-111111111111');
     });
     await page.goto(`${base}/ativar#token=${'a'.repeat(43)}&empresa=${tenant}&email=ana%40example.test`);
-    await page.getByRole('heading',{name:'Crie sua senha'}).waitFor();
+    await page.getByRole('heading',{name:'Ative sua conta'}).waitFor();
     assert.equal(oldSessionRequests,0,'Activation must not query the previous account');
     assert.equal(await page.evaluate(()=>localStorage.getItem('tplug_access_token')),null);
     await page.goto('about:blank');
@@ -107,7 +107,7 @@ try {
     await page.route('**/api/public/trials',route=>route.fulfill({status:201,json:{trialId:'test',tenantId:tenant,codigoEmpresa:codigo,expiraEm:'2026-09-30',status:'ATIVO',proximoPasso:'VERIFICAR_EMAIL',ativacaoToken:null}}));
     await page.goto(`${base}/teste`);await fill(page);await page.locator('.create').click();
     await page.getByText('Enviaremos o link de ativação', {exact:false}).waitFor();
-    assert.equal(await page.getByRole('heading',{name:'Crie sua senha'}).count(),0);
+    assert.equal(await page.getByRole('heading',{name:'Ative sua conta'}).count(),0);
     let resendPayload;
     await page.route('**/api/public/trials/reenviar-ativacao',route=>{resendPayload=route.request().postDataJSON();return route.fulfill({status:202,body:''});});
     await page.getByRole('button',{name:'Reenviar link de ativação'}).click();await page.getByRole('status').waitFor();
@@ -116,16 +116,16 @@ try {
     let activationPayload;let activationStatus=401;
     await page.route('**/api/v1/auth/ativacao-admin/confirmar',route=>{activationPayload=route.request().postDataJSON();return route.fulfill({status:activationStatus,body:''});});
     await page.goto(`${base}/ativar#token=${token}&empresa=${codigo}&email=${encodeURIComponent(email)}`);
-    await page.getByRole('heading',{name:'Crie sua senha'}).waitFor();
+    await page.getByRole('heading',{name:'Ative sua conta'}).waitFor();
     assert.equal(new URL(page.url()).hash,'','Token removed from address/history');
     await page.locator('[name=senha]').fill('SenhaTeste123!');await page.locator('[name=confirmacao]').fill('SenhaTeste123!');
-    await page.getByRole('button',{name:'Criar senha e continuar →'}).click();
+    await page.getByRole('button',{name:'Ativar minha conta →'}).click();
     await page.getByRole('heading',{name:'Reenviar ativação'}).waitFor();
     assert.deepEqual(activationPayload,{token,novaSenha:'SenhaTeste123!'});
     assert.equal(await page.locator('[name=emailAtivacao]').inputValue(),email);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     await page.screenshot({path:`${out}/activation-${width}.png`,fullPage:true});
-    activationStatus=204;await page.getByRole('button',{name:'Criar senha e continuar →'}).click();
+    activationStatus=204;await page.getByRole('button',{name:'Ativar minha conta →'}).click();
     await page.getByRole('heading',{name:'Acesse seu ERP'}).waitFor();
     assert.equal(await page.locator('[name=codigoEmpresa]').inputValue(),codigo);
     assert.equal(await page.locator('[name=email]').inputValue(),email);
@@ -142,14 +142,14 @@ try {
     await page.route('**/api/v1/auth/recuperacao-senha/confirmar',route=>{payload=route.request().postDataJSON();return route.fulfill({status:code,body:''});});
     await page.addInitScript(()=>{localStorage.setItem('tplug_access_token','old-token');localStorage.setItem('tplug_refresh_token','old-refresh');});
     await page.goto(`${base}/recuperar#token=${'r'.repeat(43)}&empresa=0042&email=ana%40example.test`);
-    await page.getByText('Recuperação de acesso',{exact:true}).waitFor();
+    await page.getByRole('heading',{name:'Defina uma nova senha'}).waitFor();
     assert.equal(new URL(page.url()).hash,'');
     assert.equal(await page.evaluate(()=>localStorage.getItem('tplug_access_token')),null);
     await page.locator('[name=senha]').fill('NovaSenha123!');await page.locator('[name=confirmacao]').fill('NovaSenha123!');
-    await page.getByRole('button',{name:'Criar senha e continuar →'}).click();
+    await page.getByRole('button',{name:'Atualizar senha →'}).click();
     await page.getByText('O link é inválido ou expirou.',{exact:false}).waitFor();
     assert.equal(await page.locator('app-reenviar-ativacao').count(),0);
-    code=204; await page.getByRole('button',{name:'Criar senha e continuar →'}).click();
+    code=204; await page.getByRole('button',{name:'Atualizar senha →'}).click();
     await page.getByRole('heading',{name:'Acesse seu ERP'}).waitFor();
     assert.deepEqual(payload,{token:'r'.repeat(43),novaSenha:'NovaSenha123!'});
     assert.equal(await page.locator('#login-company').inputValue(),'0042');

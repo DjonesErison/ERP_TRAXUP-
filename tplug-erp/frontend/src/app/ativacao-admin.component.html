@@ -1,1 +1,35 @@
-<section class="activation"><div class="card"><img src="assets/traxup-logo.webp" alt="TRAXUP"><p class="eyebrow">{{recuperacao ? "Recuperação de acesso" : "Primeiro acesso"}}</p><h1>Crie sua senha</h1><p>{{recuperacao ? "Defina uma nova senha para acessar sua empresa." : "Seu cadastro foi concluído. Defina agora a senha do administrador para continuar a configuração da empresa."}}</p><div class="alert" *ngIf="error">{{error}}</div><form (ngSubmit)="ativar()"><label>Nova senha<input name="senha" type="password" [(ngModel)]="senha" minlength="8" maxlength="72" required autocomplete="new-password"></label><label>Confirme a senha<input name="confirmacao" type="password" [(ngModel)]="confirmacao" minlength="8" maxlength="72" required autocomplete="new-password"></label><small *ngIf="senha && senha.length<8">Use pelo menos 8 caracteres.</small><small *ngIf="confirmacao && senha!==confirmacao">As senhas precisam ser iguais.</small><button type="submit" [disabled]="loading||senha.length<8||senha!==confirmacao">{{loading?'Ativando...':'Criar senha e continuar →'}}</button></form><a *ngIf="error && recuperacao" href="/entrar">Voltar ao acesso e solicitar novo link</a><app-reenviar-ativacao *ngIf="error && !recuperacao" [codigoEmpresa]="codigoEmpresa" [email]="email" /></div></section>
+<section class="activation">
+  <aside class="brand">
+    <img class="logo" src="https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Logo.png" alt="Logomarca oficial TRAXUP">
+    <h2>Falta apenas ativar <strong>sua conta!</strong></h2>
+    <p>Defina sua senha de acesso e comece a usar todo o potencial do TRAXUP por 7 dias.</p>
+    <ul><li><b>Gestão completa</b><span>ERP, PDV, CRM e Fiscal em um só lugar.</span></li><li><b>Fácil de usar</b><span>Comece a operar em poucos minutos.</span></li><li><b>100% em nuvem</b><span>Acesse de onde estiver, com segurança.</span></li></ul>
+    <p class="slogan">Mais controle. Mais vendas. Mais crescimento.</p>
+  </aside>
+  <main class="form-area"><div class="card">
+    <p class="secure">♢ Ambiente seguro</p>
+    <div class="steps" aria-label="Etapas do acesso"><span>✓ Cadastro</span><span class="active">2 Ativação</span><span>3 Acesso</span></div>
+    <h1>{{recuperacao ? 'Defina uma nova senha' : 'Ative sua conta'}}</h1>
+    <p class="intro">{{recuperacao ? 'Crie uma nova senha para recuperar seu acesso.' : 'Defina uma senha de acesso para sua empresa e comece a usar o TRAXUP agora mesmo.'}}</p>
+    <div class="alert" role="alert" *ngIf="error">{{error}}</div>
+    <form (ngSubmit)="ativar()" novalidate>
+      <label *ngIf="email">E-mail<input [value]="email" readonly autocomplete="email"></label>
+      <label>Nova senha
+        <span class="password-field"><input name="senha" [type]="mostrarSenha?'text':'password'" [(ngModel)]="senha" maxlength="72" required autocomplete="new-password" placeholder="Digite sua nova senha" [attr.aria-invalid]="tentou&&!forte">
+          <button type="button" class="eye" (click)="mostrarSenha=!mostrarSenha" [attr.aria-label]="mostrarSenha?'Ocultar senha':'Mostrar senha'">{{mostrarSenha?'Ocultar':'Mostrar'}}</button>
+        </span>
+      </label>
+      <div class="strength" *ngIf="senha" aria-live="polite"><div class="track"><div class="fill" [style.width.%]="pontos*25" [style.background]="corForca"></div></div><span [style.color]="corForca">Força da senha: {{forca}}</span></div>
+      <div class="requirements"><span [class.ok]="minimo">✓ Mínimo de 8 caracteres</span><span [class.ok]="letraNumero">✓ Pelo menos uma letra e um número</span><span>• Símbolos são recomendados para maior segurança</span></div>
+      <small class="field-error" role="alert" *ngIf="tentou&&!forte">A senha deve conter pelo menos 8 caracteres, uma letra e um número.</small>
+      <label>Confirme sua senha
+        <span class="password-field"><input name="confirmacao" [type]="mostrarConfirmacao?'text':'password'" [(ngModel)]="confirmacao" maxlength="72" required autocomplete="new-password" placeholder="Digite novamente sua senha" [attr.aria-invalid]="(confirmacao||tentou)&&!coincide">
+          <button type="button" class="eye" (click)="mostrarConfirmacao=!mostrarConfirmacao" [attr.aria-label]="mostrarConfirmacao?'Ocultar confirmação':'Mostrar confirmação'">{{mostrarConfirmacao?'Ocultar':'Mostrar'}}</button>
+        </span>
+      </label>
+      <small class="field-error" role="alert" *ngIf="(confirmacao||tentou)&&!coincide">As senhas não coincidem.</small>
+      <button class="submit" type="submit" [disabled]="loading">{{loading?'Ativando...':(recuperacao?'Atualizar senha':'Ativar minha conta')+' →'}}</button>
+    </form>
+    <div class="support"><span>Precisa de ajuda?</span><app-reenviar-ativacao *ngIf="error&&!recuperacao" [codigoEmpresa]="codigoEmpresa" [email]="email"></app-reenviar-ativacao><a *ngIf="error&&recuperacao" href="/entrar">Voltar ao acesso e solicitar novo link</a></div>
+  </div></main>
+</section>

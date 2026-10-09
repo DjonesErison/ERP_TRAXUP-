@@ -61,15 +61,15 @@ try {
   await page.getByRole('heading', { name: '3. Usuários e permissões', exact: true }).waitFor();
   await page.getByText('ana@example.test', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Voltar às etapas' }).click();
-  await page.getByRole('button', { name: /4\. Vendas e PDV/ }).click();
-  await page.getByRole('heading', { name: '4. Vendas e PDV', exact: true }).waitFor();
-  for (const titulo of ['3. Usuários e permissões', '2. Configuração fiscal', '1. Dados da empresa']) {
-   await page.getByRole('button', { name: '← Voltar', exact: true }).click();
+  for (const titulo of ['1. Dados da empresa', '2. Configuração fiscal', '3. Usuários e permissões', '4. Vendas e PDV']) {
+   await page.locator('.step').filter({ hasText: titulo }).click();
    await page.getByRole('heading', { name: titulo, exact: true }).waitFor();
+   if (titulo === '1. Dados da empresa') assert.equal(await page.getByLabel('Endereço', { exact: true }).inputValue(), 'Rua Comércio');
+   await page.getByRole('button', { name: '← Voltar', exact: true }).click();
+   await page.getByRole('button', { name: 'Iniciar configuração' }).waitFor();
+   assert.equal(await page.locator('.step').count(), 4, 'Voltar abre diretamente o painel principal das configurações');
+   assert.equal(await page.locator('.detail').count(), 0, 'Voltar não abre outra etapa');
   }
-  assert.equal(await page.getByLabel('Endereço', { exact: true }).inputValue(), 'Rua Comércio');
-  await page.getByRole('button', { name: '← Voltar', exact: true }).click();
-  await page.getByRole('button', { name: 'Iniciar configuração' }).waitFor();
   await page.getByRole('button', { name: 'Continuar depois' }).click();
   assert.equal(skipped, true);
   await page.locator('app-onboarding').waitFor({ state: 'detached' });

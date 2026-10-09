@@ -10,6 +10,10 @@ import { Component, Input } from '@angular/core';
 export class UiIconComponent {
   @Input() name = 'grid';
   readonly paths: Record<string, string> = {
+    check: 'M5 12l4 4L19 6',
+    mail: 'M3 5h18v14H3zM3 5l9 7 9-7',
+    'eye-off': 'M3 3l18 18M10 5a13 13 0 0 1 2 0c6 0 10 7 10 7s-1 2-3 4M6 6c-3 2-4 6-4 6s4 7 10 7a13 13 0 0 0 5-1M10 10a3 3 0 0 0 4 4',
+    headphones: 'M4 15v-3a8 8 0 0 1 16 0v3M4 12H2v7h4v-7H4M20 12h2v7h-4v-7h2M20 19v2h-7',
     home: 'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',
     cart: 'M2 3h3l3 12h11l3-9H6M9 19h.01M18 19h.01M8 19a1 1 0 1 0 2 0 1 1 0 0 0-2 0M17 19a1 1 0 1 0 2 0 1 1 0 0 0-2 0',
     box: 'm12 2 9 5v10l-9 5-9-5V7l9-5ZM3 7l9 5 9-5M12 12v10M7 4.8l10 5.5',

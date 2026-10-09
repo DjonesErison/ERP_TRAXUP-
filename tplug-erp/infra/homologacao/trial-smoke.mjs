@@ -162,7 +162,8 @@ try {
     await page.getByRole('heading',{name:'Acesse seu ERP'}).waitFor();
     assert.equal(await page.locator('[name=email]').inputValue(),email);
     await page.goto(`${base}/ativar`);await page.getByRole('heading',{name:'Ative sua conta'}).waitFor();
-    await page.getByRole('heading',{name:'Reenviar ativação'}).waitFor();
+    assert.equal(await page.getByRole('heading',{name:'Reenviar ativação'}).count(),0,'Sem reenvio automático na tela');
+    assert.equal(await page.getByText('Abra o link enviado ao seu e-mail para ativar sua conta.',{exact:false}).count(),0,'Sem aviso vermelho adicional');
     assert.equal(new URL(page.url()).pathname,'/ativar','Acesso direto deve manter a tela de ativação');
     assert.equal(await page.getByRole('heading',{name:'Acesse seu ERP'}).count(),0);
     assert.equal(await page.getByRole('button',{name:'Ativar minha conta →'}).isDisabled(),true,'Sem token não permite ativar');

@@ -1,1 +1,95 @@
-<section class="onboarding"><div class="card"><img src="assets/traxup-logo.webp" alt="TRAXUP"><p class="eyebrow">Configuração inicial</p><h1>Vamos preparar sua empresa</h1><p>Sua conta e empresa já foram criadas. Confirme agora sua primeira unidade para começar a usar o ERP.</p><div class="progress"><b>1</b><span>Conta</span><b>2</b><span>Empresa</span><b class="active">3</b><span>Filial</span></div><div class="alert" *ngIf="error">{{error}}</div><form (ngSubmit)="finalizar()"><label>Nome da primeira unidade<input name="nomeFilial" [(ngModel)]="nomeFilial" required maxlength="200"></label><label>CNPJ da unidade <small>(se aplicável)</small><input name="cnpj" [(ngModel)]="cnpj" maxlength="18"></label><button type="submit" [disabled]="loading||!nomeFilial.trim()">{{loading?'Configurando...':'Concluir e entrar no ERP →'}}</button></form></div></section>
+<main class="config-shell">
+ <header class="config-header">
+  <img src="assets/Logo.png" alt="TraxUp — Tecnologia que impulsiona negócios" class="brand">
+  <div class="account"><app-icon name="user"></app-icon><span *ngIf="dados?.nomeUsuario">Olá, {{ dados?.nomeUsuario }}</span><button type="button" (click)="sair.emit()" [disabled]="loading">Sair <app-icon name="arrow"></app-icon></button></div>
+ </header>
+ <section class="config-panel" aria-labelledby="config-title" [attr.aria-busy]="loading">
+  <div class="eyebrow">PRIMEIRO ACESSO</div>
+  <h1 id="config-title">Bem-vindo ao TraxUp ERP!</h1>
+  <p class="intro">Vamos preparar o sistema para a operação da sua empresa.</p>
+  <div class="progress-label"><strong>Configuração inicial</strong><span>{{ progresso }}% concluído</span></div>
+  <div class="progress" role="progressbar" aria-label="Configuração inicial" [attr.aria-valuenow]="progresso" aria-valuemin="0" aria-valuemax="100"><div [style.width.%]="progresso"></div></div>
+  <p *ngIf="loading" role="status" class="status">Carregando…</p>
+  <p *ngIf="error" role="alert" class="error">{{ error }} <button type="button" *ngIf="!dados" (click)="carregar()">Tentar novamente</button></p>
+  <p *ngIf="mensagem" role="status" class="status">{{ mensagem }}</p>
+  <ng-container *ngIf="etapa === 0">
+   <div class="steps">
+    <button class="step" *ngFor="let item of etapas; let i = index" type="button" [class.first]="i === 0" [class.complete]="completas[i]" (click)="abrir(i + 1)" [disabled]="loading || !dados">
+     <span class="step-icon"><app-icon [name]="item.icon"></app-icon></span>
+     <span class="step-copy"><strong>{{ i + 1 }}. {{ item.titulo }}</strong><span class="description">{{ item.descricao }}</span><span class="badge" [class.required]="item.obrigatoria">{{ completas[i] ? 'Concluído' : item.obrigatoria ? 'Obrigatório' : 'Recomendado' }}</span></span>
+     <span class="done" *ngIf="completas[i]" aria-label="Concluído"><app-icon name="check"></app-icon></span>
+    </button>
+   </div>
+   <div class="info"><app-icon name="help"></app-icon><span>Você poderá revisar essas configurações a qualquer momento.</span></div>
+   <button class="primary start" type="button" [disabled]="loading || !dados" (click)="progresso === 100 ? finalizar() : iniciar()">{{ progresso === 100 ? 'Concluir e entrar no ERP' : 'Iniciar configuração' }} <app-icon name="arrow"></app-icon></button>
+   <button class="later" type="button" [disabled]="loading || !dados" (click)="continuarDepois()">Continuar depois</button>
+  </ng-container>
+  <section *ngIf="etapa > 0 && dados as d" class="detail" aria-labelledby="step-title">
+   <button type="button" class="back" (click)="etapa = 0" [disabled]="loading">← Voltar às etapas</button>
+   <h2 id="step-title">{{ etapa }}. {{ etapas[etapa - 1].titulo }}</h2>
+   <form *ngIf="etapa === 1" #empresaForm="ngForm" (ngSubmit)="salvarEmpresa()">
+    <p>Os dados abaixo vieram do cadastro do trial. Revise e complete o endereço da empresa.</p>
+    <div class="fields">
+     <label>Responsável<input [value]="d.empresa.responsavel || ''" readonly></label>
+     <label>CPF/CNPJ<input [value]="d.empresa.cnpj || ''" readonly></label>
+     <label>Razão social<input name="razaoSocial" [(ngModel)]="d.empresa.razaoSocial" required maxlength="200"></label>
+     <label>Nome fantasia<input name="nomeFantasia" [(ngModel)]="d.empresa.nomeFantasia" required maxlength="200"></label>
+     <label>E-mail<input [value]="d.empresa.email || ''" readonly></label>
+     <label>Telefone<input [value]="d.empresa.telefone || ''" readonly></label>
+     <label>Segmento<input [value]="d.empresa.segmento || ''" readonly></label>
+     <label>Quantidade de lojas<input [value]="d.empresa.quantidadeLojas || ''" readonly></label>
+     <label>Nome da filial<input name="nomeFilial" [(ngModel)]="nomeFilial" required maxlength="200"></label>
+     <label>CEP<input name="cep" [(ngModel)]="d.empresa.cep" required pattern="[0-9]{5}-?[0-9]{3}" maxlength="9" autocomplete="postal-code"></label>
+     <label>Endereço<input name="endereco" [(ngModel)]="d.empresa.endereco" required maxlength="200" autocomplete="street-address"></label>
+     <label>Número<input name="numero" [(ngModel)]="d.empresa.numero" required maxlength="20"></label>
+     <label>Complemento<input name="complemento" [(ngModel)]="d.empresa.complemento" maxlength="100"></label>
+     <label>Bairro<input name="bairro" [(ngModel)]="d.empresa.bairro" required maxlength="100"></label>
+     <label>Cidade<input name="cidade" [(ngModel)]="d.empresa.cidade" required maxlength="100" autocomplete="address-level2"></label>
+     <label>UF<select aria-label="UF" name="uf" [(ngModel)]="d.empresa.uf" required><option value="">Selecione</option><option *ngFor="let uf of ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']" [value]="uf">{{ uf }}</option></select></label>
+    </div>
+    <button type="submit" class="primary" [disabled]="loading || empresaForm.invalid">Salvar e continuar <app-icon name="arrow"></app-icon></button>
+   </form>
+   <form *ngIf="etapa === 2" #fiscalForm="ngForm" (ngSubmit)="salvarFiscal()">
+    <div class="fields">
+     <label>Regime tributário<select aria-label="Regime tributário" name="regime" [(ngModel)]="fiscal.regimeTributario" (ngModelChange)="fiscal.crt = $event === 'REGIME_NORMAL' ? 3 : 1"><option value="SIMPLES_NACIONAL">Simples Nacional</option><option value="REGIME_NORMAL">Regime normal</option></select></label>
+     <label>CRT<select aria-label="CRT" name="crt" [(ngModel)]="fiscal.crt"><option *ngIf="fiscal.regimeTributario === 'SIMPLES_NACIONAL'" [ngValue]="1">1 — Simples Nacional</option><option *ngIf="fiscal.regimeTributario === 'SIMPLES_NACIONAL'" [ngValue]="2">2 — Excesso de sublimite</option><option *ngIf="fiscal.regimeTributario === 'REGIME_NORMAL'" [ngValue]="3">3 — Regime normal</option></select></label>
+     <label>Ambiente<select aria-label="Ambiente" name="ambiente" [(ngModel)]="fiscal.ambiente"><option value="HOMOLOGACAO">Homologação</option><option value="PRODUCAO">Produção</option></select></label>
+     <label>Série NF-e<input name="serieNfe" type="number" [(ngModel)]="fiscal.serieNfe" required min="1" max="999"></label>
+     <label>Série NFC-e<input name="serieNfce" type="number" [(ngModel)]="fiscal.serieNfce" required min="1" max="999"></label>
+    </div>
+    <p class="info">Esta etapa salva o perfil fiscal. Certificado digital e CSC precisam ser configurados antes da emissão de documentos fiscais.</p>
+    <button type="submit" class="primary" [disabled]="loading || fiscalForm.invalid">Salvar e continuar <app-icon name="arrow"></app-icon></button>
+   </form>
+   <div *ngIf="etapa === 3">
+    <p>Confira a equipe cadastrada e atribua um perfil quando necessário.</p>
+    <ul class="team"><li *ngFor="let u of usuarios"><strong>{{ u.nome }}</strong><span>{{ u.email }}</span><span>{{ u.ativo ? 'Ativo' : 'Inativo' }}</span></li></ul>
+    <form #perfilForm="ngForm" (ngSubmit)="atribuirPerfil()">
+     <div class="fields">
+      <label>Usuário<select aria-label="Usuário" name="usuario" [(ngModel)]="usuarioId" required><option value="">Selecione</option><option *ngFor="let u of usuarios" [value]="u.id">{{ u.nome }}</option></select></label>
+      <label>Perfil de acesso<select aria-label="Perfil de acesso" name="perfil" [(ngModel)]="perfilId" required><option value="">Selecione</option><option *ngFor="let p of perfis" [value]="p.id">{{ p.nome }} — {{ p.descricao }}</option></select></label>
+     </div>
+     <button type="submit" class="secondary" [disabled]="loading || perfilForm.invalid">Atribuir perfil</button>
+    </form>
+    <button type="button" class="primary" [disabled]="loading || !usuarios.length" (click)="revisarEquipe()">Equipe revisada, continuar <app-icon name="arrow"></app-icon></button>
+   </div>
+   <form *ngIf="etapa === 4" #pdvForm="ngForm" (ngSubmit)="salvarPdv()">
+    <div class="fields">
+     <label>Terminal<select aria-label="Terminal" name="terminalId" [(ngModel)]="terminalId" (ngModelChange)="carregarPdv()"><option value="">Criar novo terminal</option><option *ngFor="let t of terminais" [value]="t.id">{{ t.nome }}</option></select></label>
+     <ng-container *ngIf="!terminalId">
+      <label>Código do terminal<input name="codigoTerminal" [(ngModel)]="terminal.codigo" required maxlength="64"></label>
+      <label>Nome do terminal<input name="nomeTerminal" [(ngModel)]="terminal.nome" required maxlength="120"></label>
+      <label>Série do terminal<input name="serieTerminal" type="number" [(ngModel)]="terminal.serie" required min="1"></label>
+     </ng-container>
+     <label>Tamanho da impressão<select aria-label="Tamanho da impressão" name="impressao" [(ngModel)]="pdv.tamanhoImpressao"><option value="PEQUENA">Pequena</option><option value="MEDIA">Média</option><option value="GRANDE">Grande</option></select></label>
+     <label class="checkbox"><input type="checkbox" name="justificativa" [(ngModel)]="pdv.exigirJustificativaCancelamento">Exigir justificativa no cancelamento</label>
+     <label class="checkbox"><input type="checkbox" name="autorizacao" [(ngModel)]="pdv.exigirAutorizacaoCancelamento">Exigir autorização no cancelamento</label>
+     <label class="checkbox"><input type="checkbox" name="caixa" [(ngModel)]="pdv.imprimirCaixa">Imprimir no caixa</label>
+     <label class="checkbox"><input type="checkbox" name="cozinha" [(ngModel)]="pdv.imprimirCozinha">Imprimir na cozinha</label>
+    </div>
+    <button type="submit" class="primary" [disabled]="loading || pdvForm.invalid">Salvar configuração <app-icon name="check"></app-icon></button>
+   </form>
+  </section>
+  <footer><div class="support"><app-icon name="help"></app-icon><span>Precisa de ajuda?</span><button type="button" (click)="ajuda = !ajuda">Falar com suporte</button></div><p *ngIf="ajuda" class="status">Para obter ajuda, entre em contato com o atendimento TraxUp pelo canal informado no seu cadastro.</p><div class="secure"><app-icon name="lock"></app-icon>Ambiente seguro • TraxUp ERP</div></footer>
+ </section>
+ <div class="signature">MAIS CONTROLE. MAIS RESULTADOS.</div>
+</main>

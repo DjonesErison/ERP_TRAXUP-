@@ -17,6 +17,8 @@ try {
     await logo.evaluate(image => image.decode());
     assert.match(await logo.getAttribute('src'), /^assets\/Logo\.png$/, 'Usar a logomarca oficial TRAXUP 2.0');
     assert.deepEqual(await logo.evaluate(image => ({ width: image.naturalWidth, height: image.naturalHeight })), { width: 1536, height: 1024 }, 'Dimensões naturais do Logo.png oficial');
+    assert.equal(await logo.evaluate(image => getComputedStyle(image).filter), 'none', 'Logo sem filtros');
+    assert.match(await page.locator('.login-card .login-button').evaluate(button => getComputedStyle(button).backgroundImage), /rgb\(8, 117, 246\)/, 'Botão azul 2.0');
     assert.equal(await page.getByRole('button', { name: 'Entrar', exact: true }).isDisabled(), true);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no login');
     await page.screenshot({ path: `${out}/login-${viewport.width}.png`, fullPage: true });

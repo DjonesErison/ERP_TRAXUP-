@@ -13,8 +13,10 @@ try {
     page.on('console', message => { if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) errors.push(message.text()); });
     await page.goto(process.argv[2]);
     await page.getByRole('heading', { name: 'Acesse seu ERP' }).waitFor();
-    await page.locator('img:visible').first().evaluate(image => image.decode());
-    assert.equal(await page.locator('img:visible').first().evaluate(image => image.naturalWidth), 1200);
+    const logo = page.locator('.login-shell img:visible').first();
+    await logo.evaluate(image => image.decode());
+    assert.match(await logo.getAttribute('src'), /\/docs\/design\/13-identidade-visual-2\.0\/Logo\.png$/, 'Usar a logomarca oficial TRAXUP 2.0');
+    assert.deepEqual(await logo.evaluate(image => ({ width: image.naturalWidth, height: image.naturalHeight })), { width: 1536, height: 1024 }, 'Dimensões naturais do Logo.png oficial');
     assert.equal(await page.getByRole('button', { name: 'Entrar', exact: true }).isDisabled(), true);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no login');
     await page.screenshot({ path: `${out}/login-${viewport.width}.png`, fullPage: true });

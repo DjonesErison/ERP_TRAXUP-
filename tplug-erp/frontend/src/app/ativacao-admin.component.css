@@ -43,4 +43,3 @@ input:focus{outline:2px solid #0066ff;outline-offset:2px}input[aria-invalid=true
 @media(min-width:1600px){.form-area{padding-top:50px;padding-bottom:50px}.intro{margin-bottom:40px}form{gap:40px}}
 @media(max-width:900px){.activation{grid-template-columns:1fr;background:#f7faff}.brand{width:min(100%,600px);justify-self:center;border-radius:0 0 24px 24px}.form-area{padding:32px 24px}.card{max-width:600px;background:#fff;border-radius:20px;padding:28px 22px}.secure{font-size:13px;margin-bottom:28px}.steps{font-size:13px;margin-bottom:30px}.intro{font-size:16px;margin-bottom:26px}form{gap:26px}.card h1{font-size:32px}.requirements{font-size:13px}.submit{font-size:18px}.help-action{font-size:18px}}
 @media(max-width:390px){.form-area{padding:24px 12px}.card{padding:24px 16px}.card h1{font-size:30px}.steps{padding:0 4%;font-size:12px}label,input{font-size:14px}.requirements{font-size:12px;gap:8px}.requirements li{gap:8px}.secure{font-size:12px}}
-

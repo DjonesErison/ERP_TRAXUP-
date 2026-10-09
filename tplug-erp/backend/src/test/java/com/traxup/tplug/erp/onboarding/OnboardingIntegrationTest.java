@@ -36,6 +36,37 @@ class OnboardingIntegrationTest {
             .content("{\"tenantId\":\"" + trial.tenantId() + "\",\"email\":\"ana@example.test\",\"senha\":\"SenhaTeste123!\"}"))
             .andExpect(status().isOk()).andReturn();
         String bearer = "Bearer " + mapper.readTree(login.getResponse().getContentAsString()).get("accessToken").asText();
+        // A different trial must never supply the authenticated company's prefilled data.
+        provisioning.provisionar(new TrialCadastroRequest(
+            "Outra pessoa", "Outra loja", "Outra LTDA", "98765432000198", "87988888888",
+            "outra@example.test", "Serviços", 2, true, "2026-09", UUID.randomUUID().toString()));
+        mvc.perform(get("/api/v1/onboarding/configuracao").header("Authorization", bearer))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.nomeUsuario").value("Ana"))
+            .andExpect(jsonPath("$.empresa.razaoSocial").value("Loja LTDA"))
+            .andExpect(jsonPath("$.empresa.nomeFantasia").value("Loja"))
+            .andExpect(jsonPath("$.empresa.email").value("ana@example.test"))
+            .andExpect(jsonPath("$.empresa.telefone").value("87999999999"))
+            .andExpect(jsonPath("$.empresa.segmento").value("Varejo"))
+            .andExpect(jsonPath("$.empresa.quantidadeLojas").value(1))
+            .andExpect(jsonPath("$.empresa.empresaRevisada").value(false));
+        mvc.perform(put("/api/v1/onboarding/configuracao/empresa").header("Authorization", bearer)
+            .contentType(MediaType.APPLICATION_JSON).content("""
+            {"razaoSocial":"Loja LTDA","nomeFantasia":"Loja","cep":"56000-000",
+             "endereco":"Rua do Comércio","numero":"42","complemento":"Sala 1",
+             "bairro":"Centro","cidade":"Salgueiro","uf":"PE","nomeFilial":"Loja Matriz"}
+            """))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.empresa.empresaRevisada").value(true))
+            .andExpect(jsonPath("$.empresa.endereco").value("Rua do Comércio"))
+            .andExpect(jsonPath("$.filial.nome").value("Loja Matriz"));
+        mvc.perform(post("/api/v1/onboarding/configuracao/adiar").header("Authorization", bearer))
+            .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/onboarding").header("Authorization", bearer))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.concluido").value(false));
+        mvc.perform(get("/api/v1/onboarding/configuracao").header("Authorization", bearer))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.empresa.cidade").value("Salgueiro"))
+            .andExpect(jsonPath("$.fiscalConfigurado").value(false))
+            .andExpect(jsonPath("$.vendasConfiguradas").value(false));
+        assertThat(jdbc.queryForObject("select count(*) from onboarding_configuracoes", Integer.class)).isEqualTo(1);
         for (int attempt = 0; attempt < 2; attempt++) {
             mvc.perform(post("/api/v1/onboarding/concluir").header("Authorization", bearer)
                 .contentType(MediaType.APPLICATION_JSON)

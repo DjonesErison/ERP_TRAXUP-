@@ -27,7 +27,7 @@ export class AppComponent implements OnInit {
     { label: 'Inventário', icon: 'stock', area: 'inventario' }, { label: 'Clientes', icon: 'users', area: '' }, { label: 'CRM', icon: 'users', area: 'crm' },
     { label: 'Financeiro', icon: 'money', area: 'financeiro' }, { label: 'Fiscal', icon: 'file', area: '' }, { label: 'BI', icon: 'chart', area: '' },
     { label: 'Relatórios', icon: 'chart', area: '' }, { label: 'Assistente IA', icon: 'spark', area: '' }, { label: 'Compras', icon: 'file', area: 'compras' },
-    { label: 'Contabilidade', icon: 'file', area: 'contabilidade' }, { label: 'Configurações', icon: 'settings', area: '' }
+    { label: 'Contabilidade', icon: 'file', area: 'contabilidade' }, { label: 'Configurações', icon: 'settings', area: 'configuracao' }
   ];
   autenticado = false; loginCodigoEmpresa = ''; loginEmail = ''; loginSenha = ''; mostrarSenha = false; loginLoading = false; loginError = ''; logoutLoading = false;
   recuperacaoAberta = false; recuperacaoCodigoEmpresa = ''; recuperacaoEmail = ''; recuperacaoLoading = false; recuperacaoMensagem = ''; recuperacaoError = '';
@@ -89,16 +89,16 @@ export class AppComponent implements OnInit {
     });
   }
 
-  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { if (!s.empresaConfigurada) { this.auth.limparSessao(); this.contexto.limpar(); this.autenticado = false; this.onboardingPendente = false; this.loginError = 'Esta sessão não possui uma empresa cadastrada. Entre pelo link de acesso do e-mail de confirmação do seu cadastro.'; return; } this.onboardingPendente = !s.concluido; if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = false; this.carregarFiliais(); } }); }
-  onboardingConcluido(): void { this.onboardingPendente = false; this.selecionandoFilial = true; this.carregarFiliais(); }
+  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { if (!s.empresaConfigurada) { this.auth.limparSessao(); this.contexto.limpar(); this.autenticado = false; this.onboardingPendente = false; this.loginError = 'Esta sessão não possui uma empresa cadastrada. Entre pelo link de acesso do e-mail de confirmação do seu cadastro.'; return; } this.onboardingPendente = !s.concluido || window.location.pathname === '/configuracao'; if (this.onboardingPendente) window.history.replaceState(null, '', '/configuracao'); if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = true; window.history.replaceState(null, '', '/configuracao'); } }); }
+  onboardingConcluido(): void { window.history.replaceState(null, '', '/'); this.onboardingPendente = false; this.selecionandoFilial = true; this.carregarFiliais(); }
 
   carregarFiliais(): void { if (!this.auth.autenticado || this.filiaisLoading) return; this.filiaisLoading = true; this.filiaisError = ''; this.contexto.listarFiliais().subscribe({ next: filiais => { this.filiais = filiais; this.filiaisLoading = false; if (filiais.length === 1) this.escolherFilial(filiais[0]); }, error: () => { this.filiaisLoading = false; this.filiaisError = 'Não foi possível carregar as filiais permitidas para este usuário.'; } }); }
   escolherFilial(filial: FilialPermitida): void { this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id; this.selecionandoFilial = false; this.area = 'dashboard'; }
   trocarFilial(): void { this.selecionandoFilial = true; this.carregarFiliais(); }
   sair(): void { if (this.logoutLoading) return; this.logoutLoading = true; this.auth.logout().subscribe({ next: () => this.finalizarLogout(), error: () => this.finalizarLogout() }); }
   carregar(): void { if (!this.auth.autenticado) { this.autenticado = false; return; } this.loading = true; this.error = ''; const filial = this.filialAtiva?.id || this.filialId.trim() || undefined; this.crm.carregarPainel(filial, this.diasInatividade).subscribe({ next: dados => { this.inativos = dados.inativos; this.rfv = dados.rfv; this.followups = dados.followups; this.interacoes = dados.interacoes; this.loading = false; }, error: () => { this.loading = false; if (!this.auth.autenticado) { this.autenticado = false; this.loginError = 'Sua sessão expirou. Entre novamente.'; return; } this.error = 'Não foi possível carregar o CRM. Verifique a API e os filtros informados.'; } }); }
-  navegar(area: string): void { if (!area || this.selecionandoFilial) return; this.area = area; if (area === 'crm') this.carregar(); }
+  navegar(area: string): void { if (!area || this.selecionandoFilial) return; if (area === 'configuracao') { this.onboardingPendente = true; window.history.replaceState(null, '', '/configuracao'); return; } this.area = area; if (area === 'crm') this.carregar(); }
   expirarSessao(): void { this.contexto.limpar(); this.filialAtiva = null; this.autenticado = false; this.loginError = 'Sua sessão expirou. Entre novamente.'; }
   trackId(_: number, item: { id: string }): string { return item.id; } trackCliente(_: number, item: { clienteId: string }): string { return item.clienteId; }
-  private finalizarLogout(): void { this.contexto.limpar(); this.filialAtiva = null; this.filiais = []; this.selecionandoFilial = false; this.logoutLoading = false; this.area = 'dashboard'; this.menuRecolhido = false; this.autenticado = false; this.inativos = []; this.rfv = []; this.followups = []; this.interacoes = []; }
+  private finalizarLogout(): void { this.onboardingPendente = false; window.history.replaceState(null, '', '/entrar'); this.contexto.limpar(); this.filialAtiva = null; this.filiais = []; this.selecionandoFilial = false; this.logoutLoading = false; this.area = 'dashboard'; this.menuRecolhido = false; this.autenticado = false; this.inativos = []; this.rfv = []; this.followups = []; this.interacoes = []; }
 }

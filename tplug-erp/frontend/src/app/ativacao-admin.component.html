@@ -1,35 +1,55 @@
 <section class="activation">
-  <aside class="brand">
-    <img class="logo" src="https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Logo.png" alt="Logomarca oficial TRAXUP">
-    <h2>Falta apenas ativar <strong>sua conta!</strong></h2>
-    <p>Defina sua senha de acesso e comece a usar todo o potencial do TRAXUP por 7 dias.</p>
-    <ul><li><b>Gestão completa</b><span>ERP, PDV, CRM e Fiscal em um só lugar.</span></li><li><b>Fácil de usar</b><span>Comece a operar em poucos minutos.</span></li><li><b>100% em nuvem</b><span>Acesse de onde estiver, com segurança.</span></li></ul>
-    <p class="slogan">Mais controle. Mais vendas. Mais crescimento.</p>
+  <aside class="brand" aria-label="TRAXUP — benefícios do teste de sete dias">
+    <img class="official-art" src="https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Ativa%C3%A7%C3%A3o%20de%20Conta%20TRAXUP.png" alt="" aria-hidden="true" width="1536" height="1024">
+    <img class="logo" src="https://raw.githubusercontent.com/DjonesErison/ERP_TRAXUP-/main/docs/design/13-identidade-visual-2.0/Logo.png" alt="Logomarca oficial TRAXUP" width="1536" height="1024">
+    <div class="sr-only">
+      <h2>Falta apenas ativar sua conta!</h2>
+      <p>Defina sua senha de acesso e comece a usar todo o potencial do TRAXUP por 7 dias.</p>
+      <ul><li>Gestão completa: ERP, PDV, CRM e Fiscal em um só lugar.</li><li>Fácil de usar: comece a operar em poucos minutos.</li><li>100% em nuvem: acesse de onde estiver, com segurança.</li></ul>
+      <p>Mais controle. Mais vendas. Mais crescimento.</p>
+    </div>
   </aside>
   <main class="form-area"><div class="card">
-    <p class="secure">♢ Ambiente seguro</p>
-    <div class="steps" aria-label="Etapas do acesso"><span>✓ Cadastro</span><span class="active">2 Ativação</span><span>3 Acesso</span></div>
+    <p class="secure"><app-icon name="lock" /> Ambiente seguro</p>
+    <ol class="steps" aria-label="Etapas do acesso">
+      <li class="complete"><span class="step-dot"><app-icon name="check" /></span><span>Cadastro</span></li>
+      <li class="active" aria-current="step"><span class="step-dot">2</span><span>Ativação</span></li>
+      <li><span class="step-dot">3</span><span>Acesso</span></li>
+    </ol>
     <h1>{{recuperacao ? 'Defina uma nova senha' : 'Ative sua conta'}}</h1>
     <p class="intro">{{recuperacao ? 'Crie uma nova senha para recuperar seu acesso.' : 'Defina uma senha de acesso para sua empresa e comece a usar o TRAXUP agora mesmo.'}}</p>
     <div class="alert" role="alert" *ngIf="error">{{error}}</div>
     <form (ngSubmit)="ativar()" novalidate>
-      <label *ngIf="email">E-mail<input [value]="email" readonly autocomplete="email"></label>
-      <label>Nova senha
-        <span class="password-field"><input name="senha" [type]="mostrarSenha?'text':'password'" [(ngModel)]="senha" maxlength="72" required autocomplete="new-password" placeholder="Digite sua nova senha" [attr.aria-invalid]="tentou&&!forte">
-          <button type="button" class="eye" (click)="mostrarSenha=!mostrarSenha" [attr.aria-label]="mostrarSenha?'Ocultar senha':'Mostrar senha'">{{mostrarSenha?'Ocultar':'Mostrar'}}</button>
-        </span>
+      <label *ngIf="email" class="email-label">E-mail
+        <span class="input-field"><app-icon name="mail" /><input [value]="email" readonly autocomplete="email"></span>
       </label>
-      <div class="strength" *ngIf="senha" aria-live="polite"><div class="track"><div class="fill" [style.width.%]="pontos*25" [style.background]="corForca"></div></div><span [style.color]="corForca">Força da senha: {{forca}}</span></div>
-      <div class="requirements"><span [class.ok]="minimo">✓ Mínimo de 8 caracteres</span><span [class.ok]="letraNumero">✓ Pelo menos uma letra e um número</span><span>• Símbolos são recomendados para maior segurança</span></div>
-      <small class="field-error" role="alert" *ngIf="tentou&&!forte">A senha deve conter pelo menos 8 caracteres, uma letra e um número.</small>
+      <div class="password-group">
+        <label>Nova senha
+          <span class="input-field password-field"><app-icon name="lock" /><input name="senha" [type]="mostrarSenha?'text':'password'" [(ngModel)]="senha" maxlength="72" required autocomplete="new-password" placeholder="Digite sua nova senha" aria-describedby="password-requirements" [attr.aria-invalid]="tentou&&!forte">
+            <button type="button" class="eye" (click)="mostrarSenha=!mostrarSenha" [attr.aria-label]="mostrarSenha?'Ocultar senha':'Mostrar senha'"><app-icon [name]="mostrarSenha?'eye':'eye-off'" /></button>
+          </span>
+        </label>
+        <div class="strength" *ngIf="senha" aria-live="polite"><div class="track"><div class="fill" [style.width.%]="pontos*25" [style.background]="corForca"></div></div><span [style.color]="corForca">Força da senha: {{forca}}</span></div>
+        <ul class="requirements" id="password-requirements">
+          <li [class.ok]="minimo"><span class="requirement-dot"><app-icon *ngIf="minimo" name="check" /></span>Mínimo de 8 caracteres</li>
+          <li [class.ok]="letraNumero"><span class="requirement-dot"><app-icon *ngIf="letraNumero" name="check" /></span>Pelo menos uma letra e um número</li>
+          <li [class.ok]="simbolo"><span class="requirement-dot"><app-icon *ngIf="simbolo" name="check" /></span>Pode incluir símbolos (ex: &#64;, #, !, $)</li>
+        </ul>
+        <small class="field-error" role="alert" *ngIf="tentou&&!forte">A senha deve conter pelo menos 8 caracteres, uma letra e um número.</small>
+      </div>
       <label>Confirme sua senha
-        <span class="password-field"><input name="confirmacao" [type]="mostrarConfirmacao?'text':'password'" [(ngModel)]="confirmacao" maxlength="72" required autocomplete="new-password" placeholder="Digite novamente sua senha" [attr.aria-invalid]="(confirmacao||tentou)&&!coincide">
-          <button type="button" class="eye" (click)="mostrarConfirmacao=!mostrarConfirmacao" [attr.aria-label]="mostrarConfirmacao?'Ocultar confirmação':'Mostrar confirmação'">{{mostrarConfirmacao?'Ocultar':'Mostrar'}}</button>
+        <span class="input-field password-field"><app-icon name="lock" /><input name="confirmacao" [type]="mostrarConfirmacao?'text':'password'" [(ngModel)]="confirmacao" maxlength="72" required autocomplete="new-password" placeholder="Digite novamente sua senha" [attr.aria-invalid]="(confirmacao||tentou)&&!coincide">
+          <button type="button" class="eye" (click)="mostrarConfirmacao=!mostrarConfirmacao" [attr.aria-label]="mostrarConfirmacao?'Ocultar confirmação':'Mostrar confirmação'"><app-icon [name]="mostrarConfirmacao?'eye':'eye-off'" /></button>
         </span>
       </label>
       <small class="field-error" role="alert" *ngIf="(confirmacao||tentou)&&!coincide">As senhas não coincidem.</small>
-      <button class="submit" type="submit" [disabled]="loading">{{loading?'Ativando...':(recuperacao?'Atualizar senha':'Ativar minha conta')+' →'}}</button>
+      <button class="submit" type="submit" [disabled]="loading">{{loading?'Ativando...':(recuperacao?'Atualizar senha':'Ativar minha conta')}}<span *ngIf="!loading" class="sr-only"> →</span><app-icon *ngIf="!loading" name="arrow" /></button>
     </form>
-    <div class="support"><span>Precisa de ajuda?</span><app-reenviar-ativacao *ngIf="error&&!recuperacao" [codigoEmpresa]="codigoEmpresa" [email]="email"></app-reenviar-ativacao><a *ngIf="error&&recuperacao" href="/entrar">Voltar ao acesso e solicitar novo link</a></div>
+    <div class="support">
+      <p class="support-heading"><span>Precisa de ajuda?</span></p>
+      <button *ngIf="!recuperacao" type="button" class="help-action" (click)="ajudaAberta=!ajudaAberta" [attr.aria-expanded]="ajudaAberta||!!error" aria-controls="activation-help"><app-icon name="headphones" /> Ajuda com a ativação</button>
+      <div id="activation-help" *ngIf="(error||ajudaAberta)&&!recuperacao"><app-reenviar-ativacao [codigoEmpresa]="codigoEmpresa" [email]="email"></app-reenviar-ativacao></div>
+      <a *ngIf="recuperacao" href="/entrar">Voltar ao acesso e solicitar novo link</a>
+    </div>
   </div></main>
 </section>

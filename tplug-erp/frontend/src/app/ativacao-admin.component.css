@@ -1,23 +1,45 @@
-:host{display:block;font-family:Arial,Helvetica,sans-serif;color:#0a214c}
+:host{display:block;font-family:Arial,Helvetica,sans-serif;color:#09234e}
 *{box-sizing:border-box}
-.activation{display:grid;grid-template-columns:minmax(0,50%) minmax(0,50%);min-height:100vh;background:#f6faff}
-.brand{background:linear-gradient(145deg,#06254d,#0756b1 65%,#052b61);color:#fff;padding:clamp(30px,5vw,85px);display:flex;flex-direction:column;min-width:0;border-radius:0 24px 24px 0}
-.logo{width:min(310px,80%);height:auto;object-fit:contain;align-self:flex-start;border-radius:12px}
-.brand h2{font-size:clamp(32px,3.8vw,58px);line-height:1.13;margin:34px 0 12px}.brand h2 strong{display:block;color:#43a4ff}
-.brand>p{font-size:clamp(16px,1.5vw,22px);line-height:1.5;max-width:580px}
-.brand ul{list-style:none;padding:0;display:grid;gap:22px;margin:28px 0}.brand li{display:grid;gap:6px}.brand li b{font-size:18px}.brand li span{color:#e1efff}
-.brand .slogan{margin-top:auto;font-size:15px;color:#d4e9ff}
-.form-area{display:grid;place-items:center;padding:32px;min-width:0}
-.card{background:#fff;width:min(610px,100%);padding:clamp(24px,3vw,48px);border-radius:24px;box-shadow:0 12px 45px #143b6a12;min-width:0}
-.secure{text-align:right;color:#315684;font-size:13px;margin:0 0 26px}
-.steps{display:flex;justify-content:space-between;gap:10px;color:#627897;font-size:13px;margin-bottom:38px}.steps span{padding:7px}.steps .active{color:#0065e9;font-weight:700;border-bottom:2px solid #0065e9}
-.card h1{font-size:clamp(30px,2.8vw,40px);margin:0 0 8px}.intro{color:#587198;line-height:1.5;margin:0 0 28px}
-form{display:grid;gap:14px}label{display:grid;gap:7px;font-size:14px;font-weight:700}input{font:inherit;color:#132c53;width:100%;min-width:0;height:49px;padding:0 14px;border:1px solid #b9cbe3;border-radius:9px;background:#fff}input[readonly]{background:#f3f6fb;color:#657c9c}input:focus{outline:2px solid #1676f0;outline-offset:0}input[aria-invalid=true]{border-color:#cf3434}
-.password-field{position:relative;display:block}.password-field input{padding-right:88px}.eye{position:absolute;right:6px;top:6px;border:0;background:transparent;color:#28558e;height:36px;cursor:pointer;padding:0 8px}
-.strength{display:grid;gap:6px;font-size:12px;font-weight:700}.track{height:8px;border-radius:9px;background:#e4eaf2;overflow:hidden}.fill{height:100%;transition:width .2s,background .2s}
-.requirements{display:grid;gap:7px;font-size:12px;color:#6b7f9c}.requirements .ok{color:#15803d;font-weight:700}
-.field-error{color:#b42318;font-size:12px}.alert{background:#fff0f0;color:#9b1c1c;padding:12px;border-radius:9px}
-.submit{height:54px;background:#086cf0;color:#fff;font-size:17px;font-weight:700;border:0;border-radius:9px;cursor:pointer;margin-top:10px}.submit:disabled{opacity:.6}
-.support{text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #dbe5f0;color:#5b7193;font-size:14px}.support a{display:block;margin-top:14px;color:#066ce8}
-@media(max-width:900px){.activation{grid-template-columns:1fr}.brand{padding:30px 7%;border-radius:0 0 24px 24px}.brand h2{font-size:32px}.brand .slogan{margin-top:20px}.form-area{padding:16px}.card{padding:26px 20px}}
-@media(max-width:390px){.steps{font-size:11px}.card{padding:22px 14px}}
+.activation{display:grid;grid-template-columns:minmax(0,52.083333%) minmax(0,47.916667%);min-height:100vh;background:#fff}
+.brand{position:relative;align-self:start;aspect-ratio:800/1024;overflow:hidden;background:linear-gradient(120deg,#04234b,#064d98);border-radius:24px 0 0 24px;min-width:0}
+.official-art{position:absolute;top:0;left:0;width:192%;max-width:none;height:auto;clip-path:inset(15% 0 0 0)}
+.logo{position:absolute;left:11%;top:2.5%;width:24%;height:auto;object-fit:contain}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.form-area{min-width:0;padding:clamp(24px,2.6vw,40px) clamp(26px,4vw,62px);display:flex;align-items:center}
+.card{width:100%;max-width:620px;margin:auto}
+.secure{display:flex;justify-content:flex-end;align-items:center;gap:10px;color:#335487;font-size:15px;margin:0 0 clamp(28px,3.3vw,50px)}
+.steps{display:flex;justify-content:space-between;position:relative;list-style:none;padding:0 8%;margin:0 0 clamp(30px,2.6vw,40px);color:#45648f;font-size:15px}
+.steps:before{content:"";position:absolute;left:16%;right:16%;top:16px;height:2px;background:#d2dced}
+.steps li{display:flex;flex-direction:column;align-items:center;gap:10px;position:relative;z-index:1}
+.step-dot{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#dce4f1;color:#5273a4;font-size:18px}
+.step-dot app-icon{width:19px;height:19px}
+.complete .step-dot,.active .step-dot{background:#0066f3;color:#fff}.active{color:#0066ff}
+.card h1{font-size:clamp(32px,2.9vw,44px);line-height:1.15;margin:0 0 10px;font-weight:700}
+.intro{font-size:clamp(16px,1.35vw,20px);line-height:1.45;color:#43628f;margin:0 0 32px}
+form{display:grid;gap:30px}
+label{display:grid;gap:10px;font-size:16px;font-weight:400}
+.input-field{position:relative;display:flex;align-items:center}
+.input-field>app-icon{position:absolute;left:18px;color:#345585;width:23px;height:23px;pointer-events:none}
+input{font:inherit;color:#24497f;width:100%;min-width:0;height:52px;padding:0 15px 0 56px;border:1px solid #c2cee3;border-radius:9px;background:#fff;font-size:16px}
+input::placeholder{color:#5271a0;opacity:1}input[readonly]{background:#f5f7fb;color:#8199bc}
+input:focus{outline:2px solid #0066ff;outline-offset:2px}input[aria-invalid=true]{border-color:#b42318}
+.password-field input{padding-right:55px}
+.eye{position:absolute;right:5px;top:4px;width:44px;height:44px;display:grid;place-items:center;border:0;background:transparent;color:#315889;cursor:pointer}
+.eye app-icon{width:25px;height:25px}
+.eye:focus-visible,.submit:focus-visible,.help-action:focus-visible{outline:3px solid #ff8a00;outline-offset:3px}
+.password-group{display:grid;gap:12px}
+.strength{display:grid;gap:6px;font-size:12px;font-weight:700}.track{height:5px;border-radius:9px;background:#e4eaf2;overflow:hidden}.fill{height:100%;transition:width .2s,background .2s}
+.requirements{list-style:none;padding:0;margin:0;display:grid;gap:7px;font-size:15px;color:#4a6792}
+.requirements li{display:flex;align-items:center;gap:10px}
+.requirement-dot{display:grid;place-items:center;width:18px;height:18px;flex:none;border:1.5px solid #a5b8d7;border-radius:50%}
+.requirement-dot app-icon{width:13px;height:13px}.requirements .ok{color:#15803d}.ok .requirement-dot{border-color:#15803d;background:#effaf3}
+.field-error{color:#b42318;font-size:13px;line-height:1.4}.alert{background:#fff0f0;color:#9b1c1c;padding:12px;border-radius:9px;margin-bottom:20px;line-height:1.45}
+.submit{min-height:60px;background:linear-gradient(100deg,#0875f6,#0061f1);color:#fff;font-size:21px;font-weight:500;border:0;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:20px}
+.submit app-icon{width:27px;height:27px}.submit:disabled{opacity:.6;cursor:wait}
+.support{text-align:center;margin-top:34px;color:#4d6995;font-size:15px}
+.support-heading{display:flex;align-items:center;gap:16px;margin:0 0 22px}.support-heading:before,.support-heading:after{content:"";flex:1;height:1px;background:#d5dfed}
+.help-action{display:inline-flex;align-items:center;justify-content:center;gap:12px;background:transparent;border:0;color:#0066ff;font:inherit;font-size:20px;cursor:pointer;padding:8px;min-height:44px}
+.help-action app-icon{width:28px;height:28px}.support a{display:inline-block;color:#0066ff;line-height:1.5}
+@media(min-width:1600px){.form-area{padding-top:50px;padding-bottom:50px}.intro{margin-bottom:40px}form{gap:40px}}
+@media(max-width:900px){.activation{grid-template-columns:1fr;background:#f7faff}.brand{width:min(100%,600px);justify-self:center;border-radius:0 0 24px 24px}.form-area{padding:32px 24px}.card{max-width:600px;background:#fff;border-radius:20px;padding:28px 22px}.secure{font-size:13px;margin-bottom:28px}.steps{font-size:13px;margin-bottom:30px}.intro{font-size:16px;margin-bottom:26px}form{gap:26px}.card h1{font-size:32px}.requirements{font-size:13px}.submit{font-size:18px}.help-action{font-size:18px}}
+@media(max-width:390px){.form-area{padding:24px 12px}.card{padding:24px 16px}.card h1{font-size:30px}.steps{padding:0 4%;font-size:12px}label,input{font-size:14px}.requirements{font-size:12px;gap:8px}.requirements li{gap:8px}.secure{font-size:12px}}

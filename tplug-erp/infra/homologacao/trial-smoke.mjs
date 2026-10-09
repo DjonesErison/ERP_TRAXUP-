@@ -100,7 +100,7 @@ try {
     await context.close();
   }
   // Email-first signup and deep links, including mobile, expiration and retry.
-  for (const width of [320,390,1280]) {
+  for (const width of [320,390,1280,1536]) {
     const context=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block'});
     const page=await context.newPage();
     const tenant='a8d3e764-1e2b-4eb5-8b23-a6fd71192350'; const codigo='0042'; const email='ana+teste@example.test'; const token='a'.repeat(43);
@@ -113,11 +113,40 @@ try {
     await page.getByRole('button',{name:'Reenviar link de ativação'}).click();await page.getByRole('status').waitFor();
     assert.equal(resendPayload.codigoEmpresa,codigo);
     await page.screenshot({path:`${out}/trial-email-${width}.png`,fullPage:true});
-    let activationPayload;let activationStatus=401;
-    await page.route('**/api/v1/auth/ativacao-admin/confirmar',route=>{activationPayload=route.request().postDataJSON();return route.fulfill({status:activationStatus,body:''});});
+    let activationPayload;let activationStatus=401;let activationRequests=0;
+    await page.route('**/api/v1/auth/ativacao-admin/confirmar',route=>{activationRequests++;activationPayload=route.request().postDataJSON();return route.fulfill({status:activationStatus,body:''});});
     await page.goto(`${base}/ativar#token=${token}&empresa=${codigo}&email=${encodeURIComponent(email)}`);
     await page.getByRole('heading',{name:'Ative sua conta'}).waitFor();
     assert.equal(new URL(page.url()).hash,'','Token removed from address/history');
+    const officialArt=page.locator('.activation .official-art');
+    const officialLogo=page.locator('.activation .logo');
+    await officialArt.evaluate(image=>image.decode());
+    await officialLogo.evaluate(image=>image.decode());
+    assert.match(await officialArt.getAttribute('src'),/\/13-identidade-visual-2\.0\/Ativa%C3%A7%C3%A3o%20de%20Conta%20TRAXUP\.png$/);
+    assert.match(await officialLogo.getAttribute('src'),/\/13-identidade-visual-2\.0\/Logo\.png$/);
+    assert.deepEqual(await officialLogo.evaluate(image=>[image.naturalWidth,image.naturalHeight]),[1536,1024]);
+    assert.equal(await page.locator('.steps [aria-current=step]').innerText(),'2\nAtivação');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Ativação oficial sem overflow');
+    await page.screenshot({path:`${out}/activation-clean-${width}.png`,fullPage:true});
+    await page.getByRole('button',{name:'Ativar minha conta →'}).click();
+    assert.equal(activationRequests,0,'Senha vazia não chama API');
+    await page.locator('[name=senha]').fill('curta1');await page.locator('[name=confirmacao]').fill('curta1');
+    await page.getByRole('button',{name:'Ativar minha conta →'}).click();
+    assert.equal(activationRequests,0,'Senha curta não chama API');
+    await page.locator('[name=senha]').fill('SenhaTeste123');
+    assert.equal(await page.locator('.requirements .ok').count(),2,'Símbolos continuam opcionais');
+    await page.locator('[name=confirmacao]').fill('SenhaDiferente123');
+    await page.getByRole('button',{name:'Ativar minha conta →'}).click();
+    await page.getByText('As senhas não coincidem.',{exact:true}).waitFor();
+    assert.equal(activationRequests,0,'Senhas diferentes não chamam API');
+    await page.getByRole('button',{name:'Mostrar senha',exact:true}).click();
+    assert.equal(await page.locator('[name=senha]').getAttribute('type'),'text');
+    await page.getByRole('button',{name:'Ocultar senha',exact:true}).click();
+    assert.equal(await page.locator('[name=senha]').getAttribute('type'),'password');
+    await page.getByRole('button',{name:'Mostrar confirmação',exact:true}).click();
+    assert.equal(await page.locator('[name=confirmacao]').getAttribute('type'),'text');
+    await page.getByRole('button',{name:'Ocultar confirmação',exact:true}).click();
+    assert.equal(await page.locator('[name=confirmacao]').getAttribute('type'),'password');
     await page.locator('[name=senha]').fill('SenhaTeste123!');await page.locator('[name=confirmacao]').fill('SenhaTeste123!');
     await page.getByRole('button',{name:'Ativar minha conta →'}).click();
     await page.getByRole('heading',{name:'Reenviar ativação'}).waitFor();

@@ -52,7 +52,7 @@ export class AppComponent implements OnInit {
       const params = new URLSearchParams(window.location.hash.slice(1));
       const tenantId = params.get('empresa') || ''; const email = params.get('email') || '';
       if (/^[0-9]{4}$/.test(tenantId)) this.loginCodigoEmpresa = tenantId;
-      if (email.length <= 254) this.loginEmail = email;
+      if (params.has('email') && email.length <= 254) this.loginEmail = email;
       if ((publicPath === '/ativar' || publicPath === '/recuperar')) {
         this.redefinindoSenha = publicPath === '/recuperar';
         this.exibindoAtivacao = !this.redefinindoSenha;

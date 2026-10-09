@@ -36,3 +36,8 @@ endereço persistido, adiamento sem conclusão e criação idempotente da filial
 configuracao-smoke.mjs verifica login protegido, ordem, preenchimento, validação,
 progresso, adiamento e ausência de overflow em 1536 e 390 pixels; gera screenshots.
 O workflow de homologação executa o novo teste junto aos testes existentes.
+
+Migration V112 atribui ADMIN ao administrador registrado do trial quando ele ainda
+não possui nenhum perfil, dentro do tenant correspondente. Novos trials usam o
+mesmo bootstrap. Vínculos de perfil existentes são preservados. O login precisa
+ser renovado para carregar permissões adicionadas a trials anteriores.

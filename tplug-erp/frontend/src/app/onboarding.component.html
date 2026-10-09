@@ -45,15 +45,15 @@
      <label>Complemento<input name="complemento" [(ngModel)]="d.empresa.complemento" maxlength="100"></label>
      <label>Bairro<input name="bairro" [(ngModel)]="d.empresa.bairro" required maxlength="100"></label>
      <label>Cidade<input name="cidade" [(ngModel)]="d.empresa.cidade" required maxlength="100" autocomplete="address-level2"></label>
-     <label>UF<select name="uf" [(ngModel)]="d.empresa.uf" required><option value="">Selecione</option><option *ngFor="let uf of ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']" [value]="uf">{{ uf }}</option></select></label>
+     <label>UF<select aria-label="UF" name="uf" [(ngModel)]="d.empresa.uf" required><option value="">Selecione</option><option *ngFor="let uf of ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']" [value]="uf">{{ uf }}</option></select></label>
     </div>
     <button type="submit" class="primary" [disabled]="loading || empresaForm.invalid">Salvar e continuar <app-icon name="arrow"></app-icon></button>
    </form>
    <form *ngIf="etapa === 2" #fiscalForm="ngForm" (ngSubmit)="salvarFiscal()">
     <div class="fields">
-     <label>Regime tributário<select name="regime" [(ngModel)]="fiscal.regimeTributario" (ngModelChange)="fiscal.crt = $event === 'REGIME_NORMAL' ? 3 : 1"><option value="SIMPLES_NACIONAL">Simples Nacional</option><option value="REGIME_NORMAL">Regime normal</option></select></label>
-     <label>CRT<select name="crt" [(ngModel)]="fiscal.crt"><option *ngIf="fiscal.regimeTributario === 'SIMPLES_NACIONAL'" [ngValue]="1">1 — Simples Nacional</option><option *ngIf="fiscal.regimeTributario === 'SIMPLES_NACIONAL'" [ngValue]="2">2 — Excesso de sublimite</option><option *ngIf="fiscal.regimeTributario === 'REGIME_NORMAL'" [ngValue]="3">3 — Regime normal</option></select></label>
-     <label>Ambiente<select name="ambiente" [(ngModel)]="fiscal.ambiente"><option value="HOMOLOGACAO">Homologação</option><option value="PRODUCAO">Produção</option></select></label>
+     <label>Regime tributário<select aria-label="Regime tributário" name="regime" [(ngModel)]="fiscal.regimeTributario" (ngModelChange)="fiscal.crt = $event === 'REGIME_NORMAL' ? 3 : 1"><option value="SIMPLES_NACIONAL">Simples Nacional</option><option value="REGIME_NORMAL">Regime normal</option></select></label>
+     <label>CRT<select aria-label="CRT" name="crt" [(ngModel)]="fiscal.crt"><option *ngIf="fiscal.regimeTributario === 'SIMPLES_NACIONAL'" [ngValue]="1">1 — Simples Nacional</option><option *ngIf="fiscal.regimeTributario === 'SIMPLES_NACIONAL'" [ngValue]="2">2 — Excesso de sublimite</option><option *ngIf="fiscal.regimeTributario === 'REGIME_NORMAL'" [ngValue]="3">3 — Regime normal</option></select></label>
+     <label>Ambiente<select aria-label="Ambiente" name="ambiente" [(ngModel)]="fiscal.ambiente"><option value="HOMOLOGACAO">Homologação</option><option value="PRODUCAO">Produção</option></select></label>
      <label>Série NF-e<input name="serieNfe" type="number" [(ngModel)]="fiscal.serieNfe" required min="1" max="999"></label>
      <label>Série NFC-e<input name="serieNfce" type="number" [(ngModel)]="fiscal.serieNfce" required min="1" max="999"></label>
     </div>
@@ -65,8 +65,8 @@
     <ul class="team"><li *ngFor="let u of usuarios"><strong>{{ u.nome }}</strong><span>{{ u.email }}</span><span>{{ u.ativo ? 'Ativo' : 'Inativo' }}</span></li></ul>
     <form #perfilForm="ngForm" (ngSubmit)="atribuirPerfil()">
      <div class="fields">
-      <label>Usuário<select name="usuario" [(ngModel)]="usuarioId" required><option value="">Selecione</option><option *ngFor="let u of usuarios" [value]="u.id">{{ u.nome }}</option></select></label>
-      <label>Perfil de acesso<select name="perfil" [(ngModel)]="perfilId" required><option value="">Selecione</option><option *ngFor="let p of perfis" [value]="p.id">{{ p.nome }} — {{ p.descricao }}</option></select></label>
+      <label>Usuário<select aria-label="Usuário" name="usuario" [(ngModel)]="usuarioId" required><option value="">Selecione</option><option *ngFor="let u of usuarios" [value]="u.id">{{ u.nome }}</option></select></label>
+      <label>Perfil de acesso<select aria-label="Perfil de acesso" name="perfil" [(ngModel)]="perfilId" required><option value="">Selecione</option><option *ngFor="let p of perfis" [value]="p.id">{{ p.nome }} — {{ p.descricao }}</option></select></label>
      </div>
      <button type="submit" class="secondary" [disabled]="loading || perfilForm.invalid">Atribuir perfil</button>
     </form>
@@ -74,13 +74,13 @@
    </div>
    <form *ngIf="etapa === 4" #pdvForm="ngForm" (ngSubmit)="salvarPdv()">
     <div class="fields">
-     <label>Terminal<select name="terminalId" [(ngModel)]="terminalId" (ngModelChange)="carregarPdv()"><option value="">Criar novo terminal</option><option *ngFor="let t of terminais" [value]="t.id">{{ t.nome }}</option></select></label>
+     <label>Terminal<select aria-label="Terminal" name="terminalId" [(ngModel)]="terminalId" (ngModelChange)="carregarPdv()"><option value="">Criar novo terminal</option><option *ngFor="let t of terminais" [value]="t.id">{{ t.nome }}</option></select></label>
      <ng-container *ngIf="!terminalId">
       <label>Código do terminal<input name="codigoTerminal" [(ngModel)]="terminal.codigo" required maxlength="64"></label>
       <label>Nome do terminal<input name="nomeTerminal" [(ngModel)]="terminal.nome" required maxlength="120"></label>
       <label>Série do terminal<input name="serieTerminal" type="number" [(ngModel)]="terminal.serie" required min="1"></label>
      </ng-container>
-     <label>Tamanho da impressão<select name="impressao" [(ngModel)]="pdv.tamanhoImpressao"><option value="PEQUENA">Pequena</option><option value="MEDIA">Média</option><option value="GRANDE">Grande</option></select></label>
+     <label>Tamanho da impressão<select aria-label="Tamanho da impressão" name="impressao" [(ngModel)]="pdv.tamanhoImpressao"><option value="PEQUENA">Pequena</option><option value="MEDIA">Média</option><option value="GRANDE">Grande</option></select></label>
      <label class="checkbox"><input type="checkbox" name="justificativa" [(ngModel)]="pdv.exigirJustificativaCancelamento">Exigir justificativa no cancelamento</label>
      <label class="checkbox"><input type="checkbox" name="autorizacao" [(ngModel)]="pdv.exigirAutorizacaoCancelamento">Exigir autorização no cancelamento</label>
      <label class="checkbox"><input type="checkbox" name="caixa" [(ngModel)]="pdv.imprimirCaixa">Imprimir no caixa</label>

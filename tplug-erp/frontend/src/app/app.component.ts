@@ -16,39 +16,47 @@ import { TrialComponent } from './trial.component';
   standalone: true,
   imports: [CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, TrialComponent],
   template: `
-    <app-trial *ngIf="modoTrial"></app-trial>
-    <ng-container *ngIf="!modoTrial">
+    <app-trial *ngIf="modoTrial || modoAtivacao" [modoAtivacao]="modoAtivacao"></app-trial>
+    <ng-container *ngIf="!modoTrial && !modoAtivacao">
     <div class="login-shell" *ngIf="!autenticado">
       <section class="login-brand">
-        <div class="login-mark">T</div>
-        <p class="eyebrow light">TPlug ERP</p>
-        <h1>Gestão conectada.<br>Decisões mais rápidas.</h1>
-        <p>Entre no ambiente da sua empresa para acessar CRM, vendas, compras, estoque e financeiro.</p>
+        <img src="/assets/traxup-logo.webp" alt="TRAXUP" class="login-logo">
+        <h1>Gestão completa<br>para o seu negócio crescer</h1>
+        <p class="login-lead">ERP, PDV, estoque, financeiro e fiscal trabalhando juntos.</p>
+        <div class="login-benefits">
+          <div><i>⚙</i><span><b>Gestão integrada</b><small>Todos os processos em um só lugar</small></span></div>
+          <div><i>✓</i><span><b>Operação segura</b><small>Seus dados sempre protegidos</small></span></div>
+          <div><i>▥</i><span><b>Dados em tempo real</b><small>Decisões mais rápidas e assertivas</small></span></div>
+          <div><i>☁</i><span><b>Acesso de qualquer lugar</b><small>No computador, tablet ou celular</small></span></div>
+        </div>
+        <div class="login-slogan"><span></span><span></span><p>MAIS CONTROLE. MAIS RESULTADOS.</p></div>
       </section>
       <section class="login-panel">
         <form class="login-card" (ngSubmit)="entrar()">
           <div>
-            <p class="eyebrow">Acesso seguro</p>
-            <h2>Entrar no TPlug ERP</h2>
-            <p class="subtitle">Use o tenant e as credenciais cadastradas no ERP.</p>
+            <h2>Acesse seu ERP</h2>
+            <p class="subtitle">Entre com seus dados para acessar o sistema</p>
           </div>
           <div class="alert" *ngIf="loginError">{{ loginError }}</div>
           <label>
-            Tenant
-            <input name="tenantId" [(ngModel)]="loginTenantId" required placeholder="UUID do tenant" autocomplete="organization">
+            Código da empresa
+            <input name="tenantId" [(ngModel)]="loginTenantId" required placeholder="Código informado na ativação" autocomplete="organization">
           </label>
           <label>
-            E-mail
-            <input name="email" type="email" [(ngModel)]="loginEmail" required placeholder="usuario@empresa.com.br" autocomplete="username">
+            E-mail ou usuário
+            <input name="email" type="email" [(ngModel)]="loginEmail" required placeholder="seu@email.com" autocomplete="username">
           </label>
           <label>
             Senha
             <input name="senha" type="password" [(ngModel)]="loginSenha" required maxlength="72" placeholder="Sua senha" autocomplete="current-password">
           </label>
+          <div class="login-options"><label><input type="checkbox"> Lembrar meu acesso</label><a href="mailto:suporte@traxup.com.br">Esqueci minha senha</a></div>
           <button class="login-button" type="submit" [disabled]="loginLoading || !loginTenantId || !loginEmail || !loginSenha">
-            {{ loginLoading ? 'Entrando...' : 'Entrar' }}
+            {{ loginLoading ? 'Entrando...' : 'Entrar →' }}
           </button>
-          <small class="security-note">O tenant é validado pelo backend e incorporado ao JWT. O frontend não define escopo por cabeçalho manual.</small>
+          <div class="login-help"><a href="mailto:suporte@traxup.com.br">? Preciso de ajuda</a><span>▥ Status dos serviços</span></div>
+          <small class="security-note">🔒 Seus dados estão protegidos</small>
+          <div class="login-legal"><a href="#">Termos de Uso</a><a href="#">Política de Privacidade</a><small>TraxUp Central Web • v1.0.0</small></div>
         </form>
       </section>
     </div>
@@ -178,6 +186,7 @@ import { TrialComponent } from './trial.component';
 })
 export class AppComponent implements OnInit {
   modoTrial = window.location.hostname === 'captacaoclientes.traxup.com.br' || window.location.pathname === '/trial';
+  modoAtivacao = window.location.pathname === '/ativar';
   area: 'crm' | 'contabilidade' | 'financeiro' | 'vendas' | 'compras' = 'crm';
   autenticado = false;
   loginTenantId = '';
@@ -198,7 +207,7 @@ export class AppComponent implements OnInit {
   constructor(private readonly crm: CrmService, private readonly auth: AuthService) {}
 
   ngOnInit(): void {
-    if (this.modoTrial) return;
+    if (this.modoTrial || this.modoAtivacao) return;
     this.loginTenantId = localStorage.getItem('traxup_trial_tenant') ?? this.auth.tenantId ?? '';
     this.autenticado = this.auth.autenticado;
     if (this.autenticado) this.carregar();

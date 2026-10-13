@@ -8,7 +8,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   template: `
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand"><div class="logo">◇</div><div><b>ERP</b><small>Central do Produto</small></div></div>
+      <div class="brand"><img src="/assets/traxup-logo.webp" alt="TRAXUP"><div><b>Central</b><small>Gerenciador do Produto</small></div></div>
       <nav>
         <a routerLink="/dashboard" routerLinkActive="active">🏠 <span>Dashboard</span></a>
         <a routerLink="/modulos" routerLinkActive="active">▦ <span>Módulos</span></a>
@@ -28,9 +28,9 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
     </aside>
     <main class="main">
       <header class="topbar">
-        <div class="mobile-title">☰ <strong>ERP Central</strong></div>
-        <input class="global-search" placeholder="⌕  Pesquisar no projeto...">
-        <div class="user"><span>🔔</span><div class="avatar">AD</div><div><b>Administrador</b><small>Admin</small></div></div>
+        <div class="mobile-title">☰ <strong>TRAXUP Central</strong></div>
+        <input class="global-search" placeholder="⌕  Pesquisar módulos, funcionalidades e documentos...">
+        <div class="user"><span class="notification">♧<i></i></span><div class="avatar">D</div><div><b>Djones</b><small>Administrador</small></div></div>
       </header>
       <router-outlet />
     </main>

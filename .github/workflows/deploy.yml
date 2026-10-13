@@ -57,14 +57,37 @@ jobs:
           PORT="${SSH_PORT:-22}"
           scp -P "$PORT" -i ~/.ssh/traxup_deploy deploy/deploy-central.sh "$SSH_USER@$SSH_HOST:/tmp/traxup-deploy-central.sh"
 
-      - name: Executar deploy e health checks
+      - name: Autenticar no GHCR e executar deploy e health checks
         env:
           SSH_HOST: ${{ secrets.TRAXUP_DEPLOY_HOST }}
           SSH_USER: ${{ secrets.TRAXUP_DEPLOY_USER }}
           SSH_PORT: ${{ secrets.TRAXUP_DEPLOY_PORT }}
           IMAGE_SHA: ${{ github.event.workflow_run.head_sha }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
+          set +x
           set -Eeuo pipefail
+          test -n "$SSH_HOST"
+          test -n "$SSH_USER"
+          test -n "$GHCR_USERNAME"
+          test -n "$GHCR_TOKEN"
+          [[ "$IMAGE_SHA" =~ ^[0-9a-f]{40}$ ]]
           PORT="${SSH_PORT:-22}"
-          ssh -p "$PORT" -i ~/.ssh/traxup_deploy "$SSH_USER@$SSH_HOST" \
-            "chmod +x /tmp/traxup-deploy-central.sh && TRAXUP_CENTRAL_IMAGE=ghcr.io/djoneserison/traxup-central:${IMAGE_SHA} /tmp/traxup-deploy-central.sh"
+          # O token segue apenas pelo stdin criptografado do SSH.
+          printf '%s\n' "$GHCR_USERNAME" "$IMAGE_SHA" "$GHCR_TOKEN" |
+            ssh -T -o BatchMode=yes -p "$PORT" -i ~/.ssh/traxup_deploy "$SSH_USER@$SSH_HOST" \
+              'bash -c '\''set +x
+          set -Eeuo pipefail
+          IFS= read -r GHCR_USERNAME
+          IFS= read -r IMAGE_SHA
+          test -n "$GHCR_USERNAME"
+          [[ "$IMAGE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          umask 077
+          DOCKER_CONFIG="$(mktemp -d /tmp/traxup-central-docker.XXXXXX)"
+          export DOCKER_CONFIG
+          trap '\''\'\'''\''rm -rf "$DOCKER_CONFIG"'\''\'\'''\'' EXIT
+          printf "Contexto Docker remoto: usuario=%s config=%s\n" "$(id -un)" "$DOCKER_CONFIG"
+          docker login ghcr.io --username "$GHCR_USERNAME" --password-stdin
+          export TRAXUP_CENTRAL_IMAGE="ghcr.io/djoneserison/traxup-central:${IMAGE_SHA}"
+          bash /tmp/traxup-deploy-central.sh'\'''

@@ -127,7 +127,7 @@ try {
       page.getByRole('button',{name:'Atualizar dashboard',exact:true}).click()
     ]);
     const filtro = new URL(pedidoRequest.url()).searchParams;
-    assert.equal(filtro.get('filialId'), 'fixture-filial');
+    assert.equal(filtro.get('filialId'), '00000000-0000-4000-8000-000000000101');
     assert.match(filtro.get('inicio'), /^\d{4}-\d{2}-\d{2}T00:00:00Z$/);
     assert.match(filtro.get('fim'), /^\d{4}-\d{2}-\d{2}T23:59:59Z$/);
     await page.getByRole('button',{name:'Atualizar dashboard',exact:true}).waitFor();

@@ -12,21 +12,22 @@ import { ConciliacaoFinanceiraComponent } from './conciliacao-financeira.compone
 import { VendasComponent } from './vendas.component';
 import { ComprasComponent } from './compras.component';
 import { DashboardComponent } from './dashboard.component';
+import { ClientesComponent } from './clientes.component';
 import { UiIconComponent } from './ui-icon.component';
 import { TrialComponent } from './trial.component';
 import { AtivacaoAdminComponent } from './ativacao-admin.component';
 import { OnboardingComponent } from './onboarding.component';
 import { OnboardingService } from './onboarding.service';
 
-@Component({ selector: 'app-root', standalone: true, imports: [ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
+@Component({ selector: 'app-root', standalone: true, imports: [ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, ClientesComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
   redefinindoSenha = false;
-  readonly rotas: Record<string,string> = {dashboard:'/dashboard',vendas:'/vendas',compras:'/compras',inventario:'/inventario',financeiro:'/financeiro',contabilidade:'/contabilidade',crm:'/crm',configuracao:'/configuracao'};
+  readonly rotas: Record<string,string> = {dashboard:'/dashboard',vendas:'/vendas',compras:'/compras',inventario:'/inventario',financeiro:'/financeiro',contabilidade:'/contabilidade',crm:'/crm',clientes:'/clientes',configuracao:'/configuracao'};
   private destinoInicial = 'dashboard';
   area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false; ativacaoAdminToken = ''; exibindoAtivacao = false;
   readonly menu = [
     { label: 'Visão Geral', icon: 'home', area: 'dashboard' }, { label: 'Vendas', icon: 'cart', area: 'vendas' }, { label: 'Produtos', icon: 'box', area: '' },
-    { label: 'Inventário', icon: 'stock', area: 'inventario' }, { label: 'Clientes', icon: 'users', area: '' }, { label: 'CRM', icon: 'users', area: 'crm' },
+    { label: 'Inventário', icon: 'stock', area: 'inventario' }, { label: 'Clientes', icon: 'users', area: 'clientes' }, { label: 'CRM', icon: 'users', area: 'crm' },
     { label: 'Financeiro', icon: 'money', area: 'financeiro' }, { label: 'Fiscal', icon: 'file', area: '' }, { label: 'BI', icon: 'chart', area: '' },
     { label: 'Relatórios', icon: 'chart', area: '' }, { label: 'Assistente IA', icon: 'spark', area: '' }, { label: 'Compras', icon: 'file', area: 'compras' },
     { label: 'Contabilidade', icon: 'file', area: 'contabilidade' }, { label: 'Configurações', icon: 'settings', area: 'configuracao' }

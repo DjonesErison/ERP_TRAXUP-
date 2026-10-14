@@ -180,10 +180,17 @@ jobs:
       - name: Publicar versao e validar
         env:
           PUBLIC_URL: https://apphomologacao.traxup.com.br
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
+          set +x
+          set -Eeuo pipefail
+          test -n "$GHCR_USERNAME" && test -n "$GHCR_TOKEN"
           test -n "$PUBLIC_URL"
-          scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,compose.mail.yml,deploy.sh,smoke.sh,cleanup-simulations.sh,cleanup-simulations.sql} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"
-          ssh -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" "bash /opt/traxup-homologacao/deploy.sh '$RELEASE_SHA' '$BACKEND_IMAGE' '$FRONTEND_IMAGE'"
+          scp -P "${SSH_PORT:-22}" -i ~/.ssh/homologacao tplug-erp/infra/homologacao/{compose.yml,compose.mail.yml,deploy.sh,ghcr-deploy.sh,smoke.sh,cleanup-simulations.sh,cleanup-simulations.sql} "$SSH_USER@$SSH_HOST:/opt/traxup-homologacao/"
+          printf '%s\n' "$GHCR_USERNAME" "$RELEASE_SHA" "$BACKEND_IMAGE" "$FRONTEND_IMAGE" "$GHCR_TOKEN" |
+            ssh -T -o BatchMode=yes -p "${SSH_PORT:-22}" -i ~/.ssh/homologacao "$SSH_USER@$SSH_HOST" \
+              'bash /opt/traxup-homologacao/ghcr-deploy.sh'
           # A conta de deploy nao possui sudo. O proxy TLS e administrado fora deste job.
           # Valida primeiro a aplicacao na propria VPS; o acesso publico e validado apenas
           # quando o host de homologacao estiver alcancavel pelo runner.

@@ -115,3 +115,5 @@ button.secondary { color: var(--traxup-blue); background: var(--traxup-blue-soft
  .login-card .input-icon input{font-size:16px;min-width:0;box-sizing:border-box}
  .login-card .text-action,.login-footer{overflow-wrap:anywhere}
 }
+
+nav a.nav-link{text-decoration:none}nav a.nav-link:focus-visible{outline:3px solid #fff;outline-offset:-3px}

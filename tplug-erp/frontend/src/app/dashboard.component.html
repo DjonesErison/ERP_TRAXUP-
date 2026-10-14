@@ -2,22 +2,27 @@
   <div><h1>Olá, boas-vindas!</h1><p>Aqui está o resumo da sua operação</p></div>
   <div class="today"><span>{{ hoje | date:'EEEE, d MMMM yyyy':'':'pt-BR' }}</span><small>Boa gestão, grandes resultados!</small></div>
 </header>
-
+<form class="dashboard-filters" (ngSubmit)="carregar()" aria-label="Filtros do dashboard">
+ <label>Buscar pedido<input name="buscaPedido" [(ngModel)]="busca" placeholder="Número do pedido" maxlength="100" [disabled]="loading"></label>
+ <label>Período<select aria-label="Período" name="periodo" [(ngModel)]="periodo" [disabled]="loading"><option [ngValue]="0">Todos os períodos</option><option [ngValue]="1">Hoje</option><option [ngValue]="7">Últimos 7 dias</option><option [ngValue]="30">Últimos 30 dias</option></select></label>
+ <button type="submit" [disabled]="loading">{{loading ? 'Atualizando…' : 'Atualizar dashboard'}}</button>
+ <small *ngIf="atualizadoEm && !loading && !erro" role="status">Atualizado às {{atualizadoEm | date:'HH:mm'}}</small>
+</form>
 <section class="summary-grid" aria-label="Resumo da operação">
   <article class="summary-card"><span class="metric-icon"><app-icon name="cart" /></span><div><h2>Vendas hoje</h2><strong>—</strong><small>Resumo diário em preparação</small></div></article>
-  <article class="summary-card"><span class="metric-icon orange"><app-icon name="file" /></span><div><h2>Pedidos</h2><strong>{{ loading ? '…' : (totalPedidos ?? '—') }}</strong><small>{{ erro ? 'Consulta indisponível' : 'Total de pedidos registrados' }}</small></div></article>
+  <article class="summary-card"><span class="metric-icon orange"><app-icon name="file" /></span><div><h2>Pedidos</h2><strong>{{ loading ? '…' : (totalPedidos ?? '—') }}</strong><small>{{ erro ? 'Consulta indisponível' : 'Pedidos nos filtros selecionados' }}</small></div></article>
   <article class="summary-card"><span class="metric-icon"><app-icon name="chart" /></span><div><h2>Ticket médio</h2><strong>—</strong><small>Indicador em preparação</small></div></article>
   <article class="summary-card"><span class="metric-icon red"><app-icon name="box" /></span><div><h2>Estoque baixo</h2><strong>—</strong><small>Alertas em preparação</small></div></article>
 </section>
 
 <section class="analysis-grid">
-  <article class="panel"><header><h2>Vendas da semana</h2><span class="period">Últimos 7 dias</span></header><div class="chart-empty"><app-icon name="chart" /><strong>Seu desempenho, em uma visão</strong><p>O histórico consolidado estará disponível aqui.<br>Consulte os pedidos em Vendas.</p><button class="text-link" (click)="abrirVendas.emit()">Consultar vendas <app-icon name="arrow" /></button></div></article>
+  <article class="panel"><header><h2>Vendas da semana</h2><span class="period">Últimos 7 dias</span></header><div class="chart-empty"><app-icon name="chart" /><strong>Seu desempenho, em uma visão</strong><p>O histórico consolidado estará disponível aqui.<br>Consulte os pedidos em Vendas.</p><a class="text-link" href="/vendas" (click)="abrirVendas.emit($event)">Consultar vendas <app-icon name="arrow" /></a></div></article>
   <article class="panel"><header><h2>Formas de pagamento</h2></header><div class="chart-empty payment-empty"><span class="empty-ring" aria-hidden="true"></span><strong>Resumo em preparação</strong><p>A distribuição por forma de pagamento<br>ainda não está disponível.</p></div></article>
   <article class="panel applications"><header><h2>Central de aplicativos</h2></header><p>Ferramentas para o seu negócio</p><div class="app-download"><app-icon name="monitor" /><div><strong>Baixar PDV</strong><small>Download em preparação</small></div><button type="button" disabled aria-label="Baixar PDV indisponível"><app-icon name="download" /></button></div><div class="app-download remote"><app-icon name="monitor" /><div><strong>Acesso Remoto</strong><small>Consulte seu suporte</small></div><button type="button" disabled aria-label="Download de acesso remoto indisponível"><app-icon name="download" /></button></div></article>
 </section>
 
 <section class="activity-grid">
-  <article class="panel recent-sales" [attr.aria-busy]="loading"><header><h2>Últimas vendas</h2><button class="text-link" (click)="abrirVendas.emit()">Ver todas</button></header>
+  <article class="panel recent-sales" [attr.aria-busy]="loading"><header><h2>Últimas vendas</h2><a class="text-link" href="/vendas" (click)="abrirVendas.emit($event)">Ver todas</a></header>
     <div *ngIf="erro" class="error" role="alert">{{ erro }} <button (click)="carregar()">Tentar novamente</button></div>
     <div class="table-wrap" *ngIf="!erro"><table><thead><tr><th>Nº Pedido</th><th>Data/Hora</th><th>Valor</th><th>Status</th></tr></thead><tbody>
       <tr *ngFor="let venda of vendas"><td><strong>{{ venda.numero }}</strong></td><td>{{ venda.criadoEm | date:'dd/MM/yyyy HH:mm' }}</td><td>{{ venda.totalLiquido | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td><td><span class="sale-status" [class.billed]="venda.status === 'FATURADO'" [class.cancelled]="venda.status === 'CANCELADO'">{{ status(venda) }}</span></td></tr>

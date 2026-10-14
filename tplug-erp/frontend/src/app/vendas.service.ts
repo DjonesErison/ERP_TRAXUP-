@@ -71,6 +71,7 @@ export interface VendaDetalhe {
 }
 
 export interface VendaFiltros {
+  filialId?: string;
   numero?: string;
   status?: string;
   inicio?: string;
@@ -91,6 +92,7 @@ export class VendasService {
     let params = new HttpParams()
       .set('pagina', pagina)
       .set('tamanho', tamanho);
+    if (filtros.filialId) params = params.set('filialId', filtros.filialId);
     if (filtros.numero?.trim())
       params = params.set('numero', filtros.numero.trim());
     if (filtros.status)

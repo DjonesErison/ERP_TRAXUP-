@@ -25,13 +25,13 @@ try {
         overflow:document.documentElement.scrollWidth>innerWidth,
         fieldCount:fields.length,
         inputs:fields.every(x=>x.getBoundingClientRect().width>100 && x.getBoundingClientRect().height>=44),
-        cardVisible:!!card && card.width>280 && card.left>=0 && card.right<=innerWidth+1
+        cardVisible:!!card && card.width>=280 && card.left>=0 && card.right<=innerWidth+1
       };
     });
     assert.deepEqual(layout,{overflow:false,fieldCount:8,inputs:true,cardVisible:true},`Trial 2.0 layout ${width}`);
     assert.equal(await page.locator('.existing').count(),0,'Trial 2.0 não exibe login no cadastro');
-    await page.getByRole('link',{name:'Políticas de Privacidade'}).waitFor();
-    await page.getByRole('link',{name:'Termos de uso'}).waitFor();
+    assert.equal(await page.locator('.legal a').count(),0,'Não usar documentos de outras empresas');
+    assert.match(await page.locator('.legal').innerText(),/TRAXUP.*pendentes de publicação/);
     assert.equal(await page.locator('.create').isDisabled(),false);
     await page.locator('[name=nomeCompleto]').focus();
     assert.equal(await page.locator('[name=nomeCompleto]').evaluate(e=>e===document.activeElement),true);

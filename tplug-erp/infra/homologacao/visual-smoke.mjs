@@ -39,10 +39,12 @@ try {
     assert.equal(fields[3].placeholder, 'E-mail');
     assert.equal(fields[4].placeholder, 'Telefone / WhatsApp');
     assert.equal(fields[6].placeholder, 'Nome do responsável');
-    assert.equal(await trialPage.locator('.trial-v2 img').count(), 0, 'Não reutilizar imagens antigas na Trial');
-    assert.equal(await trialPage.locator('input[type="checkbox"]').count(), 0, 'Trial aprovada não contém checkbox adicional');
-    assert.equal(await trialPage.getByRole('link', { name: 'Políticas de Privacidade' }).getAttribute('href'), 'https://institucional.locaweb.com.br/politicas/');
-    assert.equal(await trialPage.getByRole('link', { name: 'Termos de uso' }).getAttribute('href'), 'https://www.connectplug.com.br/termos_de_uso');
+    const trialLogo = trialPage.locator('.trial-mobile-logo');
+    assert.equal(await trialLogo.isVisible(), viewport.width <= 900, 'Logo do cabeçalho compacto apenas no mobile');
+    if (viewport.width <= 900) await trialLogo.evaluate(image => image.decode());
+    assert.equal(await trialPage.locator('input[type="checkbox"]').count(), 0, 'Trial sem checkbox adicional');
+    assert.equal(await trialPage.locator('.legal a').count(), 0, 'Sem aceite ou links de terceiros');
+    assert.match(await trialPage.locator('.legal').innerText(), /TRAXUP.*pendentes de publicação/);
     assert.equal(await trialPage.locator('.existing').count(), 0, 'Trial 2.0 não deve exibir bloco Entrar');
     assert.equal(await trialPage.getByRole('button', { name: 'Criar conta de teste' }).isDisabled(), false);
     assert.equal(await trialPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no trial');

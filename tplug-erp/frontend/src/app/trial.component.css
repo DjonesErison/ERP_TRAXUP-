@@ -125,3 +125,23 @@
 }
 
 .field-error{display:block;color:#b42318;font-size:12px;line-height:1.4;margin:-7px 0 4px 8px}.field-error+ .field-with-icon{margin-top:2px}
+
+/* Cabeçalho compacto: o formulário ganha prioridade em celular e tablet. */
+.trial-mobile-logo{display:none}
+@media(max-width:900px){
+ .trial-brand{aspect-ratio:auto;background-image:none;padding:20px 24px;pointer-events:auto}
+ .trial-brand .trial-copy{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:normal}
+ .trial-mobile-logo{display:block;width:120px;height:auto;margin-bottom:12px}
+ .trial-copy h1{font-size:28px;line-height:1.15;letter-spacing:-.02em}
+ .trial-copy h1 br{display:none}.trial-copy h1 strong{display:block}
+ .trial-copy p{font-size:16px;margin:12px 0 0}.trial-copy p br{display:none}
+ .trial-benefits{display:none!important}
+ .fields input,.fields select{font-size:16px}
+ .trial-card h2{font-size:26px;overflow-wrap:anywhere}
+ .legal,.success p{overflow-wrap:anywhere}
+}
+@media(max-width:480px){
+ .reassurance{grid-template-columns:1fr;gap:14px}
+ .reassurance span{grid-template-columns:38px 1fr;column-gap:10px}
+ .reassurance b{font-size:14px}.reassurance small{font-size:12px}
+}

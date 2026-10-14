@@ -43,7 +43,7 @@ try{
   await page.getByRole('button',{name:'Produto Visual',exact:true}).click();
   await page.getByRole('button',{name:'Preços',exact:true}).click();
   await page.getByRole('complementary',{name:'Detalhes do produto'}).getByText('100,0%',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Fiscal',exact:true}).click();
+  await page.getByRole('complementary',{name:'Detalhes do produto'}).getByRole('button',{name:'Fiscal',exact:true}).click();
   await page.getByText('12345678',{exact:true}).waitFor();
   await page.screenshot({path:`${out}/produtos-${width}.png`,fullPage:true});
   await page.getByRole('button',{name:'Novo produto',exact:false}).click();

@@ -120,11 +120,13 @@ try {
     await page.locator('app-vendas').waitFor();
     await page.goForward();
     await page.locator('app-dashboard').waitFor();
-    const pedidoRequest = page.waitForRequest(request => request.url().includes('/vendas/pedidos/recentes') && new URL(request.url()).searchParams.get('numero') === 'TESTE-001');
     await page.getByLabel('Buscar pedido', {exact:true}).fill('TESTE-001');
     await page.getByLabel('Período', {exact:true}).selectOption({label:'Últimos 7 dias'});
-    await page.getByRole('button',{name:'Atualizar dashboard',exact:true}).click();
-    const filtro = new URL((await pedidoRequest).url()).searchParams;
+    const [pedidoRequest] = await Promise.all([
+      page.waitForRequest(request => request.url().includes('/vendas/pedidos/recentes') && new URL(request.url()).searchParams.get('numero') === 'TESTE-001'),
+      page.getByRole('button',{name:'Atualizar dashboard',exact:true}).click()
+    ]);
+    const filtro = new URL(pedidoRequest.url()).searchParams;
     assert.equal(filtro.get('filialId'), 'fixture-filial');
     assert.match(filtro.get('inicio'), /^\d{4}-\d{2}-\d{2}T00:00:00Z$/);
     assert.match(filtro.get('fim'), /^\d{4}-\d{2}-\d{2}T23:59:59Z$/);

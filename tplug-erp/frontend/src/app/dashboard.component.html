@@ -4,7 +4,7 @@
 </header>
 <form class="dashboard-filters" (ngSubmit)="carregar()" aria-label="Filtros do dashboard">
  <label>Buscar pedido<input name="buscaPedido" [(ngModel)]="busca" placeholder="Número do pedido" maxlength="100" [disabled]="loading"></label>
- <label>Período<select name="periodo" [(ngModel)]="periodo" [disabled]="loading"><option [ngValue]="0">Todos os períodos</option><option [ngValue]="1">Hoje</option><option [ngValue]="7">Últimos 7 dias</option><option [ngValue]="30">Últimos 30 dias</option></select></label>
+ <label>Período<select aria-label="Período" name="periodo" [(ngModel)]="periodo" [disabled]="loading"><option [ngValue]="0">Todos os períodos</option><option [ngValue]="1">Hoje</option><option [ngValue]="7">Últimos 7 dias</option><option [ngValue]="30">Últimos 30 dias</option></select></label>
  <button type="submit" [disabled]="loading">{{loading ? 'Atualizando…' : 'Atualizar dashboard'}}</button>
  <small *ngIf="atualizadoEm && !loading && !erro" role="status">Atualizado às {{atualizadoEm | date:'HH:mm'}}</small>
 </form>

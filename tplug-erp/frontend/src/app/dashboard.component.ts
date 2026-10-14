@@ -21,7 +21,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   periodo = 0;
   busca = '';
   atualizadoEm?: Date;
-  get periodoLabel(): string { return this.periodo === 0 ? 'Todos os períodos' : this.periodo === 1 ? 'Hoje' : `Últimos ${this.periodo} dias`; }
   vendas: VendaRecente[] = [];
   totalPedidos: number | null = null;
   loading = false;

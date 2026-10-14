@@ -21,6 +21,8 @@ import { OnboardingService } from './onboarding.service';
 @Component({ selector: 'app-root', standalone: true, imports: [ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
   redefinindoSenha = false;
+  readonly rotas: Record<string,string> = {dashboard:'/dashboard',vendas:'/vendas',compras:'/compras',inventario:'/inventario',financeiro:'/financeiro',contabilidade:'/contabilidade',crm:'/crm',configuracao:'/configuracao'};
+  private destinoInicial = 'dashboard';
   area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false; ativacaoAdminToken = ''; exibindoAtivacao = false;
   readonly menu = [
     { label: 'Visão Geral', icon: 'home', area: 'dashboard' }, { label: 'Vendas', icon: 'cart', area: 'vendas' }, { label: 'Produtos', icon: 'box', area: '' },
@@ -39,6 +41,8 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     const publicPath = window.location.pathname.replace(/\/+$/, '');
+    this.destinoInicial = this.areaDoCaminho(publicPath);
+    this.area = this.destinoInicial;
     // Email links must not reuse credentials from a previous account in this browser.
     const linkParams = new URLSearchParams(window.location.hash.slice(1));
     if ((publicPath === '/ativar' || publicPath === '/recuperar') || (publicPath === '/entrar' && linkParams.has('empresa'))) {
@@ -93,12 +97,35 @@ export class AppComponent implements OnInit {
   onboardingConcluido(): void { window.history.replaceState(null, '', '/'); this.onboardingPendente = false; this.selecionandoFilial = true; this.carregarFiliais(); }
 
   carregarFiliais(): void { if (!this.auth.autenticado || this.filiaisLoading) return; this.filiaisLoading = true; this.filiaisError = ''; this.contexto.listarFiliais().subscribe({ next: filiais => { this.filiais = filiais; this.filiaisLoading = false; if (filiais.length === 1) this.escolherFilial(filiais[0]); }, error: () => { this.filiaisLoading = false; this.filiaisError = 'Não foi possível carregar as filiais permitidas para este usuário.'; } }); }
-  escolherFilial(filial: FilialPermitida): void { this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id; this.selecionandoFilial = false; this.area = 'dashboard'; }
+  escolherFilial(filial: FilialPermitida): void { this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id; this.selecionandoFilial = false; this.area = this.destinoInicial; this.atualizarEndereco(this.area, true); if (this.area === 'crm') this.carregar(); }
   trocarFilial(): void { this.selecionandoFilial = true; this.carregarFiliais(); }
   sair(): void { if (this.logoutLoading) return; this.logoutLoading = true; this.auth.logout().subscribe({ next: () => this.finalizarLogout(), error: () => this.finalizarLogout() }); }
   carregar(): void { if (!this.auth.autenticado) { this.autenticado = false; return; } this.loading = true; this.error = ''; const filial = this.filialAtiva?.id || this.filialId.trim() || undefined; this.crm.carregarPainel(filial, this.diasInatividade).subscribe({ next: dados => { this.inativos = dados.inativos; this.rfv = dados.rfv; this.followups = dados.followups; this.interacoes = dados.interacoes; this.loading = false; }, error: () => { this.loading = false; if (!this.auth.autenticado) { this.autenticado = false; this.loginError = 'Sua sessão expirou. Entre novamente.'; return; } this.error = 'Não foi possível carregar o CRM. Verifique a API e os filtros informados.'; } }); }
-  navegar(area: string): void { if (!area || this.selecionandoFilial) return; if (area === 'configuracao') { this.onboardingPendente = true; window.history.replaceState(null, '', '/configuracao'); return; } this.area = area; if (area === 'crm') this.carregar(); }
-  expirarSessao(): void { this.contexto.limpar(); this.filialAtiva = null; this.autenticado = false; this.loginError = 'Sua sessão expirou. Entre novamente.'; }
+  private areaDoCaminho(caminho: string): string { return Object.keys(this.rotas).find(area => this.rotas[area] === caminho) || 'dashboard'; }
+  private atualizarEndereco(area: string, substituir = false): void {
+    const caminho = this.rotas[area]; if (!caminho) return;
+    if (substituir) window.history.replaceState(null, '', caminho);
+    else if (window.location.pathname !== caminho) window.history.pushState(null, '', caminho);
+  }
+  navegar(area: string, evento?: MouseEvent): void {
+    if (evento && (evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey || evento.button !== 0)) return;
+    evento?.preventDefault();
+    if (!this.rotas[area] || !this.autenticado || this.selecionandoFilial) return;
+    this.destinoInicial = area;
+    this.atualizarEndereco(area);
+    if (area === 'configuracao') { this.onboardingPendente = true; return; }
+    this.area = area; if (area === 'crm') this.carregar();
+  }
+  @HostListener('window:popstate')
+  restaurarEndereco(): void {
+    if (!this.autenticado) return;
+    const caminho = window.location.pathname.replace(/\/+$/, '');
+    this.destinoInicial = this.areaDoCaminho(caminho);
+    if (caminho === '/configuracao' || this.onboardingPendente) { this.verificarOnboarding(); return; }
+    this.area = this.destinoInicial;
+    if (this.area === 'crm' && !this.selecionandoFilial) this.carregar();
+  }
+  expirarSessao(): void { this.contexto.limpar(); this.filialAtiva = null; this.autenticado = false; window.history.replaceState(null, '', '/entrar'); this.loginError = 'Sua sessão expirou. Entre novamente.'; }
   trackId(_: number, item: { id: string }): string { return item.id; } trackCliente(_: number, item: { clienteId: string }): string { return item.clienteId; }
-  private finalizarLogout(): void { this.onboardingPendente = false; window.history.replaceState(null, '', '/entrar'); this.contexto.limpar(); this.filialAtiva = null; this.filiais = []; this.selecionandoFilial = false; this.logoutLoading = false; this.area = 'dashboard'; this.menuRecolhido = false; this.autenticado = false; this.inativos = []; this.rfv = []; this.followups = []; this.interacoes = []; }
+  private finalizarLogout(): void { this.onboardingPendente = false; window.history.replaceState(null, '', '/entrar'); this.contexto.limpar(); this.filialAtiva = null; this.filiais = []; this.selecionandoFilial = false; this.logoutLoading = false; this.area = 'dashboard'; this.destinoInicial = 'dashboard'; this.menuRecolhido = false; this.autenticado = false; this.inativos = []; this.rfv = []; this.followups = []; this.interacoes = []; }
 }

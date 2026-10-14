@@ -108,11 +108,33 @@ try {
     assert.equal(await page.locator('.summary-card').nth(0).locator('strong').innerText(), '—');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no dashboard');
     assert.equal(await page.getByRole('button', { name: 'Baixar PDV indisponível' }).isDisabled(), true);
+    assert.equal(new URL(page.url()).pathname, '/dashboard', 'Login leva ao endereço do dashboard');
+    assert.equal(await page.getByRole('navigation').getByRole('link', {name:'Visão Geral',exact:true}).getAttribute('href'), '/dashboard');
+    await page.getByRole('navigation').getByRole('link', {name:'Vendas',exact:true}).click();
+    assert.equal(new URL(page.url()).pathname, '/vendas');
+    await page.reload();
+    await page.locator('app-vendas').waitFor();
+    assert.equal(new URL(page.url()).pathname, '/vendas', 'Recarregar preserva módulo');
+    await page.getByRole('navigation').getByRole('link', {name:'Visão Geral',exact:true}).click();
+    await page.goBack();
+    await page.locator('app-vendas').waitFor();
+    await page.goForward();
+    await page.locator('app-dashboard').waitFor();
+    const pedidoRequest = page.waitForRequest(request => request.url().includes('/vendas/pedidos/recentes') && new URL(request.url()).searchParams.get('numero') === 'TESTE-001');
+    await page.getByLabel('Buscar pedido', {exact:true}).fill('TESTE-001');
+    await page.getByLabel('Período', {exact:true}).selectOption({label:'Últimos 7 dias'});
+    await page.getByRole('button',{name:'Atualizar dashboard',exact:true}).click();
+    const filtro = new URL((await pedidoRequest).url()).searchParams;
+    assert.equal(filtro.get('filialId'), 'fixture-filial');
+    assert.match(filtro.get('inicio'), /^\d{4}-\d{2}-\d{2}T00:00:00Z$/);
+    assert.match(filtro.get('fim'), /^\d{4}-\d{2}-\d{2}T23:59:59Z$/);
+    await page.getByRole('button',{name:'Atualizar dashboard',exact:true}).waitFor();
+    await page.getByText('TESTE-001', {exact:true}).waitFor();
     await page.screenshot({ path: `${out}/dashboard-${viewport.width}.png`, fullPage: true });
     for (const [mode, expected] of [['empty', 'Nenhuma venda registrada.'], ['denied', 'Seu perfil não tem permissão para consultar as vendas.'], ['error', 'Não foi possível carregar as vendas. Tente novamente.']]) {
       salesMode = mode;
-      await page.getByRole('navigation').getByRole('button', { name: 'Vendas', exact: true }).click();
-      await page.getByRole('navigation').getByRole('button', { name: 'Visão Geral', exact: true }).click();
+      await page.getByRole('navigation').getByRole('link', { name: 'Vendas', exact: true }).click();
+      await page.getByRole('navigation').getByRole('link', { name: 'Visão Geral', exact: true }).click();
       await page.getByText(expected, { exact: mode === 'empty' }).waitFor();
       assert.equal(await page.locator('.recent-sales').getByText('TESTE-001').count(), 0);
     }
@@ -122,11 +144,11 @@ try {
     await page.getByRole('button', { name: 'Alternar menu' }).click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow com menu recolhido');
     await page.getByRole('button', { name: 'Alternar menu' }).click();
-    await page.getByRole('navigation').getByRole('button', { name: 'CRM', exact: true }).click();
+    await page.getByRole('navigation').getByRole('link', { name: 'CRM', exact: true }).click();
     await page.getByRole('heading', { name: 'Painel de relacionamento' }).waitFor();
     await page.screenshot({ path: `${out}/crm-${viewport.width}.png`, fullPage: true });
     for (const [label, selector] of [['Vendas','app-vendas'],['Compras','app-compras'],['Inventário','app-inventario-mobile'],['Financeiro','app-conciliacao-financeira'],['Contabilidade','app-contabilidade']]) {
-      await page.getByRole('navigation').getByRole('button', { name: label, exact: true }).click();
+      await page.getByRole('navigation').getByRole('link', { name: label, exact: true }).click();
       await page.locator(selector).waitFor();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `Overflow em ${label}`);
       await page.screenshot({ path: `${out}/${selector}-${viewport.width}.png`, fullPage: true });
@@ -149,8 +171,8 @@ try {
     assert.equal(refreshCount, 1, 'A renovação da sessão deve ocorrer uma vez');
     assert.equal(await page.evaluate(() => localStorage.getItem('traxup_login_hint')), null);
     salesMode = 'expired';
-    await page.getByRole('navigation').getByRole('button', { name: 'Vendas', exact: true }).click();
-    await page.getByRole('navigation').getByRole('button', { name: 'Visão Geral', exact: true }).click();
+    await page.getByRole('navigation').getByRole('link', { name: 'Vendas', exact: true }).click();
+    await page.getByRole('navigation').getByRole('link', { name: 'Visão Geral', exact: true }).click();
     await page.getByRole('alert').filter({ hasText: 'Sua sessão expirou. Entre novamente.' }).waitFor();
     assert.equal(await page.evaluate(() => localStorage.getItem('tplug_access_token')), null);
     assert.deepEqual(errors, [], 'Erros JavaScript no navegador');

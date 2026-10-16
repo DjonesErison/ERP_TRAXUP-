@@ -1,0 +1,33 @@
+name: TRAXUP UI-023 - Prototipo
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Prototipo Telas/UI-023-Administracao-Clientes/**'
+      - '.github/workflows/prototipo-ui023.yml'
+permissions:
+  contents: read
+jobs:
+  validar:
+    name: Angular, Tailwind e interacoes UI-023
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 'Prototipo Telas/UI-023-Administracao-Clientes'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: 'Prototipo Telas/UI-023-Administracao-Clientes/package-lock.json'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui023-validacao-visual
+          path: 'Prototipo Telas/UI-023-Administracao-Clientes/test-results'
+          retention-days: 7

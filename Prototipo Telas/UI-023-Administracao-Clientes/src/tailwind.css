@@ -1,0 +1,4 @@
+@import "tailwindcss" source(none);
+@source "./main.ts";
+@source "./app.html";
+@source "./ui-icon.component.ts";

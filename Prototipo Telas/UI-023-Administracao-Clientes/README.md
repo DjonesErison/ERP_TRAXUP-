@@ -42,3 +42,19 @@ O Tailwind é compilado antes do Angular. `scripts/make-single-html.mjs` incorpo
 ## Teste automatizado
 
 Após `npm install` e `npm run build`, execute `npx playwright install chromium` e `npm test`. O teste abre o HTML por `file://`, exercita os fluxos principais e verifica ausência de erros JavaScript, requisições externas e transbordamento da página em 320, 390, 768 e 1536 px. Capturas ficam em `test-results/`. É possível informar um Chromium existente em `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
+
+## Correção visual para a referência aprovada
+
+A revisão usa exclusivamente `Prototipo Telas/UI-023-administracao-clientes-traxup.webp`
+e sua especificação `.md`. Mantém sidebar de 192 px, cinco indicadores em linha,
+filtros e busca no cabeçalho da tabela, painel lateral alinhado à borda direita e
+blocos inferiores nas proporções da referência. Os símbolos de fonte foram
+substituídos por ícones SVG locais; nenhuma tela foi rasterizada.
+
+O arquivo `Logo.png` é byte a byte o ativo oficial da branch main. A imagem é exibida
+com suas cores originais, sem filtros ou recriação da arte. O aviso de
+dados demonstrativos fica no rodapé, sem faixa adicional acima da tela aprovada.
+
+O workflow `TRAXUP UI-023 - Prototipo` compila este projeto e executa o smoke
+específico, além do CI independente da Central. Capturas incluem 1672 px,
+320, 390, 768 e 1536 px. O PR permanece aberto para aprovação visual, sem deploy.

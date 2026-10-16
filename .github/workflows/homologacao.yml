@@ -4,6 +4,14 @@ on:
     branches: [homologacao]
   push:
     branches: [homologacao]
+    # Monitor-only changes do not publish or deploy application images.
+    paths-ignore:
+      - '.github/workflows/traxup-monitor.yml'
+      - '.github/workflows/homologacao.yml'
+      - 'scripts/monitor.py'
+      - 'scripts/monitor_remote.py'
+      - 'scripts/monitor_test.py'
+      - 'docs/tplug-erp/monitor-vps.md'
 permissions:
   contents: read
 concurrency:

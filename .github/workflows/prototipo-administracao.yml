@@ -1,0 +1,29 @@
+name: Protótipo Administração UI-023 a UI-029
+on:
+  pull_request:
+    paths:
+      - 'Prototipo Telas/Administracao-SaaS-UI023-UI029/**'
+      - '.github/workflows/prototipo-administracao.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Prototipo Telas/Administracao-SaaS-UI023-UI029
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: administracao-validacao
+          path: Prototipo Telas/Administracao-SaaS-UI023-UI029/test-results/

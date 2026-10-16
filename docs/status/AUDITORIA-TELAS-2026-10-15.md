@@ -77,6 +77,8 @@ A busca global do shell da Central também é um input sem lógica de consulta. 
 ## Não publicados / ainda indisponíveis
 
 - **Clientes:** PR https://github.com/DjonesErison/ERP_TRAXUP-/pull/418 aberto, base homologacao, branch feat/clientes-ui022. Não integra o commit publicado. Consulta/cadastro/360º desse PR não foram tratados como implementados em produção nesta revisão.
+- **Protótipo de Clientes:** PR https://github.com/DjonesErison/ERP_TRAXUP-/pull/419 aberto para main, branch feat/prototipo-clientes-ui021-ui022, pasta `Prototipo Telas/UI-002-Clientes`. Angular/Tailwind e HTML demonstrativo, sem API. Não está na main integrada; não confundir com o módulo real do PR 418.
+- **Monitoramento VPS:** PR 420 aberto para homologacao, branch codex/monitor-vps-homologacao; infraestrutura de leitura, não adiciona tela.
 - Produtos: editar/reativar, importação, etiquetas, saldos/alertas de estoque, combos e grade permanecem pendentes.
 - Dashboard: totais monetários agregados, ticket, gráficos, pagamentos, alertas e downloads não integrados.
 - Fiscal completo, BI, Relatórios e Assistente IA permanecem desabilitados no menu ERP. APIs específicas existentes não equivalem a telas completas.

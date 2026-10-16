@@ -1,0 +1,33 @@
+{
+  "name": "traxup-administracao-saas-prototipo",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "start": "ng serve",
+    "build": "tailwindcss -i src/tailwind.css -o src/generated.css --minify && ng build && node scripts/make-single-html.mjs",
+    "prestart": "tailwindcss -i src/tailwind.css -o src/generated.css --minify",
+    "test": "node scripts/smoke.cjs"
+  },
+  "dependencies": {
+    "@angular/common": "^19.2.0",
+    "@angular/compiler": "^19.2.0",
+    "@angular/core": "^19.2.0",
+    "@angular/forms": "^19.2.0",
+    "@angular/platform-browser": "^19.2.0",
+    "jspdf": "^4.2.1",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.8.1",
+    "xlsx": "^0.18.5",
+    "zone.js": "^0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.2.0",
+    "@angular/cli": "^19.2.0",
+    "@angular/compiler-cli": "^19.2.0",
+    "@tailwindcss/cli": "^4.1.0",
+    "playwright": "1.51.1",
+    "tailwindcss": "^4.1.0",
+    "typescript": "~5.7.2",
+    "esbuild": "^0.25.0"
+  }
+}

@@ -1,0 +1,10 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {buildSync} from 'esbuild';
+let html=readFileSync('dist/index.html','utf8');const css=readFileSync('dist/styles.css','utf8');const logo='data:image/png;base64,'+readFileSync('src/assets/Logo.png').toString('base64');
+const main=buildSync({entryPoints:['dist/main.js'],bundle:true,write:false,minify:true,format:'iife',platform:'browser',target:'es2022'}).outputFiles[0].text.replaceAll('assets/Logo.png',logo);
+html=html.replace(/<link[^>]*rel="modulepreload"[^>]*>/g,'');
+html=html.replace(/<link rel="stylesheet"[^>]*href="styles\.css"[^>]*>/g,()=>'<style>'+css+'</style>').replace(/<noscript>.*?<\/noscript>/gs,'');
+for(const [file,code] of [['polyfills.js',readFileSync('dist/polyfills.js','utf8')],['main.js',main]])html=html.replace(`<script src="${file}" type="module"></script>`,()=>'<script type="module">'+code.replaceAll('</script','<\\/script')+'</script>');
+if(/(?:src|href)="(?:assets\/|main\.js|polyfills\.js|styles\.css)/.test(html))throw Error('Dependência externa não incorporada');
+writeFileSync('TRAXUP-Administracao-UI023-UI029.html',html);
+console.log('HTML independente gerado.');

@@ -1,0 +1,57 @@
+name: TRAXUP - Monitor somente leitura
+on:
+  pull_request:
+    branches: [homologacao]
+  push:
+    branches: [homologacao]
+    paths:
+      - '.github/workflows/traxup-monitor.yml'
+      - 'scripts/monitor*'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: traxup-readonly-monitor
+  cancel-in-progress: false
+jobs:
+  validate:
+    name: Monitor - testes de sanitizacao
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s scripts -p 'monitor_test.py' -v
+  observe:
+    name: Monitor - VPS homologacao
+    needs: validate
+    if: github.repository == 'DjonesErison/ERP_TRAXUP-' && github.ref == 'refs/heads/homologacao' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: homologacao
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Observar VPS sem alteracoes
+        env:
+          SSH_HOST: ${{ secrets.HOMOLOGACAO_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOMOLOGACAO_SSH_USER }}
+          SSH_PORT: ${{ secrets.HOMOLOGACAO_SSH_PORT }}
+          SSH_KEY: ${{ secrets.HOMOLOGACAO_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.HOMOLOGACAO_SSH_KNOWN_HOSTS }}
+        run: python3 scripts/monitor.py
+      - name: Documentacao sanitizada
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traxup-homologacao-monitor
+          path: monitor-artifact/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Resumo
+        if: always()
+        run: |
+          if [ -f monitor-artifact/report.md ]; then
+            cat monitor-artifact/report.md >> "$GITHUB_STEP_SUMMARY"
+          fi

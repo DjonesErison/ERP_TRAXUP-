@@ -7,6 +7,7 @@ Protótipos funcionais das telas aprovadas do ERP TRAXUP.
 | UI-001 — Dashboard do ERP | `UI-001-Dashboard-ERP` | Protótipo funcional |
 | UI-003 — Produtos | `UI-003-Produtos` | Protótipo funcional |
 | UI-011 — PDV Desktop | `UI-011-PDV-Desktop` | Protótipo funcional |
+| UI-023 — Administração de clientes | `UI-023-Administracao-Clientes` | Protótipo funcional |
 
 Cada subpasta contém o projeto Angular e um arquivo HTML independente para validação rápida no navegador.
 

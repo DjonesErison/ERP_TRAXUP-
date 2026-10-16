@@ -53,3 +53,7 @@ Opcional: `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` aponta para um Chromium existent
 - Série histórica da receita é ilustrativa; distribuição do anel, contagens, valores e listas vêm da base local. Período seleciona a série ilustrativa, não um histórico contábil real. Filtro de plano dos relatórios afeta MRR, ARR, churn e a exportação tabular; painéis de contexto da base permanecem globais.
 - CNPJ valida 14 dígitos e duplicidade, sem cálculo dos verificadores. Usuários e onboarding são resumos simulados. Matriz e adicionais comerciais são referências, sem contratação real.
 - Nenhuma rota da aplicação publicada ou serviço da VPS foi alterado. Integração de produção e autenticação são uma etapa posterior.
+
+## Revisão visual
+
+Referências exclusivas: os sete arquivos `.webp` UI-023 a UI-029 e seus `.md` na raiz de `Prototipo Telas` em `main`. Revisão ajusta densidade, tipografia condensada, ícones SVG, cartões, menu e gráficos; não pressupõe aprovação visual. Fonte Roboto Condensed incorporada, licença SIL OFL em `src/assets/RobotoCondensed-OFL.txt`. A imagem oficial `Logo.png` é preservada sem filtros de cor ou recriação.

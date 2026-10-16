@@ -2,7 +2,7 @@ import 'zone.js';
 import * as XLSX from 'xlsx';
 import {jsPDF} from 'jspdf';
 import {bootstrapApplication} from '@angular/platform-browser';
-import {Component,HostListener} from '@angular/core';
+import {Component,HostListener,Input} from '@angular/core';
 import {CommonModule,registerLocaleData} from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 registerLocaleData(localePt);
@@ -14,7 +14,14 @@ const HOJE=new Date().toISOString().slice(0,10);
 const data=(dias:number)=>{const d=new Date(HOJE+'T12:00:00');d.setDate(d.getDate()+dias);return d.toISOString().slice(0,10);};
 const NOMES=['Comercial Martins LTDA','Rede SuperMais','Drogaria Saúde Total','Auto Peças Silva','Restaurante Bom Sabor','Constrular Materiais','Clínica Vida Plena','Hotel Vista Mar','Mercado do Povo','Clínica Nova Esperança','Papelaria Central','Loja Horizonte','Padaria Sabor Real','Ótica Avenida','Pet Vida','Moda Urbana'];
 function seed():Cliente[]{return NOMES.map((empresa,i)=>({id:i+1,empresa,cnpj:`${String(12+i).padStart(2,'0')}.345.678/0001-${String(10+i).padStart(2,'0')}`,responsavel:['Ana Paula Santos','Carlos Mendes','Mariana Oliveira','Ricardo Alves','Juliana Costa','Felipe Rocha','Patrícia Lima','Eduardo Nunes'][i%8],email:`cliente${i+1}@example.test`,telefone:'(11) 98765-4321',plano:['Pessoal','Básico','Essencial','Completo','Corporativo'][i%5],segmento:['Varejo','Alimentação','Saúde','Serviços'][i%4],modulos:i%3===0?['ERP','PDV','Fiscal']:i%3===1?['ERP','PDV','CRM','BI']:['ERP','Fiscal'],inicio:data(-120-i*3),vencimento:data(i%4===2?-8:i+1),mensalidade:[289.9,759.5,320,149,199.9,399,129.9,612.4][i%8],situacao:(['Ativo','Trial','Inadimplente','Trial','Bloqueado','Trial','Cancelado','Ativo'] as Situacao[])[i%8],lojas:i===1?12:1,terminais:i===1?28:2,usuarios:i===1?42:4,trial:data(i===1?3:7),certificado:data(i%3===0?20:180),logs:['Cadastro incluído na demonstração.'],faturas:[{numero:'DEMO-'+String(i+1).padStart(4,'0'),valor:[289.9,759.5,320,149][i%4],status:i%4===2?'Em atraso':'Em aberto'}]}));}
-@Component({selector:'app-root',standalone:true,imports:[CommonModule,FormsModule],templateUrl:'./app.html'})
+
+@Component({selector:'admin-icon',standalone:true,template:`<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path [attr.d]="desenho"/></svg>`})
+export class AdminIcon{
+ @Input() nome='';
+ get desenho(){const n=this.nome.toLowerCase();if(n.includes('visão'))return 'M3 10 12 3 21 10M5 9v12h5v-7h4v7h5V9';if(n.includes('trial')||n.includes('convers'))return 'M9 3h6M10 3v7L4 20h16l-6-10V3M7 15h10M10 18h1';if(n.includes('config'))return 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2';if(n.includes('fatura')||n.includes('plano'))return 'M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7';if(n.includes('cliente')||n.includes('assinatura'))return 'M9 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6M3 21v-5a6 6 0 0 1 12 0v5zM17 5a3 3 0 0 1 0 6M18 14a4 4 0 0 1 3 4v3';if(n.includes('atraso')||n.includes('inadimpl')||n.includes('cancel'))return 'M12 3 2 21h20zM12 9v5M12 17v1';if(n.includes('financeiro')||n.includes('ticket')||n.includes('receita'))return 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 6v12M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8';return 'M5 20V12h3v8zM11 20V7h3v13zM17 20V3h3v17z';}
+}
+
+@Component({selector:'app-root',standalone:true,imports:[CommonModule,FormsModule,AdminIcon],templateUrl:'./app.html'})
 export class App{
  clientes=seed();ativo:Cliente|undefined=this.clientes[1];query='';buscaTabela='';situacao='';plano='';segmento='';vencimento='';modulo='';pagina=1;tamanho=8;selecionados=new Set<number>();aba='Resumo';nav='Visão Geral';recolhido=false;modal='';mensagem='';erro='';planoNovo='Completo';modulosNovos:string[]=[];dias=7;confirmacao='';novo={empresa:'',cnpj:'',responsavel:'',email:'',telefone:'',plano:'Básico',segmento:'Varejo',mensalidade:149};
  readonly navegacao=[['⌂','Visão Geral'],['♙','Clientes'],['☑','Trials'],['＄','Financeiro'],['▤','Planos e Assinaturas'],['▣','Faturas'],['▥','Relatórios'],['⚙','Configurações']];readonly planos=['Pessoal','Básico','Essencial','Completo','Corporativo'];readonly segmentos=['Varejo','Alimentação','Saúde','Serviços'];readonly modulos=['ERP','PDV','Fiscal','CRM','BI'];readonly meses=['Mai','Jun','Jul','Ago','Set','Out'];readonly receitas=[46,57,64,78,89,83];readonly atrasos=[11,10,8,6,9,7];

@@ -67,6 +67,6 @@ Fonte visual: imagens e especificações aprovadas em `Prototipo Telas`, PR #424
 
 Usuário sem autorização recebe uma página própria, sem menu administrativo nem dados. Ela permite voltar ao ERP, trocar usuário ou verificar a liberação. Sessão expirada solicita novo login. Nenhum operador é habilitado automaticamente. A liberação ainda exige identificar o usuário interno TRAXUP.
 
-O histórico de primeiro acesso e a integração com certificados permanecem indisponíveis, identificados na tela. O gráfico de faturamento usa faturas por competência, sem apresentar esses valores como histórico de MRR ou percentuais de inadimplência. Não são fabricados valores para reproduzir os números ilustrativos das imagens.
+O histórico de primeiro acesso e a integração com certificados permanecem indisponíveis, identificados na tela. Na visão geral, o gráfico mostra o MRR e a proporção atual de clientes inadimplentes com duas escalas, identificando os meses anteriores como sem histórico. Nos relatórios, o gráfico de faturamento usa faturas por competência. Não se apresenta faturamento como histórico de MRR. Não são fabricados valores para reproduzir os números ilustrativos das imagens.
 
 Validação: build Angular e smoke das sete telas em 320, 390, 768 e 1680 px; estados de acesso negado, nova verificação de acesso e sessão expirada; cores da distribuição, quatro etapas e próximos vencimentos.

@@ -96,6 +96,13 @@ class SaasIntegrationTest {
   assertEquals("CANCELLED",db.queryForObject("SELECT status FROM trial_activation_emails WHERE trial_id=?",String.class,t.getId()));
   assertTrue(emails.prepare().isEmpty());
  }
+ @Test void indicadoresDePlanoVemDoHistoricoPersistido()throws Exception{
+  var op=operador(true);var t=trial();converter(op,t);String url="/api/v1/saas/clientes/"+t.getId()+"/plano";
+  for(int i=0;i<2;i++)mvc.perform(post(url).with(token(op)).contentType(MediaType.APPLICATION_JSON).content("{\"plano\":\"Completo\",\"modulos\":[\"ERP\"]}")).andExpect(status().isOk());
+  mvc.perform(get("/api/v1/saas/painel").with(token(op))).andExpect(status().isOk()).andExpect(jsonPath("$.alteracoes.length()").value(1)).andExpect(jsonPath("$.alteracoes[0].tipo").value("Upgrade"));
+  mvc.perform(post(url).with(token(op)).contentType(MediaType.APPLICATION_JSON).content("{\"plano\":\"Básico\",\"modulos\":[\"ERP\"]}")).andExpect(status().isOk());
+  mvc.perform(get("/api/v1/saas/painel").with(token(op))).andExpect(status().isOk()).andExpect(jsonPath("$.alteracoes.length()").value(2)).andExpect(jsonPath("$.alteracoes[1].tipo").value("Downgrade"));
+ }
  @Test void relatoriosSaoPrivadosDoOperador()throws Exception{
   var a=operador(true);var b=operador(true);
   mvc.perform(post("/api/v1/saas/relatorios").with(token(a)).contentType(MediaType.APPLICATION_JSON).content("{\"nome\":\"Mensal A\",\"plano\":\"\",\"periodo\":6}")).andExpect(status().isOk());

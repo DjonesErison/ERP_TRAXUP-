@@ -125,7 +125,7 @@ public class AuthApplicationService {
                 .orElseThrow(() -> new AutenticacaoException("Token de ativacao invalido ou expirado"));
         Usuario usuario = ativacao.getUsuario();
         var trial=trialRepository.lockByAdministradorId(usuario.getId()).orElseThrow(() -> new AutenticacaoException("Ativacao indisponivel"));
-        if(!usuario.isAtivo() || trial.isAdminAtivado() || !trial.getExpiraEm().isAfter(agora)) throw new AutenticacaoException("Ativacao indisponivel");
+        if(!"ATIVO".equals(trial.getStatus()) || !usuario.isAtivo() || trial.isAdminAtivado() || !trial.getExpiraEm().isAfter(agora)) throw new AutenticacaoException("Ativacao indisponivel");
         trial.marcarAdminAtivado(agora);
         trialRepository.save(trial);
         usuario.alterarSenhaHash(passwordEncoder.encode(novaSenha));

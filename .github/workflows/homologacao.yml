@@ -82,6 +82,7 @@ jobs:
           PLAYWRIGHT_MODULE=/tmp/traxup-browser/node_modules/playwright/index.mjs node tplug-erp/infra/homologacao/trial-smoke.mjs http://127.0.0.1:8082
           PLAYWRIGHT_MODULE=/tmp/traxup-browser/node_modules/playwright/index.mjs node tplug-erp/infra/homologacao/configuracao-smoke.mjs http://127.0.0.1:8082
           PLAYWRIGHT_MODULE=/tmp/traxup-browser/node_modules/playwright/index.mjs node tplug-erp/infra/homologacao/produtos-smoke.mjs http://127.0.0.1:8082
+          PLAYWRIGHT_MODULE=/tmp/traxup-browser/node_modules/playwright/index.mjs node tplug-erp/infra/homologacao/administracao-smoke.mjs http://127.0.0.1:8082
       - uses: actions/upload-artifact@v4
         if: always()
         with:

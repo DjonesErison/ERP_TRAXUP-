@@ -1,3 +1,4 @@
+import {AdministracaoComponent} from './administracao/administracao.component';
 import { ReenviarAtivacaoComponent } from './reenviar-ativacao.component';
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit } from '@angular/core';
@@ -19,8 +20,10 @@ import { AtivacaoAdminComponent } from './ativacao-admin.component';
 import { OnboardingComponent } from './onboarding.component';
 import { OnboardingService } from './onboarding.service';
 
-@Component({ selector: 'app-root', standalone: true, imports: [ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, ProdutosComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
+@Component({ selector: 'app-root', standalone: true, imports: [AdministracaoComponent, ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, ProdutosComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
+  acessoAdministracao = false;
+  administracao = window.location.pathname.replace(/\/+$/, '') === '/administracao';
   redefinindoSenha = false;
   readonly rotas: Record<string,string> = {dashboard:'/dashboard',produtos:'/produtos',vendas:'/vendas',compras:'/compras',inventario:'/inventario',financeiro:'/financeiro',contabilidade:'/contabilidade',crm:'/crm',configuracao:'/configuracao'};
   private destinoInicial = 'dashboard';
@@ -41,6 +44,7 @@ export class AppComponent implements OnInit {
   constructor(private readonly crm: CrmService, private readonly auth: AuthService, private readonly contexto: ContextoOperacionalService, private readonly onboarding: OnboardingService) {}
 
   ngOnInit(): void {
+    if (this.auth.autenticado) this.carregarAcessoAdministracao();
     const publicPath = window.location.pathname.replace(/\/+$/, '');
     this.destinoInicial = this.areaDoCaminho(publicPath);
     this.area = this.destinoInicial;
@@ -51,7 +55,7 @@ export class AppComponent implements OnInit {
     }
     if ((window.location.hostname === 'captacaoclientes.traxup.com.br' && !['/ativar','/entrar','/recuperar'].includes(publicPath)) || publicPath === '/teste' || publicPath === '/trial') this.exibindoTrial = true;
     this.loginCodigoEmpresa = ''; this.autenticado = this.auth.autenticado; this.filialAtiva = this.contexto.filialAtiva;
-    this.selecionandoFilial = this.autenticado && !this.filialAtiva; if (this.autenticado) this.verificarOnboarding(); else if (this.selecionandoFilial) this.carregarFiliais();
+    this.selecionandoFilial = this.autenticado && !this.filialAtiva && !this.administracao; if (this.autenticado && !this.administracao) this.verificarOnboarding(); else if (this.selecionandoFilial) this.carregarFiliais();
     try { const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null'); if (salvo && typeof salvo.codigoEmpresa === 'string' && /^[0-9]{4}$/.test(salvo.codigoEmpresa) && typeof salvo.email === 'string') { this.loginCodigoEmpresa = salvo.codigoEmpresa; this.loginEmail = salvo.email; this.lembrarAcesso = true; } } catch { localStorage.removeItem('traxup_login_hint'); }
     if ((publicPath === '/ativar' || publicPath === '/recuperar') || publicPath === '/entrar') {
       const params = new URLSearchParams(window.location.hash.slice(1));
@@ -69,6 +73,8 @@ export class AppComponent implements OnInit {
       window.history.replaceState(null, '', this.exibindoAtivacao ? '/ativar' : '/entrar');
     }
   }
+
+  carregarAcessoAdministracao(): void { this.auth.acessoAdministracao().subscribe(ok => this.acessoAdministracao = ok); }
 
   iniciarAtivacaoAdmin(token: string): void { this.exibindoAtivacao = true; this.ativacaoAdminToken = token; this.exibindoTrial = false; }
   concluirAtivacaoAdmin(): void { this.exibindoAtivacao = false; window.history.replaceState(null, '', '/entrar'); this.ativacaoAdminToken = ''; this.exibindoTrial = false; this.loginError = ''; this.ativacaoMensagem = 'Senha criada! Entre para configurar sua empresa.'; }
@@ -89,7 +95,7 @@ export class AppComponent implements OnInit {
   entrar(): void {
     if (this.loginLoading || !/^[0-9]{4}$/.test(this.loginCodigoEmpresa)) return; this.loginLoading = true; this.loginError = '';
     this.auth.login({ codigoEmpresa: this.loginCodigoEmpresa.trim(), email: this.loginEmail.trim(), senha: this.loginSenha }).subscribe({
-      next: () => { this.loginLoading = false; this.loginSenha = ''; this.mostrarSenha = false; this.area = 'dashboard'; this.autenticado = true; this.contexto.limpar(); this.filialAtiva = null; this.selecionandoFilial = true; this.verificarOnboarding(); if (this.lembrarAcesso) localStorage.setItem('traxup_login_hint', JSON.stringify({ codigoEmpresa: this.loginCodigoEmpresa.trim(), email: this.loginEmail.trim() })); else localStorage.removeItem('traxup_login_hint'); },
+      next: () => { this.loginLoading = false; this.loginSenha = ''; this.mostrarSenha = false; this.area = 'dashboard'; this.autenticado = true; this.carregarAcessoAdministracao(); this.contexto.limpar(); this.filialAtiva = null; this.selecionandoFilial = !this.administracao; if (!this.administracao) this.verificarOnboarding(); if (this.lembrarAcesso) localStorage.setItem('traxup_login_hint', JSON.stringify({ codigoEmpresa: this.loginCodigoEmpresa.trim(), email: this.loginEmail.trim() })); else localStorage.removeItem('traxup_login_hint'); },
       error: err => { this.loginLoading = false; this.loginError = err?.status === 401 || err?.status === 403 ? 'Empresa, e-mail ou senha inválidos.' : 'Não foi possível entrar. Verifique os dados e a disponibilidade do sistema.'; }
     });
   }
@@ -121,6 +127,8 @@ export class AppComponent implements OnInit {
   restaurarEndereco(): void {
     if (!this.autenticado) return;
     const caminho = window.location.pathname.replace(/\/+$/, '');
+    this.administracao = caminho === '/administracao';
+    if (this.administracao) return;
     this.destinoInicial = this.areaDoCaminho(caminho);
     if (caminho === '/configuracao' || this.onboardingPendente) { this.verificarOnboarding(); return; }
     this.area = this.destinoInicial;
@@ -128,5 +136,5 @@ export class AppComponent implements OnInit {
   }
   expirarSessao(): void { this.contexto.limpar(); this.filialAtiva = null; this.autenticado = false; window.history.replaceState(null, '', '/entrar'); this.loginError = 'Sua sessão expirou. Entre novamente.'; }
   trackId(_: number, item: { id: string }): string { return item.id; } trackCliente(_: number, item: { clienteId: string }): string { return item.clienteId; }
-  private finalizarLogout(): void { this.onboardingPendente = false; window.history.replaceState(null, '', '/entrar'); this.contexto.limpar(); this.filialAtiva = null; this.filiais = []; this.selecionandoFilial = false; this.logoutLoading = false; this.area = 'dashboard'; this.destinoInicial = 'dashboard'; this.menuRecolhido = false; this.autenticado = false; this.inativos = []; this.rfv = []; this.followups = []; this.interacoes = []; }
+  private finalizarLogout(): void { this.acessoAdministracao = false; this.onboardingPendente = false; window.history.replaceState(null, '', this.administracao ? '/administracao' : '/entrar'); this.contexto.limpar(); this.filialAtiva = null; this.filiais = []; this.selecionandoFilial = false; this.logoutLoading = false; this.area = 'dashboard'; this.destinoInicial = 'dashboard'; this.menuRecolhido = false; this.autenticado = false; this.inativos = []; this.rfv = []; this.followups = []; this.interacoes = []; }
 }

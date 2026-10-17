@@ -28,8 +28,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
+            JwtAuthenticationConverter jwtAuthenticationConverter, org.springframework.jdbc.core.JdbcTemplate jdbc) throws Exception {
         http
+                .addFilterAfter(new com.traxup.tplug.erp.saas.SaasAccessFilter(jdbc), org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize

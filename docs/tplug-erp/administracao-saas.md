@@ -51,7 +51,7 @@ Bloqueio suspende o tenant e é verificado também para JWTs anteriores à suspe
 
 ## Validação e publicação
 
-Testes em `SaasIntegrationTest`: autorização, revogação, tenant incorreto, conversão única, idempotência, saldo, catálogo, bloqueio e relatórios privados. Validação local: build Angular e testes do navegador passaram; 41 testes de SaaS, autenticação, RBAC e trial passaram no PostgreSQL.
+Testes em `SaasIntegrationTest`: autorização, revogação, tenant incorreto, conversão única, idempotência, saldo, catálogo, bloqueio e relatórios privados. Validação local: build Angular e testes do navegador passaram; 42 testes de SaaS, autenticação, RBAC e trial passaram no PostgreSQL.
 
 Smoke administrativo verifica as sete telas, cabeçalho autenticado da API, falha e repetição de pagamento com a mesma chave, acesso negado e larguras 320/390/768/1680 px. Build Angular separa a administração em chunk carregado sob demanda. A fonte condensada aprovada possui licença em `src/assets/administracao/RobotoCondensed-OFL.txt`. A logo oficial existente não foi alterada.
 

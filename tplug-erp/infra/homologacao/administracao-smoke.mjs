@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 const base=process.argv[2]||'http://127.0.0.1:8082';
-const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({...(process.env.PLAYWRIGHT_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE}:{channel:'chrome'}),headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1680,height:950},serviceWorkers:'block'});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.addInitScript(()=>{localStorage.setItem('tplug_access_token','test-access');localStorage.setItem('tplug_refresh_token','test-refresh');});
@@ -28,6 +28,7 @@ try{
   for(const width of [320,390,768,1680]){await page.setViewportSize({width,height:950});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Transbordamento ${nome} ${width}`);}
   await page.screenshot({path:'/tmp/traxup-visual/administracao/'+nome.replaceAll(' ','-')+'.png',fullPage:true});
  }
+ await page.emulateMedia({media:'print'});assert(await page.locator('main .distribution').first().isVisible(),'Dados do relatório precisam aparecer na impressão');await page.emulateMedia({media:'screen'});
  await page.getByRole('navigation').getByRole('button',{name:'Trials',exact:true}).click();
  await page.locator('main .company').filter({hasText:'Trial integração'}).click();
  await page.getByRole('button',{name:'Prorrogar trial',exact:true}).click();

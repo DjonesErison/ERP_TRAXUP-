@@ -27,6 +27,7 @@ class SaasIntegrationTest {
  @Autowired MockMvc mvc; @Autowired JdbcTemplate db; @Autowired TenantRepository tenants;
  @Autowired UsuarioApplicationService usuarios; @Autowired EmpresaRepository empresas;
  @Autowired TrialSaasRepository trials; @Autowired EntityManager em;
+ @Autowired com.traxup.tplug.erp.trial.mail.TrialEmailQueue emails;
  private Usuario operador(boolean autorizar){var tenant=tenants.saveAndFlush(new Tenant("Operação TRAXUP"));var user=usuarios.criar(tenant.getId(),"Operador","op-"+UUID.randomUUID()+"@example.test","SenhaForte123!");em.flush();if(autorizar)db.update("INSERT INTO saas_operadores(usuario_id) VALUES(?)",user.getId());return user;}
  private RequestPostProcessor token(Usuario u){return jwt().jwt(t->t.subject(u.getId().toString()).claim("tenant_id",u.getTenant().getId().toString())).authorities(new SimpleGrantedAuthority("RBAC_GERENCIAR"));}
  private TrialSaas trial(){var tenant=tenants.saveAndFlush(new Tenant("Cliente SaaS"));var empresa=empresas.save(new Empresa(tenant,"Razão social","Cliente SaaS","12345678000190"));var user=usuarios.criar(tenant.getId(),"Responsável","cliente-"+UUID.randomUUID()+"@example.test","SenhaForte123!");var t=new TrialSaas(tenant,empresa,user,user.getEmail(),"12345678000190","81999999999","Varejo",1,"v1",UUID.randomUUID().toString(),Instant.now());t.marcarAdminAtivado(Instant.now());trials.saveAndFlush(t);return t;}
@@ -35,7 +36,7 @@ class SaasIntegrationTest {
   mvc.perform(get("/api/v1/saas/painel")).andExpect(status().isUnauthorized());
   var op=operador(false);mvc.perform(get("/api/v1/saas/acesso").with(token(op))).andExpect(status().isOk()).andExpect(jsonPath("$.permitido").value(false));mvc.perform(get("/api/v1/saas/painel").with(token(op))).andExpect(status().isForbidden());
   db.update("INSERT INTO saas_operadores(usuario_id) VALUES(?)",op.getId());
-  mvc.perform(get("/api/v1/saas/painel").with(token(op))).andExpect(status().isOk()).andExpect(jsonPath("$.catalogo.length()").value(5));
+  mvc.perform(get("/api/v1/saas/painel").with(token(op))).andExpect(status().isOk()).andExpect(jsonPath("$.catalogo.length()").value(5)).andExpect(jsonPath("$.catalogo[0].nome").value("Pessoal"));
   mvc.perform(get("/api/v1/saas/painel").with(jwt().jwt(t->t.subject(op.getId().toString()).claim("tenant_id",UUID.randomUUID().toString())))).andExpect(status().isForbidden());
   db.update("UPDATE saas_operadores SET ativo=FALSE WHERE usuario_id=?",op.getId());mvc.perform(get("/api/v1/saas/painel").with(token(op))).andExpect(status().isForbidden());
  }
@@ -85,6 +86,15 @@ class SaasIntegrationTest {
   mvc.perform(post(url).with(token(op)).contentType(MediaType.APPLICATION_JSON).content("{\"plano\":\"Corporativo\",\"modulos\":[\"ERP\"]}")).andExpect(status().isConflict());
   mvc.perform(post(url).with(token(op)).contentType(MediaType.APPLICATION_JSON).content("{\"plano\":\"Corporativo\",\"modulos\":[\"ERP\"],\"mensalidade\":700.00}")).andExpect(status().isOk());
   assertEquals(0,new java.math.BigDecimal("700.00").compareTo(db.queryForObject("SELECT mensalidade FROM saas_assinaturas WHERE trial_id=?",java.math.BigDecimal.class,t.getId())));
+ }
+ @Test void trialEncerradoNaoPodeReenfileirarAtivacao()throws Exception{
+  var op=operador(true);var t=trial();var tenant=t.getTenantId();var email=t.getEmail();
+  db.update("UPDATE trials_saas SET admin_ativado_em=NULL WHERE id=?",t.getId());
+  db.update("INSERT INTO trial_activation_emails(trial_id) VALUES(?)",t.getId());
+  mvc.perform(post("/api/v1/saas/trials/"+t.getId()+"/encerrar").with(token(op))).andExpect(status().isOk());
+  em.clear();emails.resend(tenant,email);
+  assertEquals("CANCELLED",db.queryForObject("SELECT status FROM trial_activation_emails WHERE trial_id=?",String.class,t.getId()));
+  assertTrue(emails.prepare().isEmpty());
  }
  @Test void relatoriosSaoPrivadosDoOperador()throws Exception{
   var a=operador(true);var b=operador(true);

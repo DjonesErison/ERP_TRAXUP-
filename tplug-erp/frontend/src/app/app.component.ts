@@ -44,7 +44,6 @@ export class AppComponent implements OnInit {
   constructor(private readonly crm: CrmService, private readonly auth: AuthService, private readonly contexto: ContextoOperacionalService, private readonly onboarding: OnboardingService) {}
 
   ngOnInit(): void {
-    if (this.auth.autenticado) this.carregarAcessoAdministracao();
     const publicPath = window.location.pathname.replace(/\/+$/, '');
     this.destinoInicial = this.areaDoCaminho(publicPath);
     this.area = this.destinoInicial;
@@ -54,7 +53,8 @@ export class AppComponent implements OnInit {
       this.auth.limparSessao(); this.contexto.limpar();
     }
     if ((window.location.hostname === 'captacaoclientes.traxup.com.br' && !['/ativar','/entrar','/recuperar'].includes(publicPath)) || publicPath === '/teste' || publicPath === '/trial') this.exibindoTrial = true;
-    this.loginCodigoEmpresa = ''; this.autenticado = this.auth.autenticado; this.filialAtiva = this.contexto.filialAtiva;
+    this.loginCodigoEmpresa = ''; this.autenticado = this.auth.autenticado;
+    if (this.autenticado) this.carregarAcessoAdministracao(); this.filialAtiva = this.contexto.filialAtiva;
     this.selecionandoFilial = this.autenticado && !this.filialAtiva && !this.administracao; if (this.autenticado && !this.administracao) this.verificarOnboarding(); else if (this.selecionandoFilial) this.carregarFiliais();
     try { const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null'); if (salvo && typeof salvo.codigoEmpresa === 'string' && /^[0-9]{4}$/.test(salvo.codigoEmpresa) && typeof salvo.email === 'string') { this.loginCodigoEmpresa = salvo.codigoEmpresa; this.loginEmail = salvo.email; this.lembrarAcesso = true; } } catch { localStorage.removeItem('traxup_login_hint'); }
     if ((publicPath === '/ativar' || publicPath === '/recuperar') || publicPath === '/entrar') {

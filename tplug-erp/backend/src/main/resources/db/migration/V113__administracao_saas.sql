@@ -1,0 +1,11 @@
+-- Operadores globais são autorizados separadamente do RBAC de cada cliente.
+CREATE TABLE saas_operadores (usuario_id UUID PRIMARY KEY REFERENCES usuarios(id), ativo BOOLEAN NOT NULL DEFAULT TRUE);
+CREATE TABLE saas_planos (nome VARCHAR(40) PRIMARY KEY, preco NUMERIC(14,2) NOT NULL CHECK(preco>=0), usuarios INTEGER NOT NULL CHECK(usuarios>=0), lojas INTEGER NOT NULL CHECK(lojas>=0));
+INSERT INTO saas_planos VALUES ('Pessoal',39.90,1,1),('Básico',79.90,2,1),('Essencial',149.90,5,1),('Completo',249.90,10,3),('Corporativo',0,0,0);
+CREATE TABLE saas_assinaturas (trial_id UUID PRIMARY KEY REFERENCES trials_saas(id), plano VARCHAR(40) NOT NULL REFERENCES saas_planos(nome), mensalidade NUMERIC(14,2) NOT NULL CHECK(mensalidade>0), modulos VARCHAR(200) NOT NULL, inicio DATE NOT NULL, vencimento DATE NOT NULL, bloqueada BOOLEAN NOT NULL DEFAULT FALSE);
+CREATE TABLE saas_faturas (id BIGSERIAL PRIMARY KEY, trial_id UUID NOT NULL REFERENCES saas_assinaturas(trial_id), competencia VARCHAR(7) NOT NULL, emissao DATE NOT NULL, vencimento DATE NOT NULL, valor NUMERIC(14,2) NOT NULL CHECK(valor>0), pago NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK(pago>=0 AND pago<=valor), forma VARCHAR(20) NOT NULL DEFAULT '', data DATE, cancelada BOOLEAN NOT NULL DEFAULT FALSE, chave UUID UNIQUE);
+CREATE INDEX idx_saas_faturas_trial ON saas_faturas(trial_id, vencimento);
+CREATE TABLE saas_pagamentos (id BIGSERIAL PRIMARY KEY, fatura_id BIGINT NOT NULL REFERENCES saas_faturas(id), valor NUMERIC(14,2) NOT NULL CHECK(valor>0), forma VARCHAR(20) NOT NULL, data DATE NOT NULL, chave UUID NOT NULL UNIQUE, operador_id UUID NOT NULL REFERENCES usuarios(id), criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE TABLE saas_eventos (id BIGSERIAL PRIMARY KEY, trial_id UUID REFERENCES trials_saas(id), fatura_id BIGINT REFERENCES saas_faturas(id), operador_id UUID NOT NULL REFERENCES usuarios(id), acao VARCHAR(80) NOT NULL, detalhe VARCHAR(1000) NOT NULL, criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE INDEX idx_saas_eventos_trial ON saas_eventos(trial_id,id);
+CREATE TABLE saas_relatorios (id BIGSERIAL PRIMARY KEY, operador_id UUID NOT NULL REFERENCES usuarios(id), nome VARCHAR(80) NOT NULL, plano VARCHAR(40) NOT NULL DEFAULT '', periodo INTEGER NOT NULL CHECK(periodo IN (3,6)), criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE(operador_id,nome));

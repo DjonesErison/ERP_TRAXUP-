@@ -19,6 +19,8 @@ export class AuthService {
     return this.http.post<TokenResponse>(`${this.baseUrl}/login`, payload).pipe(tap(tokens => this.salvarTokens(tokens, this.tenantDoToken(tokens.accessToken))));
   }
 
+  acessoAdministracao(): Observable<boolean> { return this.http.get<{permitido:boolean}>('/api/v1/saas/acesso').pipe(map(r=>r.permitido),catchError(()=>of(false))); }
+
   solicitarRecuperacao(codigoEmpresa: string, email: string): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/recuperacao-senha/solicitar`, { codigoEmpresa, email });
   }

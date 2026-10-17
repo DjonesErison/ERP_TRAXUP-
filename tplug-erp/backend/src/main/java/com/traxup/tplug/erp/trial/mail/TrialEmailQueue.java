@@ -24,7 +24,7 @@ public class TrialEmailQueue {
         jdbc.update("INSERT INTO trial_activation_emails(trial_id) VALUES (?) ON CONFLICT DO NOTHING",trial.getId());
     }
     public void resend(UUID tenantId,String email) {
-        trials.findByTenantIdAndEmailIgnoreCase(tenantId,email.trim()).filter(t -> !t.isAdminAtivado() && t.getExpiraEm().isAfter(Instant.now())).ifPresent(t -> {
+        trials.findByTenantIdAndEmailIgnoreCase(tenantId,email.trim()).filter(t -> "ATIVO".equals(t.getStatus()) && !t.isAdminAtivado() && t.getExpiraEm().isAfter(Instant.now())).ifPresent(t -> {
             jdbc.update("INSERT INTO trial_activation_emails(trial_id,last_requested_at,requests_in_window) VALUES (?,NOW()-INTERVAL '1 minute',0) ON CONFLICT DO NOTHING",t.getId());
             // One minute cooldown, six requests/day, serialized by the UPDATE row lock.
             jdbc.update("""
@@ -47,7 +47,7 @@ public class TrialEmailQueue {
         if(ids.isEmpty()) return Optional.empty();
         UUID id=ids.getFirst();
         TrialSaas trial=trials.findById(id).orElseThrow();
-        if(trial.isAdminAtivado() || !trial.getExpiraEm().isAfter(Instant.now()) || !trial.getAdministrador().isAtivo()) {
+        if(!"ATIVO".equals(trial.getStatus()) || trial.isAdminAtivado() || !trial.getExpiraEm().isAfter(Instant.now()) || !trial.getAdministrador().isAtivo()) {
             jdbc.update("UPDATE trial_activation_emails SET status='CANCELLED' WHERE trial_id=?",id);
             return Optional.empty();
         }

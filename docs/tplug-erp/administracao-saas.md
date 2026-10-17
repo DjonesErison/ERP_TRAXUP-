@@ -60,3 +60,13 @@ O PR de implementação tem base `homologacao`. Não modifica `main`, serviços 
 ## Indicadores de alteração de plano
 
 Upgrades e downgrades são carregados dos eventos persistidos do contrato; recarregar não zera os contadores. Trocas de módulos ou regravações com o mesmo preço ficam no histórico como alteração, sem contar como upgrade. A consulta de elegibilidade administrativa ocorre depois da limpeza de sessão dos links públicos de ativação/recuperação.
+
+## Ajustes às referências UI-023 a UI-029 (17/10/2026)
+
+Fonte visual: imagens e especificações aprovadas em `Prototipo Telas`, PR #424. As sete rotas integradas continuam usando as APIs reais. A visão geral agora mantém as cores dos planos coerentes entre legenda e gráfico, o funil em quatro níveis com rótulos laterais e as ações com contagens reais. O indicador de inadimplentes é uma contagem de clientes. Os vencimentos mostram somente faturas abertas futuras e trials ativos, ordenados por data; não incluem faturas pagas ou canceladas. Ações de faturas em atraso incluem pagamentos parciais vencidos.
+
+Usuário sem autorização recebe uma página própria, sem menu administrativo nem dados. Ela permite voltar ao ERP, trocar usuário ou verificar a liberação. Sessão expirada solicita novo login. Nenhum operador é habilitado automaticamente. A liberação ainda exige identificar o usuário interno TRAXUP.
+
+O histórico de primeiro acesso e a integração com certificados permanecem indisponíveis, identificados na tela. Na visão geral, o gráfico mostra o MRR e a proporção atual de clientes inadimplentes com duas escalas, identificando os meses anteriores como sem histórico. Nos relatórios, o gráfico de faturamento usa faturas por competência. Não se apresenta faturamento como histórico de MRR. Não são fabricados valores para reproduzir os números ilustrativos das imagens.
+
+Validação: build Angular e smoke das sete telas em 320, 390, 768 e 1680 px; estados de acesso negado, nova verificação de acesso e sessão expirada; cores da distribuição, quatro etapas e próximos vencimentos.

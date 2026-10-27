@@ -74,7 +74,10 @@ try {
       if (url.endsWith('/auth/logout')) return route.fulfill({ status: 204 });
       const path = new URL(url).pathname;
       if (path === '/api/v1/onboarding') return route.fulfill({ json: { concluido: true, empresaConfigurada: true, filialConfigurada: true } });
-      if (path === '/api/v1/me/filiais') return route.fulfill({ json: [{ id: '00000000-0000-4000-8000-000000000101', nome: 'Filial Visual', cnpj: '00000000000100', empresaId: '00000000-0000-4000-8000-000000000201', empresaNome: 'Empresa Visual' }] });
+      if (path === '/api/v1/me/filiais') return route.fulfill({ json: [
+        { id: '00000000-0000-4000-8000-000000000101', nome: 'Matriz Visual', cnpj: '00000000000100', empresaId: '00000000-0000-4000-8000-000000000201', empresaNome: 'Empresa Visual', matriz: true, cidade: 'Petrolina', uf: 'PE', dadosEmpresaCompletos: true, fiscalCompleto: true, usuariosCompletos: true, pdvCompleto: true },
+        { id: '00000000-0000-4000-8000-000000000102', nome: 'Filial Visual', cnpj: '00000000000200', empresaId: '00000000-0000-4000-8000-000000000201', empresaNome: 'Empresa Visual', matriz: false, cidade: 'Salvador', uf: 'BA', dadosEmpresaCompletos: true, fiscalCompleto: false, usuariosCompletos: false, pdvCompleto: true }
+      ] });
       if (path.endsWith('/vendas/pedidos/recentes') && new URL(url).searchParams.get('tamanho') === '5') {
         assert.match(route.request().headers().authorization || '', /^Bearer /);
         if (salesMode === 'denied') return route.fulfill({ status: 403, json: {} });
@@ -102,6 +105,16 @@ try {
     accepted = true;
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
     await page.getByRole('navigation', { name: 'Menu principal' }).waitFor();
+    await page.getByRole('heading', { name: 'Escolha onde deseja trabalhar' }).waitFor();
+    assert.equal(await page.locator('.branch-card').count(), 2);
+    assert.match(await page.locator('.branch-card').nth(1).innerText(), /Configuração 50%/);
+    await page.locator('.branch-card').nth(1).getByRole('button', { name: 'Selecionar' }).click();
+    const pendingDialog = page.getByRole('dialog', { name: 'Configuração incompleta' });
+    await pendingDialog.waitFor();
+    const pendingText = await pendingDialog.innerText();
+    assert.match(pendingText, /Configurações fiscais/);
+    assert.match(pendingText, /Usuários e permissões/);
+    await pendingDialog.getByRole('button', { name: 'Agora não' }).click();
     await page.getByRole('heading', { name: 'Olá, boas-vindas!' }).waitFor();
     await page.getByText('TESTE-001', { exact: true }).waitFor();
     assert.equal(await page.locator('.summary-card').nth(1).locator('strong').innerText(), '21');
@@ -127,7 +140,7 @@ try {
       page.getByRole('button',{name:'Atualizar dashboard',exact:true}).click()
     ]);
     const filtro = new URL(pedidoRequest.url()).searchParams;
-    assert.equal(filtro.get('filialId'), '00000000-0000-4000-8000-000000000101');
+    assert.equal(filtro.get('filialId'), '00000000-0000-4000-8000-000000000102');
     assert.match(filtro.get('inicio'), /^\d{4}-\d{2}-\d{2}T00:00:00Z$/);
     assert.match(filtro.get('fim'), /^\d{4}-\d{2}-\d{2}T23:59:59Z$/);
     await page.getByRole('button',{name:'Atualizar dashboard',exact:true}).waitFor();
@@ -169,6 +182,8 @@ try {
     await page.getByLabel('Senha', { exact: true }).fill('somente-teste-visual');
     salesMode = 'refresh';
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+    await page.getByRole('heading', { name: 'Escolha onde deseja trabalhar' }).waitFor();
+    await page.locator('.branch-card').first().getByRole('button', { name: 'Selecionar' }).click();
     await page.getByText('TESTE-001', { exact: true }).waitFor();
     assert.equal(refreshCount, 1, 'A renovação da sessão deve ocorrer uma vez');
     assert.equal(await page.evaluate(() => localStorage.getItem('traxup_login_hint')), null);

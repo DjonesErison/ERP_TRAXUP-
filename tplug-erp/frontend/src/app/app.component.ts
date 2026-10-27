@@ -39,6 +39,7 @@ export class AppComponent implements OnInit {
   recuperacaoAberta = false; recuperacaoCodigoEmpresa = ''; recuperacaoEmail = ''; recuperacaoLoading = false; recuperacaoMensagem = ''; recuperacaoError = '';
   onboardingPendente = false; reenviarAtivacao = false; ativacaoMensagem = '';
   filialId = ''; filiais: FilialPermitida[] = []; filialAtiva: FilialPermitida | null = null; selecionandoFilial = false; filiaisLoading = false; filiaisError = '';
+  filialSelecionada: FilialPermitida | null = null; configuracaoPendenteAberta = false;
   private filialPosOnboardingId = '';
   diasInatividade = 30; loading = false; error = ''; inativos: ClienteInativo[] = []; rfv: ClienteRfv[] = []; followups: ClienteFollowUp[] = []; interacoes: ClienteInteracao[] = [];
 
@@ -105,8 +106,32 @@ export class AppComponent implements OnInit {
   onboardingConcluido(filialId = ''): void { this.destinoInicial = 'dashboard'; this.area = 'dashboard'; this.filialPosOnboardingId = filialId; window.history.replaceState(null, '', '/dashboard'); this.onboardingPendente = false; this.selecionandoFilial = true; this.carregarFiliais(); }
 
   carregarFiliais(): void { if (!this.auth.autenticado || this.filiaisLoading) return; this.filiaisLoading = true; this.filiaisError = ''; this.contexto.listarFiliais().subscribe({ next: filiais => { this.filiais = filiais; this.filiaisLoading = false; const escolhida = this.filialPosOnboardingId ? filiais.find(f => f.id === this.filialPosOnboardingId) : undefined; this.filialPosOnboardingId = ''; if (escolhida) this.escolherFilial(escolhida); else if (filiais.length === 1) this.escolherFilial(filiais[0]); }, error: () => { this.filiaisLoading = false; this.filiaisError = 'Não foi possível carregar as filiais permitidas para este usuário.'; } }); }
-  escolherFilial(filial: FilialPermitida): void { this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id; this.selecionandoFilial = false; this.area = this.destinoInicial; this.atualizarEndereco(this.area, true); if (this.area === 'crm') this.carregar(); }
-  trocarFilial(): void { this.selecionandoFilial = true; this.carregarFiliais(); }
+  escolherFilial(filial: FilialPermitida): void {
+    this.filialSelecionada = filial;
+    if (this.pendenciasDaFilial(filial).length) { this.configuracaoPendenteAberta = true; return; }
+    this.confirmarFilial(filial);
+  }
+  entrarComPendencias(): void { if (this.filialSelecionada) this.confirmarFilial(this.filialSelecionada); }
+  completarConfiguracao(): void {
+    if (!this.filialSelecionada) return;
+    const filial = this.filialSelecionada;
+    this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id;
+    this.configuracaoPendenteAberta = false; this.selecionandoFilial = false;
+    this.destinoInicial = 'configuracao'; this.area = 'configuracao'; this.onboardingPendente = true;
+    window.history.pushState(null, '', '/configuracao');
+  }
+  fecharPendencias(): void { this.configuracaoPendenteAberta = false; this.filialSelecionada = null; }
+  pendenciasDaFilial(filial: FilialPermitida): string[] {
+    const pendencias: string[] = [];
+    if (filial.dadosEmpresaCompletos === false) pendencias.push('Dados da empresa');
+    if (filial.fiscalCompleto === false) pendencias.push('Configurações fiscais');
+    if (filial.usuariosCompletos === false) pendencias.push('Usuários e permissões');
+    if (filial.pdvCompleto === false) pendencias.push('Configuração do PDV');
+    return pendencias;
+  }
+  percentualConfiguracao(filial: FilialPermitida): number { return (4 - this.pendenciasDaFilial(filial).length) * 25; }
+  private confirmarFilial(filial: FilialPermitida): void { this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id; this.filialSelecionada = null; this.configuracaoPendenteAberta = false; this.selecionandoFilial = false; this.area = this.destinoInicial; this.atualizarEndereco(this.area, true); if (this.area === 'crm') this.carregar(); }
+  trocarFilial(): void { this.filialSelecionada = null; this.configuracaoPendenteAberta = false; this.selecionandoFilial = true; this.carregarFiliais(); }
   sair(): void { if (this.logoutLoading) return; this.logoutLoading = true; this.auth.logout().subscribe({ next: () => this.finalizarLogout(), error: () => this.finalizarLogout() }); }
   carregar(): void { if (!this.auth.autenticado) { this.autenticado = false; return; } this.loading = true; this.error = ''; const filial = this.filialAtiva?.id || this.filialId.trim() || undefined; this.crm.carregarPainel(filial, this.diasInatividade).subscribe({ next: dados => { this.inativos = dados.inativos; this.rfv = dados.rfv; this.followups = dados.followups; this.interacoes = dados.interacoes; this.loading = false; }, error: () => { this.loading = false; if (!this.auth.autenticado) { this.autenticado = false; this.loginError = 'Sua sessão expirou. Entre novamente.'; return; } this.error = 'Não foi possível carregar o CRM. Verifique a API e os filtros informados.'; } }); }
   private areaDoCaminho(caminho: string): string { return Object.keys(this.rotas).find(area => this.rotas[area] === caminho) || 'dashboard'; }

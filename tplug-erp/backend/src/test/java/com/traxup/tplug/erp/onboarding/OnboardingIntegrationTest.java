@@ -116,6 +116,10 @@ class OnboardingIntegrationTest {
         assertThat(jdbc.queryForObject("select count(*) from usuario_filiais where tenant_id=?", Integer.class, trial.tenantId())).isEqualTo(3);
         mvc.perform(get("/api/v1/me/filiais").header("Authorization", bearer))
             .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(3))
-            .andExpect(jsonPath("$[0].empresaNome").value("Rede Teste"));
+            .andExpect(jsonPath("$[0].empresaNome").value("Rede Teste"))
+            .andExpect(jsonPath("$[0].dadosEmpresaCompletos").value(true))
+            .andExpect(jsonPath("$[0].fiscalCompleto").value(true))
+            .andExpect(jsonPath("$[0].usuariosCompletos").value(false))
+            .andExpect(jsonPath("$[0].pdvCompleto").value(false));
     }
 }

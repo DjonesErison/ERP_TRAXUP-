@@ -123,6 +123,27 @@ try {
     assert.equal(await page.getByRole('button', { name: 'Baixar PDV indisponível' }).isDisabled(), true);
     assert.equal(new URL(page.url()).pathname, '/dashboard', 'Login leva ao endereço do dashboard');
     assert.equal(await page.getByRole('navigation').getByRole('link', {name:'Visão Geral',exact:true}).getAttribute('href'), '/dashboard');
+    const appearanceButton = page.getByRole('button', { name: 'Aparência', exact: true });
+    assert.equal(await appearanceButton.count(), 1, 'Aparência deve existir uma vez no menu lateral');
+    assert.equal(await page.evaluate(() => {
+      const settings = [...document.querySelectorAll('.nav-link')].find(el => el.textContent?.includes('Configurações'));
+      const appearance = document.querySelector('.appearance-menu');
+      return !!settings && !!appearance && !!(settings.compareDocumentPosition(appearance) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }), true, 'Aparência deve ficar abaixo de Configurações');
+    await appearanceButton.click();
+    await page.getByRole('radio', { name: 'Escuro', exact: true }).click();
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.traxupTheme), 'dark');
+    assert.equal(await page.evaluate(() => localStorage.getItem('traxup_aparencia')), 'escuro');
+    await page.reload();
+    await page.getByRole('heading', { name: 'Olá, boas-vindas!' }).waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.traxupTheme), 'dark', 'Tema deve persistir após recarregar');
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.getByRole('button', { name: 'Aparência', exact: true }).click();
+    await page.getByRole('radio', { name: 'Automático', exact: true }).click();
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.traxupTheme), 'light');
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.waitForFunction(() => document.documentElement.dataset.traxupTheme === 'dark');
+    assert.equal(await page.evaluate(() => localStorage.getItem('traxup_aparencia')), 'automatico');
     await page.getByRole('navigation').getByRole('link', {name:'Vendas',exact:true}).click();
     assert.equal(new URL(page.url()).pathname, '/vendas');
     await page.reload();

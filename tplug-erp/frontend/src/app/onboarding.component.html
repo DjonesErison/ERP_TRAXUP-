@@ -1,96 +1,88 @@
-<main class="config-shell">
- <header class="config-header">
-  <img src="assets/Logo.png" alt="TraxUp — Tecnologia que impulsiona negócios" class="brand">
-  <div class="account"><app-icon name="user"></app-icon><span *ngIf="dados?.nomeUsuario">Olá, {{ dados?.nomeUsuario }}</span><button type="button" (click)="sair.emit()" [disabled]="loading">Sair <app-icon name="arrow"></app-icon></button></div>
+<main class="onboarding-shell">
+ <header class="topbar">
+  <img src="assets/Logo.png" alt="TRAXUP" class="brand">
+  <div class="account"><span>Olá, {{ dados?.nomeUsuario || 'Administrador' }}</span><button type="button" (click)="sair.emit()">Sair</button></div>
  </header>
- <section class="config-panel" aria-labelledby="config-title" [attr.aria-busy]="loading">
-  <div class="eyebrow">PRIMEIRO ACESSO</div>
-  <h1 id="config-title">Bem-vindo ao TraxUp ERP!</h1>
-  <p class="intro">Vamos preparar o sistema para a operação da sua empresa.</p>
-  <div class="progress-label"><strong>Configuração inicial</strong><span>{{ progresso }}% concluído</span></div>
-  <div class="progress" role="progressbar" aria-label="Configuração inicial" [attr.aria-valuenow]="progresso" aria-valuemin="0" aria-valuemax="100"><div [style.width.%]="progresso"></div></div>
-  <p *ngIf="loading" role="status" class="status">Carregando…</p>
-  <p *ngIf="error" role="alert" class="error">{{ error }} <button type="button" *ngIf="!dados" (click)="carregar()">Tentar novamente</button></p>
-  <p *ngIf="mensagem" role="status" class="status">{{ mensagem }}</p>
-  <ng-container *ngIf="etapa === 0">
-   <div class="steps">
-    <button class="step" *ngFor="let item of etapas; let i = index" type="button" [class.first]="i === 0" [class.complete]="completas[i]" (click)="abrir(i + 1)" [disabled]="loading || !dados">
-     <span class="step-icon"><app-icon [name]="item.icon"></app-icon></span>
-     <span class="step-copy"><strong>{{ i + 1 }}. {{ item.titulo }}</strong><span class="description">{{ item.descricao }}</span><span class="badge" [class.required]="item.obrigatoria">{{ completas[i] ? 'Concluído' : item.obrigatoria ? 'Obrigatório' : 'Recomendado' }}</span></span>
-     <span class="done" *ngIf="completas[i]" aria-label="Concluído"><app-icon name="check"></app-icon></span>
-    </button>
-   </div>
-   <div class="info"><app-icon name="help"></app-icon><span>Você poderá revisar essas configurações a qualquer momento.</span></div>
-   <button class="primary start" type="button" [disabled]="loading || !dados" (click)="progresso === 100 ? finalizar() : iniciar()">{{ progresso === 100 ? 'Concluir e entrar no ERP' : 'Iniciar configuração' }} <app-icon name="arrow"></app-icon></button>
-   <button class="later" type="button" [disabled]="loading || !dados" (click)="continuarDepois()">Continuar depois</button>
-  </ng-container>
-  <section *ngIf="etapa > 0 && dados as d" class="detail" aria-labelledby="step-title">
-   <button type="button" class="back" (click)="etapa = 0" [disabled]="loading">← Voltar às etapas</button>
-   <h2 id="step-title">{{ etapa }}. {{ etapas[etapa - 1].titulo }}</h2>
-   <form *ngIf="etapa === 1" #empresaForm="ngForm" (ngSubmit)="salvarEmpresa()">
-    <p>Os dados abaixo vieram do cadastro do trial. Revise e complete o endereço da empresa.</p>
+ <section class="workspace" [attr.aria-busy]="loading">
+  <aside class="intro-panel">
+   <p class="kicker">CONFIGURAÇÃO INICIAL</p>
+   <h1>Prepare sua empresa para começar.</h1>
+   <p>Cadastre a matriz e as filiais informadas no trial. Você poderá revisar tudo antes de entrar no ERP.</p>
+   <div class="company-code"><small>EMPRESA</small><strong>0001</strong><span>{{ dados?.empresa?.nomeFantasia || 'Sua empresa' }}</span></div>
+   <div class="support"><app-icon name="help"></app-icon><span>Precisa de ajuda?<br><b>Falar com suporte</b></span></div>
+  </aside>
+  <section class="content-card">
+   <nav class="stepper" aria-label="Progresso do onboarding">
+    <div *ngFor="let item of etapas; let i=index" class="step" [class.active]="etapa === i+1" [class.done]="etapa > i+1">
+     <span>{{ etapa > i+1 ? '✓' : i+1 }}</span><small>{{ item }}</small>
+    </div>
+   </nav>
+   <div class="progress"><i [style.width.%]="progresso"></i></div>
+   <p class="progress-copy">{{ progresso }}% concluído</p>
+   <div class="alert error" *ngIf="error" role="alert">{{ error }}</div>
+   <div class="alert success" *ngIf="mensagem" role="status">{{ mensagem }}</div>
+   <p class="loading" *ngIf="loading">Salvando informações…</p>
+
+   <form *ngIf="etapa===1 && dados as d" #empresaForm="ngForm" (ngSubmit)="salvarEmpresa()" class="screen">
+    <div class="title"><div><p>ETAPA 1 DE 5</p><h2>Dados da empresa</h2><span>Confirme os dados trazidos do seu cadastro de trial.</span></div><span class="status-pill">Trial ativo</span></div>
+    <div class="summary"><app-icon name="building"></app-icon><div><small>ESTRUTURA CONTRATADA</small><strong>{{ d.empresa.quantidadeLojas }} lojas</strong><span>1 matriz + {{ d.empresa.quantidadeLojas - 1 }} {{ d.empresa.quantidadeLojas === 2 ? 'filial' : 'filiais' }}</span></div></div>
     <div class="fields">
-     <label>Responsável<input [value]="d.empresa.responsavel || ''" readonly></label>
-     <label>CPF/CNPJ<input [value]="d.empresa.cnpj || ''" readonly></label>
-     <label>Razão social<input name="razaoSocial" [(ngModel)]="d.empresa.razaoSocial" required maxlength="200"></label>
-     <label>Nome fantasia<input name="nomeFantasia" [(ngModel)]="d.empresa.nomeFantasia" required maxlength="200"></label>
-     <label>E-mail<input [value]="d.empresa.email || ''" readonly></label>
-     <label>Telefone<input [value]="d.empresa.telefone || ''" readonly></label>
-     <label>Segmento<input [value]="d.empresa.segmento || ''" readonly></label>
-     <label>Quantidade de lojas<input [value]="d.empresa.quantidadeLojas || ''" readonly></label>
-     <label>Nome da filial<input name="nomeFilial" [(ngModel)]="nomeFilial" required maxlength="200"></label>
-     <label>CEP<input name="cep" [(ngModel)]="d.empresa.cep" required pattern="[0-9]{5}-?[0-9]{3}" maxlength="9" autocomplete="postal-code"></label>
-     <label>Endereço<input name="endereco" [(ngModel)]="d.empresa.endereco" required maxlength="200" autocomplete="street-address"></label>
+     <label>Razão social<input name="razao" [(ngModel)]="d.empresa.razaoSocial" required maxlength="200"></label>
+     <label>Nome fantasia<input name="fantasia" [(ngModel)]="d.empresa.nomeFantasia" required maxlength="200"></label>
+     <label>CNPJ<input [value]="d.empresa.cnpj" readonly></label><label>E-mail do responsável<input [value]="d.empresa.email" readonly></label>
+     <label>CEP da matriz<input name="cep" [(ngModel)]="d.empresa.cep" required pattern="[0-9]{5}-?[0-9]{3}"></label>
+     <label>Endereço<input name="endereco" [(ngModel)]="d.empresa.endereco" required maxlength="200"></label>
      <label>Número<input name="numero" [(ngModel)]="d.empresa.numero" required maxlength="20"></label>
      <label>Complemento<input name="complemento" [(ngModel)]="d.empresa.complemento" maxlength="100"></label>
      <label>Bairro<input name="bairro" [(ngModel)]="d.empresa.bairro" required maxlength="100"></label>
-     <label>Cidade<input name="cidade" [(ngModel)]="d.empresa.cidade" required maxlength="100" autocomplete="address-level2"></label>
-     <label>UF<select aria-label="UF" name="uf" [(ngModel)]="d.empresa.uf" required><option value="">Selecione</option><option *ngFor="let uf of ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']" [value]="uf">{{ uf }}</option></select></label>
+     <label>Cidade<input name="cidade" [(ngModel)]="d.empresa.cidade" required maxlength="100"></label>
+     <label>UF<select name="uf" [(ngModel)]="d.empresa.uf" required><option value="">Selecione</option><option *ngFor="let uf of ufs" [value]="uf">{{ uf }}</option></select></label>
     </div>
-    <button type="submit" class="primary" [disabled]="loading || empresaForm.invalid">Salvar e continuar <app-icon name="arrow"></app-icon></button>
+    <div class="actions"><span></span><button class="primary" type="submit" [disabled]="empresaForm.invalid || loading">Salvar e continuar →</button></div>
    </form>
-   <form *ngIf="etapa === 2" #fiscalForm="ngForm" (ngSubmit)="salvarFiscal()">
-    <div class="fields">
-     <label>Regime tributário<select aria-label="Regime tributário" name="regime" [(ngModel)]="fiscal.regimeTributario" (ngModelChange)="fiscal.crt = $event === 'REGIME_NORMAL' ? 3 : 1"><option value="SIMPLES_NACIONAL">Simples Nacional</option><option value="REGIME_NORMAL">Regime normal</option></select></label>
-     <label>CRT<select aria-label="CRT" name="crt" [(ngModel)]="fiscal.crt"><option *ngIf="fiscal.regimeTributario === 'SIMPLES_NACIONAL'" [ngValue]="1">1 — Simples Nacional</option><option *ngIf="fiscal.regimeTributario === 'SIMPLES_NACIONAL'" [ngValue]="2">2 — Excesso de sublimite</option><option *ngIf="fiscal.regimeTributario === 'REGIME_NORMAL'" [ngValue]="3">3 — Regime normal</option></select></label>
-     <label>Ambiente<select aria-label="Ambiente" name="ambiente" [(ngModel)]="fiscal.ambiente"><option value="HOMOLOGACAO">Homologação</option><option value="PRODUCAO">Produção</option></select></label>
-     <label>Série NF-e<input name="serieNfe" type="number" [(ngModel)]="fiscal.serieNfe" required min="1" max="999"></label>
-     <label>Série NFC-e<input name="serieNfce" type="number" [(ngModel)]="fiscal.serieNfce" required min="1" max="999"></label>
+
+   <section *ngIf="etapa===2" class="screen">
+    <div class="title"><div><p>ETAPA 2 DE 5</p><h2>Configuração das lojas</h2><span>Configure as {{ unidades.length }} unidades informadas no trial.</span></div><span class="counter">{{ configuradas }}/{{ unidades.length }} configuradas</span></div>
+    <div class="units">
+     <article *ngFor="let u of unidades; let i=index; trackBy: identificar" [class.ready]="unidadeValida(u)">
+      <div class="unit-icon"><app-icon name="home"></app-icon></div><div class="unit-copy"><div><b>{{ u.nome }}</b><span *ngIf="u.matriz">MATRIZ</span></div><small>Código {{ u.codigo }} · {{ u.cidade || 'Localização pendente' }}<ng-container *ngIf="u.uf">/{{u.uf}}</ng-container></small><em>{{ unidadeValida(u) ? '✓ Configurada' : '○ Pendente' }}</em></div>
+      <button type="button" class="outline" (click)="abrirUnidade(i)">{{ unidadeValida(u) ? 'Revisar' : 'Configurar' }}</button>
+     </article>
     </div>
-    <p class="info">Esta etapa salva o perfil fiscal. Certificado digital e CSC precisam ser configurados antes da emissão de documentos fiscais.</p>
-    <button type="submit" class="primary" [disabled]="loading || fiscalForm.invalid">Salvar e continuar <app-icon name="arrow"></app-icon></button>
-   </form>
-   <div *ngIf="etapa === 3">
-    <p>Confira a equipe cadastrada e atribua um perfil quando necessário.</p>
-    <ul class="team"><li *ngFor="let u of usuarios"><strong>{{ u.nome }}</strong><span>{{ u.email }}</span><span>{{ u.ativo ? 'Ativo' : 'Inativo' }}</span></li></ul>
-    <form #perfilForm="ngForm" (ngSubmit)="atribuirPerfil()">
-     <div class="fields">
-      <label>Usuário<select aria-label="Usuário" name="usuario" [(ngModel)]="usuarioId" required><option value="">Selecione</option><option *ngFor="let u of usuarios" [value]="u.id">{{ u.nome }}</option></select></label>
-      <label>Perfil de acesso<select aria-label="Perfil de acesso" name="perfil" [(ngModel)]="perfilId" required><option value="">Selecione</option><option *ngFor="let p of perfis" [value]="p.id">{{ p.nome }} — {{ p.descricao }}</option></select></label>
-     </div>
-     <button type="submit" class="secondary" [disabled]="loading || perfilForm.invalid">Atribuir perfil</button>
-    </form>
-    <button type="button" class="primary" [disabled]="loading || !usuarios.length" (click)="revisarEquipe()">Equipe revisada, continuar <app-icon name="arrow"></app-icon></button>
-   </div>
-   <form *ngIf="etapa === 4" #pdvForm="ngForm" (ngSubmit)="salvarPdv()">
-    <div class="fields">
-     <label>Terminal<select aria-label="Terminal" name="terminalId" [(ngModel)]="terminalId" (ngModelChange)="carregarPdv()"><option value="">Criar novo terminal</option><option *ngFor="let t of terminais" [value]="t.id">{{ t.nome }}</option></select></label>
-     <ng-container *ngIf="!terminalId">
-      <label>Código do terminal<input name="codigoTerminal" [(ngModel)]="terminal.codigo" required maxlength="64"></label>
-      <label>Nome do terminal<input name="nomeTerminal" [(ngModel)]="terminal.nome" required maxlength="120"></label>
-      <label>Série do terminal<input name="serieTerminal" type="number" [(ngModel)]="terminal.serie" required min="1"></label>
-     </ng-container>
-     <label>Tamanho da impressão<select aria-label="Tamanho da impressão" name="impressao" [(ngModel)]="pdv.tamanhoImpressao"><option value="PEQUENA">Pequena</option><option value="MEDIA">Média</option><option value="GRANDE">Grande</option></select></label>
-     <label class="checkbox"><input type="checkbox" name="justificativa" [(ngModel)]="pdv.exigirJustificativaCancelamento">Exigir justificativa no cancelamento</label>
-     <label class="checkbox"><input type="checkbox" name="autorizacao" [(ngModel)]="pdv.exigirAutorizacaoCancelamento">Exigir autorização no cancelamento</label>
-     <label class="checkbox"><input type="checkbox" name="caixa" [(ngModel)]="pdv.imprimirCaixa">Imprimir no caixa</label>
-     <label class="checkbox"><input type="checkbox" name="cozinha" [(ngModel)]="pdv.imprimirCozinha">Imprimir na cozinha</label>
+    <div class="tip">A matriz utiliza o CNPJ principal. Cada filial pode ter CNPJ e configurações operacionais próprias.</div>
+    <div class="actions"><button class="ghost" type="button" (click)="etapa=1">← Voltar</button><button class="primary" type="button" (click)="revisar()" [disabled]="configuradas!==unidades.length || loading">Revisar unidades →</button></div>
+   </section>
+
+   <form *ngIf="etapa===3 && atual as u" #unidadeForm="ngForm" (ngSubmit)="salvarUnidade()" class="screen">
+    <div class="title"><div><p>ETAPA 3 DE 5 · UNIDADE {{ unidadeAtual+1 }}</p><h2>{{ u.matriz ? 'Configure a matriz' : 'Configure a filial' }}</h2><span>Dados cadastrais, endereço e recursos disponíveis nesta unidade.</span></div><span class="status-pill">{{ u.codigo }}</span></div>
+    <div class="section-title">Identificação</div><div class="fields">
+     <label>Código<input name="codigo" [(ngModel)]="u.codigo" required pattern="[0-9]{3}"></label><label>Nome da unidade<input name="nome" [(ngModel)]="u.nome" required maxlength="200"></label>
+     <label class="wide">CNPJ <small>{{u.matriz?'CNPJ principal':'Opcional durante o trial'}}</small><input name="cnpj" [(ngModel)]="u.cnpj" maxlength="18" [readonly]="u.matriz"></label>
     </div>
-    <button type="submit" class="primary" [disabled]="loading || pdvForm.invalid">Salvar configuração <app-icon name="check"></app-icon></button>
+    <div class="section-title">Endereço</div><div class="fields">
+     <label>CEP<input name="uCep" [(ngModel)]="u.cep" required pattern="[0-9]{5}-?[0-9]{3}"></label><label>Endereço<input name="uEndereco" [(ngModel)]="u.endereco" required maxlength="200"></label>
+     <label>Número<input name="uNumero" [(ngModel)]="u.numero" required maxlength="20"></label><label>Complemento<input name="uComplemento" [(ngModel)]="u.complemento" maxlength="100"></label>
+     <label>Bairro<input name="uBairro" [(ngModel)]="u.bairro" required maxlength="100"></label><label>Cidade<input name="uCidade" [(ngModel)]="u.cidade" required maxlength="100"></label>
+     <label>UF<select name="uUf" [(ngModel)]="u.uf" required><option value="">Selecione</option><option *ngFor="let uf of ufs" [value]="uf">{{uf}}</option></select></label>
+    </div>
+    <div class="section-title inline">Operação <button *ngIf="!u.matriz" type="button" class="link" (click)="copiarMatriz()">Copiar configurações da matriz</button></div>
+    <div class="toggles"><label><input type="checkbox" name="estoque" [(ngModel)]="u.estoqueAtivo"><span></span><b>Estoque</b><small>Controle por unidade</small></label><label><input type="checkbox" name="pdv" [(ngModel)]="u.pdvAtivo"><span></span><b>PDV</b><small>Frente de caixa</small></label><label><input type="checkbox" name="fiscal" [(ngModel)]="u.fiscalAtivo"><span></span><b>Fiscal</b><small>Emissão de documentos</small></label></div>
+    <div class="actions"><button class="ghost" type="button" (click)="etapa=2">← Voltar</button><button class="primary" type="submit" [disabled]="unidadeForm.invalid">Salvar unidade →</button></div>
    </form>
-   <button type="button" class="secondary return-button" (click)="voltar()" [disabled]="loading">← Voltar</button>
+
+   <section *ngIf="etapa===4" class="screen">
+    <div class="title"><div><p>ETAPA 4 DE 5</p><h2>Revise suas unidades</h2><span>Confira os dados antes de concluir a configuração.</span></div><span class="counter ready">Tudo pronto</span></div>
+    <div class="review-head"><span>UNIDADE</span><span>LOCALIZAÇÃO</span><span>RECURSOS</span><span>STATUS</span></div>
+    <div class="review-row" *ngFor="let u of unidades; let i=index"><div><b>{{u.nome}}</b><small>{{u.matriz?'Matriz':'Filial'}} · {{u.codigo}}</small></div><div><b>{{u.cidade}}/{{u.uf}}</b><small>{{u.endereco}}, {{u.numero}}</small></div><div><span class="chip" *ngIf="u.estoqueAtivo">Estoque</span><span class="chip" *ngIf="u.pdvAtivo">PDV</span><span class="chip" *ngIf="u.fiscalAtivo">Fiscal</span></div><div><b class="ok">✓ Configurada</b><button class="link" type="button" (click)="abrirUnidade(i)">Editar</button></div></div>
+    <div class="confirmation"><app-icon name="check"></app-icon><div><b>{{unidades.length}} unidades prontas para uso</b><span>O administrador terá acesso a todas elas e poderá alternar a filial dentro do ERP.</span></div></div>
+    <div class="actions"><button class="ghost" type="button" (click)="etapa=2">← Voltar</button><button class="primary" type="button" (click)="finalizar()" [disabled]="loading">Concluir configuração →</button></div>
+   </section>
+
+   <section *ngIf="etapa===5" class="screen access-screen">
+    <div class="success-mark">✓</div><p class="kicker">CONFIGURAÇÃO CONCLUÍDA</p><h2>Em qual unidade você quer entrar?</h2><p>Escolha sua operação inicial. Você poderá trocar de filial a qualquer momento.</p>
+    <div class="access-grid"><button *ngFor="let u of unidades; let i=index" type="button" [class.featured]="i===0" (click)="entrarNoErp(u)"><span class="unit-icon"><app-icon name="home"></app-icon></span><b>{{u.nome}}</b><small>{{u.matriz?'Matriz':'Filial'}} · {{u.codigo}}</small><em>{{u.cidade}}/{{u.uf}}</em><strong>Entrar no ERP →</strong></button></div>
+   </section>
   </section>
-  <footer><div class="support"><app-icon name="help"></app-icon><span>Precisa de ajuda?</span><button type="button" (click)="ajuda = !ajuda">Falar com suporte</button></div><p *ngIf="ajuda" class="status">Para obter ajuda, entre em contato com o atendimento TraxUp pelo canal informado no seu cadastro.</p><div class="secure"><app-icon name="lock"></app-icon>Ambiente seguro • TraxUp ERP</div></footer>
  </section>
- <div class="signature">MAIS CONTROLE. MAIS RESULTADOS.</div>
+ <footer>Ambiente seguro · TRAXUP ERP <button type="button" (click)="continuarDepois()" *ngIf="etapa<4">Continuar depois</button></footer>
 </main>

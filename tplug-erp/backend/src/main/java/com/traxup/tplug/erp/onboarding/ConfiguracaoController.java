@@ -38,9 +38,44 @@ public class ConfiguracaoController {
   var filiais=jdbc.queryForList("select id,nome,cnpj from filiais where tenant_id=? and ativo=true order by criado_em,id limit 1",t);
   UUID filialId=filiais.isEmpty()?null:(UUID)filiais.getFirst().get("id");
   result.put("filial",filiais.isEmpty()?null:filiais.getFirst());
+  result.put("unidades", jdbc.queryForList("""
+   select id,codigo,nome,cnpj,matriz,cep,endereco,numero,complemento,bairro,cidade,uf,
+          estoque_ativo as "estoqueAtivo",pdv_ativo as "pdvAtivo",fiscal_ativo as "fiscalAtivo",
+          configuracao_concluida as "configuracaoConcluida"
+     from filiais where tenant_id=? and ativo=true order by matriz desc,codigo,id
+   """,t));
   result.put("fiscalConfigurado", filialId!=null && Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from fiscal_perfis_filial where tenant_id=? and filial_id=? and ativo=true)",Boolean.class,t,filialId)));
   result.put("vendasConfiguradas",filialId!=null && Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from pdv_configuracoes c join pdv_terminais p on p.tenant_id=c.tenant_id and p.id=c.terminal_id where c.tenant_id=? and c.filial_id=? and p.ativo=true)",Boolean.class,t,filialId)));
   return result;
+ }
+ @PutMapping("/unidades") @PreAuthorize("hasAuthority('RBAC_GERENCIAR')") @Transactional
+ public Map<String,Object> salvarUnidades(@Valid @RequestBody UnidadesRequest request) {
+  UUID t=context.tenantId(); UUID u=context.usuarioIdOuNulo();
+  Map<String,Object> empresa=jdbc.queryForMap("select id,cnpj from empresas where tenant_id=? order by criado_em,id limit 1",t);
+  UUID empresaId=(UUID)empresa.get("id");
+  Integer limite=jdbc.queryForObject("select quantidade_lojas from trials_saas where tenant_id=?",Integer.class,t);
+  if(limite==null || request.unidades().size()!=limite) throw new IllegalArgumentException("Informe exatamente "+limite+" unidades.");
+  if(request.unidades().stream().filter(UnidadeRequest::matriz).count()!=1) throw new IllegalArgumentException("Defina exatamente uma matriz.");
+  Set<String> codigos=new HashSet<>();
+  for (UnidadeRequest r:request.unidades()) {
+   String codigo=r.codigo().trim(); if(!codigos.add(codigo)) throw new IllegalArgumentException("Os códigos das unidades devem ser únicos.");
+   UUID filialId=r.id();
+   if(filialId==null) {
+    filialId=UUID.randomUUID();
+    jdbc.update("""
+     insert into filiais(id,tenant_id,empresa_id,nome,cnpj,ativo,criado_em,atualizado_em,codigo,matriz,cep,endereco,numero,complemento,bairro,cidade,uf,estoque_ativo,pdv_ativo,fiscal_ativo,configuracao_concluida)
+     values (?,?,?,?,?,true,now(),now(),?,?,?,?,?,?,?,?,?,?,?,?,true)
+     """,filialId,t,empresaId,r.nome().trim(),digitos(r.cnpj()),codigo,r.matriz(),r.cep(),r.endereco().trim(),r.numero().trim(),r.complemento(),r.bairro().trim(),r.cidade().trim(),r.uf(),r.estoqueAtivo(),r.pdvAtivo(),r.fiscalAtivo());
+   } else {
+    int alteradas=jdbc.update("""
+     update filiais set codigo=?,nome=?,cnpj=?,matriz=?,cep=?,endereco=?,numero=?,complemento=?,bairro=?,cidade=?,uf=?,estoque_ativo=?,pdv_ativo=?,fiscal_ativo=?,configuracao_concluida=true,atualizado_em=now()
+      where tenant_id=? and empresa_id=? and id=?
+     """,codigo,r.nome().trim(),digitos(r.cnpj()),r.matriz(),r.cep(),r.endereco().trim(),r.numero().trim(),r.complemento(),r.bairro().trim(),r.cidade().trim(),r.uf(),r.estoqueAtivo(),r.pdvAtivo(),r.fiscalAtivo(),t,empresaId,filialId);
+    if(alteradas==0) throw new IllegalArgumentException("Unidade inválida para esta empresa.");
+   }
+   if(u!=null) jdbc.update("insert into usuario_filiais(tenant_id,usuario_id,filial_id) values (?,?,?) on conflict do nothing",t,u,filialId);
+  }
+  return dados();
  }
  @PutMapping("/empresa") @PreAuthorize("hasAuthority('RBAC_GERENCIAR')") @Transactional
  public Map<String,Object> salvarEmpresa(@Valid @RequestBody EmpresaRequest r) {
@@ -75,4 +110,16 @@ public class ConfiguracaoController {
   @Size(max=100) String complemento, @NotBlank @Size(max=100) String bairro,
   @NotBlank @Size(max=100) String cidade, @NotBlank @Pattern(regexp="AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO") String uf,
   @NotBlank @Size(max=200) String nomeFilial) {}
+ public record UnidadesRequest(@NotEmpty List<@Valid UnidadeRequest> unidades) {}
+ public record UnidadeRequest(UUID id,
+  @NotBlank @Pattern(regexp="[0-9]{3}") String codigo,
+  @NotBlank @Size(max=200) String nome,
+  @Size(max=18) String cnpj, boolean matriz,
+  @NotBlank @Pattern(regexp="[0-9]{5}-?[0-9]{3}") String cep,
+  @NotBlank @Size(max=200) String endereco,@NotBlank @Size(max=20) String numero,
+  @Size(max=100) String complemento,@NotBlank @Size(max=100) String bairro,
+  @NotBlank @Size(max=100) String cidade,
+  @NotBlank @Pattern(regexp="AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO") String uf,
+  boolean estoqueAtivo,boolean pdvAtivo,boolean fiscalAtivo) {}
+ private static String digitos(String valor) { return valor==null||valor.isBlank()?null:valor.replaceAll("\\D",""); }
 }

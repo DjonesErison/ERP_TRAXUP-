@@ -147,7 +147,8 @@ try {
     await page.waitForFunction(() => document.documentElement.dataset.traxupTheme === 'dark');
     assert.equal(await page.evaluate(() => localStorage.getItem('traxup_aparencia')), 'automatico');
     assert.equal(await page.locator('.workspace-profile').count(), 1, 'Cabeçalho deve exibir usuário e perfil');
-    assert.equal(await page.getByRole('button', { name: 'Notificações', exact: true }).count(), 1, 'Cabeçalho deve exibir notificações');
+    assert.equal(await page.locator('.notification-button[aria-label="Notificações"]').count(), 1, 'Cabeçalho deve conter o controle de notificações');
+    assert.equal(await page.locator('.notification-button').isVisible(), viewport.width > 760, 'Notificações devem aparecer no desktop e ficar compactadas no celular');
     assert.match(await page.locator('.workspace-context').innerText(), /Minha operação[\s\S]*Empresa Visual · Filial Visual[\s\S]*CNPJ:/);
     await page.getByRole('navigation').getByRole('link', {name:'Vendas',exact:true}).click();
     assert.equal(new URL(page.url()).pathname, '/vendas');

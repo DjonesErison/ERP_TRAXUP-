@@ -12,6 +12,12 @@ try {
   let empresa = { id: 'empresa-test', responsavel: 'Ana Trial', razaoSocial: 'Trial LTDA', nomeFantasia: 'Trial Loja', cnpj: '12345678000199', email: 'ana@example.test', telefone: '87999999999', segmento: 'Varejo', quantidadeLojas: 2, cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '', empresaRevisada: false, equipeRevisada: false };
   let unidades = []; let concluido = false;
   const dados = () => ({ nomeUsuario: 'Ana Trial', empresa, filial: unidades[0] || null, unidades, fiscalConfigurado: false, vendasConfiguradas: false });
+  await page.route('https://viacep.com.br/**', route => {
+   const cep = new URL(route.request().url()).pathname.split('/')[2];
+   return route.fulfill({ json: cep === '56000000'
+    ? { cep: '56000-000', logradouro: 'Rua Comércio', complemento: '', bairro: 'Centro', localidade: 'Salgueiro', uf: 'PE' }
+    : { cep: '50000-000', logradouro: 'Rua Recife', complemento: '', bairro: 'Boa Vista', localidade: 'Recife', uf: 'PE' } });
+  });
   await page.route('**/api/**', async route => {
    const p = new URL(route.request().url()).pathname;
    if (p === '/api/v1/auth/login') return route.fulfill({ json: { accessToken: 'ui030-fixture', refreshToken: 'ui030-fixture' } });
@@ -50,8 +56,9 @@ try {
   assert.equal(await page.getByLabel('Razão social', { exact: true }).inputValue(), 'Trial LTDA');
   assert.equal(await page.getByLabel('E-mail do responsável', { exact: true }).inputValue(), 'ana@example.test');
   assert.equal(await page.getByRole('button', { name: 'Salvar e continuar' }).isDisabled(), true);
-  for (const [label, value] of Object.entries({ 'CEP da matriz': '56000-000', Endereço: 'Rua Comércio', Número: '42', Bairro: 'Centro', Cidade: 'Salgueiro' })) await page.getByLabel(label, { exact: true }).fill(value);
-  await page.locator('select[name="uf"]').selectOption('PE');
+  await page.getByLabel('CEP da matriz', { exact: true }).fill('56000-000'); await page.getByLabel('Número', { exact: true }).fill('42');
+  await page.getByLabel('Endereço', { exact: true }).waitFor(); await page.waitForFunction(() => document.querySelector('input[name="endereco"]')?.value === 'Rua Comércio');
+  assert.equal(await page.getByLabel('Cidade', { exact: true }).inputValue(), 'Salgueiro'); assert.equal(await page.locator('select[name="uf"]').inputValue(), 'PE');
   await page.getByRole('button', { name: 'Salvar e continuar' }).click();
   await page.getByRole('heading', { name: 'Configuração das lojas' }).waitFor();
   assert.equal(await page.locator('.units article').count(), 2);
@@ -60,8 +67,9 @@ try {
   await page.getByRole('button', { name: 'Salvar unidade' }).click();
   await page.locator('.units article').nth(1).getByRole('button').click();
   await page.getByRole('heading', { name: 'Configure a filial' }).waitFor();
-  for (const [label, value] of Object.entries({ CEP: '50000-000', Endereço: 'Rua Recife', Número: '100', Bairro: 'Boa Vista', Cidade: 'Recife' })) await page.getByLabel(label, { exact: true }).fill(value);
-  await page.locator('select[name="uUf"]').selectOption('PE');
+  await page.getByLabel('CEP', { exact: true }).fill('50000-000'); await page.getByLabel('Número', { exact: true }).fill('100');
+  await page.waitForFunction(() => document.querySelector('input[name="uEndereco"]')?.value === 'Rua Recife');
+  assert.equal(await page.getByLabel('Cidade', { exact: true }).inputValue(), 'Recife'); assert.equal(await page.locator('select[name="uUf"]').inputValue(), 'PE');
   await page.getByRole('button', { name: 'Salvar unidade' }).click();
   await page.getByRole('button', { name: 'Revisar unidades' }).click();
   await page.getByRole('heading', { name: 'Revise suas unidades' }).waitFor();

@@ -20,6 +20,8 @@ import { AtivacaoAdminComponent } from './ativacao-admin.component';
 import { OnboardingComponent } from './onboarding.component';
 import { OnboardingService } from './onboarding.service';
 
+type PreferenciaAparencia = 'claro' | 'escuro' | 'automatico';
+
 @Component({ selector: 'app-root', standalone: true, imports: [AdministracaoComponent, ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, ProdutosComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
   acessoAdministracao = false;
@@ -28,6 +30,10 @@ export class AppComponent implements OnInit {
   readonly rotas: Record<string,string> = {dashboard:'/dashboard',produtos:'/produtos',vendas:'/vendas',compras:'/compras',inventario:'/inventario',financeiro:'/financeiro',contabilidade:'/contabilidade',crm:'/crm',configuracao:'/configuracao'};
   private destinoInicial = 'dashboard';
   area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false; ativacaoAdminToken = ''; exibindoAtivacao = false;
+  aparenciaAberta = false;
+  preferenciaAparencia: PreferenciaAparencia = 'automatico';
+  private readonly consultaTemaEscuro = window.matchMedia('(prefers-color-scheme: dark)');
+  private readonly atualizarTemaAutomatico = () => { if (this.preferenciaAparencia === 'automatico') this.aplicarTema(); };
   readonly menu = [
     { label: 'Visão Geral', icon: 'home', area: 'dashboard' }, { label: 'Vendas', icon: 'cart', area: 'vendas' }, { label: 'Produtos', icon: 'box', area: 'produtos' },
     { label: 'Inventário', icon: 'stock', area: 'inventario' }, { label: 'Clientes', icon: 'users', area: '' }, { label: 'CRM', icon: 'users', area: 'crm' },
@@ -46,6 +52,7 @@ export class AppComponent implements OnInit {
   constructor(private readonly crm: CrmService, private readonly auth: AuthService, private readonly contexto: ContextoOperacionalService, private readonly onboarding: OnboardingService) {}
 
   ngOnInit(): void {
+    this.inicializarAparencia();
     const publicPath = window.location.pathname.replace(/\/+$/, '');
     this.destinoInicial = this.areaDoCaminho(publicPath);
     this.area = this.destinoInicial;
@@ -77,6 +84,26 @@ export class AppComponent implements OnInit {
   }
 
   carregarAcessoAdministracao(): void { this.auth.acessoAdministracao().subscribe(ok => this.acessoAdministracao = ok); }
+
+  alternarAparencia(): void { this.aparenciaAberta = !this.aparenciaAberta; }
+  selecionarAparencia(preferencia: PreferenciaAparencia): void {
+    this.preferenciaAparencia = preferencia;
+    localStorage.setItem('traxup_aparencia', preferencia);
+    this.aplicarTema();
+    this.aparenciaAberta = false;
+  }
+  private inicializarAparencia(): void {
+    const salva = localStorage.getItem('traxup_aparencia');
+    this.preferenciaAparencia = salva === 'claro' || salva === 'escuro' || salva === 'automatico' ? salva : 'automatico';
+    this.aplicarTema();
+    this.consultaTemaEscuro.addEventListener('change', this.atualizarTemaAutomatico);
+  }
+  private aplicarTema(): void {
+    const tema = this.preferenciaAparencia === 'automatico' ? (this.consultaTemaEscuro.matches ? 'dark' : 'light') : (this.preferenciaAparencia === 'escuro' ? 'dark' : 'light');
+    document.documentElement.dataset['traxupTheme'] = tema;
+    document.documentElement.style.colorScheme = tema;
+    document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', tema === 'dark' ? '#041b3f' : '#075fd8');
+  }
 
   iniciarAtivacaoAdmin(token: string): void { this.exibindoAtivacao = true; this.ativacaoAdminToken = token; this.exibindoTrial = false; }
   concluirAtivacaoAdmin(): void { this.exibindoAtivacao = false; window.history.replaceState(null, '', '/entrar'); this.ativacaoAdminToken = ''; this.exibindoTrial = false; this.loginError = ''; this.ativacaoMensagem = 'Senha criada! Entre para configurar sua empresa.'; }

@@ -7,6 +7,10 @@
   --traxup-primary: #bd4e00;
   --traxup-ink: #173353;
   --traxup-canvas: #f3f6fb;
+  --traxup-surface: #ffffff;
+  --traxup-surface-soft: #f0f6fc;
+  --traxup-border: #dce7f2;
+  --traxup-muted: #53618b;
 }
 html, body { margin: 0; min-height: 100%; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--traxup-canvas); }
 body { min-width: 320px; }
@@ -15,3 +19,35 @@ button, a, input, select, textarea { touch-action: manipulation; }
 :focus-visible { outline: 3px solid #1680df; outline-offset: 3px; }
 input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offset: 1px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
+
+/* Tema global do ERP. A preferência é aplicada no elemento html pelo AppComponent. */
+:root[data-traxup-theme="dark"] {
+  --traxup-blue: #36a3ff;
+  --traxup-blue-soft: #0b3260;
+  --traxup-primary: #ff8a1f;
+  --traxup-ink: #eaf4ff;
+  --traxup-canvas: #031a36;
+  --traxup-surface: #07264a;
+  --traxup-surface-soft: #0a315c;
+  --traxup-border: #174a79;
+  --traxup-muted: #a9c1df;
+}
+:root[data-traxup-theme="dark"] body{background:#031a36;color:#eaf4ff}
+:root[data-traxup-theme="dark"] .app-shell{background:#031a36!important;color:#eaf4ff}
+:root[data-traxup-theme="dark"] .workspace-bar{background:#061f40!important;border-color:#174a79!important;box-shadow:0 2px 14px #0005!important}
+:root[data-traxup-theme="dark"] .workspace-context,:root[data-traxup-theme="dark"] .menu-toggle{background:#0a315c!important;color:#dcecff!important}
+:root[data-traxup-theme="dark"] .workspace-scope,:root[data-traxup-theme="dark"] .workspace-scope small{color:#b6cbea!important}
+:root[data-traxup-theme="dark"] .environment-badge{background:#18385b!important;color:#ffbd78!important}
+:root[data-traxup-theme="dark"] app-dashboard,:root[data-traxup-theme="dark"] app-produtos,:root[data-traxup-theme="dark"] app-vendas,:root[data-traxup-theme="dark"] app-compras,:root[data-traxup-theme="dark"] app-contabilidade,:root[data-traxup-theme="dark"] app-conciliacao-financeira,:root[data-traxup-theme="dark"] app-inventario-mobile{color:#eaf4ff!important}
+:root[data-traxup-theme="dark"] .card,:root[data-traxup-theme="dark"] .panel,:root[data-traxup-theme="dark"] .summary-card,:root[data-traxup-theme="dark"] .branch-selector,:root[data-traxup-theme="dark"] .branch-card,:root[data-traxup-theme="dark"] .configuration-dialog,:root[data-traxup-theme="dark"] .modal{background:#07264a!important;border-color:#174a79!important;color:#eaf4ff!important;box-shadow:0 3px 16px #0004!important}
+:root[data-traxup-theme="dark"] h1,:root[data-traxup-theme="dark"] h2,:root[data-traxup-theme="dark"] h3,:root[data-traxup-theme="dark"] strong,:root[data-traxup-theme="dark"] label,:root[data-traxup-theme="dark"] .app-download strong{color:#eaf4ff!important}
+:root[data-traxup-theme="dark"] p,:root[data-traxup-theme="dark"] small,:root[data-traxup-theme="dark"] td,:root[data-traxup-theme="dark"] .today,:root[data-traxup-theme="dark"] .subtitle,:root[data-traxup-theme="dark"] .metric span{color:#a9c1df!important}
+:root[data-traxup-theme="dark"] input,:root[data-traxup-theme="dark"] select,:root[data-traxup-theme="dark"] textarea{background:#041d3c!important;border-color:#285784!important;color:#eaf4ff!important}
+:root[data-traxup-theme="dark"] input::placeholder,:root[data-traxup-theme="dark"] textarea::placeholder{color:#7795b8!important}
+:root[data-traxup-theme="dark"] th{background:#0a315c!important;color:#b8cce5!important}
+:root[data-traxup-theme="dark"] td,:root[data-traxup-theme="dark"] .panel-title,:root[data-traxup-theme="dark"] .followup,:root[data-traxup-theme="dark"] .interaction{border-color:#174a79!important}
+:root[data-traxup-theme="dark"] .chart-empty{background:repeating-linear-gradient(0deg,transparent 0,transparent 45px,#174a79 46px)!important}
+:root[data-traxup-theme="dark"] .period,:root[data-traxup-theme="dark"] .badge,:root[data-traxup-theme="dark"] .note,:root[data-traxup-theme="dark"] .configuration-dialog ul{background:#0a315c!important;border-color:#285784!important;color:#c5d7ec!important}
+:root[data-traxup-theme="dark"] .app-download{background:#0a315c!important}:root[data-traxup-theme="dark"] .remote{background:#3a2a16!important}
+:root[data-traxup-theme="dark"] .alert-item{background:#3b2030!important}:root[data-traxup-theme="dark"] .stock-alert{background:#392b17!important}:root[data-traxup-theme="dark"] .certificate{background:#0b315d!important}
+:root[data-traxup-theme="dark"] .selected{background:#0b3767!important}

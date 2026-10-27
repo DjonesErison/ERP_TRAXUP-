@@ -37,6 +37,8 @@ export class UiIconComponent {
     download: 'M12 2v14M6 10l6 6 6-6M4 17v5h16v-5',
     help: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM9 8a3 3 0 0 1 6 0c0 2-3 2-3 5M12 17h.01',
     bell: 'M4 17h16l-2-4V8a6 6 0 0 0-12 0v5l-2 4ZM10 21h4',
+    sun: 'M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z',
+    moon: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z',
     building: 'M4 22V2h12v20M16 10h5v12M8 6h4M8 10h4M8 14h4M9 22v-4h3v4',
     grid: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z'
   };

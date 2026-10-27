@@ -1,8 +1,11 @@
-# Captação de clientes — Trial
+# Fluxo oficial de homologação — Trial e ERP
 
-Subdomínio público: `captacaoclientes.traxup.com.br`.
+1. Cadastro de trial: https://apphomologacao.traxup.com.br/trial
+2. Ativação: https://apphomologacao.traxup.com.br/ativar — usar o link com token enviado por e-mail.
+3. Login: https://apphomologacao.traxup.com.br/entrar
+4. Configuração inicial: https://apphomologacao.traxup.com.br/onboarding
+5. Dashboard: https://apphomologacao.traxup.com.br/dashboard
 
-Esta promoção registra a liberação do fluxo de captação já validado em homologação:
-cadastro → ativação do administrador → onboarding → primeiro acesso.
+Os e-mails de ativação e recuperação enviados pelo ambiente de homologação utilizam a origem `https://apphomologacao.traxup.com.br`, mantendo o token no fragmento do link. O endereço de configuração anterior `/configuracao` permanece aceito. O subdomínio `captacaoclientes.traxup.com.br` continua disponível por compatibilidade; não representa um ambiente de produção separado.
 
-O subdomínio usa o mesmo frontend/API do ambiente homologado e é roteado pelo Caddy.
+Deploys de homologação não executam a antiga limpeza de simulações automaticamente: os cadastros atuais devem ser preservados. Limpezas exigem procedimento separado e backup verificado.

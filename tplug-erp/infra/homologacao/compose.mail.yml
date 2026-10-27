@@ -7,7 +7,7 @@ services:
       SMTP_PORT: "465"
       SMTP_USERNAME: naoresponda@traxup.com.br
       SMTP_FROM: naoresponda@traxup.com.br
-      TRIAL_PUBLIC_URL: https://captacaoclientes.traxup.com.br
+      TRIAL_PUBLIC_URL: https://apphomologacao.traxup.com.br
     volumes:
       - type: bind
         source: /opt/traxup-homologacao/secrets/smtp-password

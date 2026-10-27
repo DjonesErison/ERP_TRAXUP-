@@ -100,8 +100,8 @@ export class AppComponent implements OnInit {
     });
   }
 
-  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { if (!s.empresaConfigurada) { this.auth.limparSessao(); this.contexto.limpar(); this.autenticado = false; this.onboardingPendente = false; this.loginError = 'Esta sessão não possui uma empresa cadastrada. Entre pelo link de acesso do e-mail de confirmação do seu cadastro.'; return; } this.onboardingPendente = !s.concluido || window.location.pathname === '/configuracao'; if (this.onboardingPendente) window.history.replaceState(null, '', '/configuracao'); if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = true; window.history.replaceState(null, '', '/configuracao'); } }); }
-  onboardingConcluido(): void { window.history.replaceState(null, '', '/'); this.onboardingPendente = false; this.selecionandoFilial = true; this.carregarFiliais(); }
+  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { if (!s.empresaConfigurada) { this.auth.limparSessao(); this.contexto.limpar(); this.autenticado = false; this.onboardingPendente = false; this.loginError = 'Esta sessão não possui uma empresa cadastrada. Entre pelo link de acesso do e-mail de confirmação do seu cadastro.'; return; } this.onboardingPendente = !s.concluido || ['/configuracao', '/onboarding'].includes(window.location.pathname); if (this.onboardingPendente) window.history.replaceState(null, '', window.location.pathname === '/configuracao' && s.concluido ? '/configuracao' : '/onboarding'); if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = true; window.history.replaceState(null, '', window.location.pathname === '/configuracao' ? '/configuracao' : '/onboarding'); } }); }
+  onboardingConcluido(): void { this.destinoInicial = 'dashboard'; this.area = 'dashboard'; window.history.replaceState(null, '', '/dashboard'); this.onboardingPendente = false; this.selecionandoFilial = true; this.carregarFiliais(); }
 
   carregarFiliais(): void { if (!this.auth.autenticado || this.filiaisLoading) return; this.filiaisLoading = true; this.filiaisError = ''; this.contexto.listarFiliais().subscribe({ next: filiais => { this.filiais = filiais; this.filiaisLoading = false; if (filiais.length === 1) this.escolherFilial(filiais[0]); }, error: () => { this.filiaisLoading = false; this.filiaisError = 'Não foi possível carregar as filiais permitidas para este usuário.'; } }); }
   escolherFilial(filial: FilialPermitida): void { this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id; this.selecionandoFilial = false; this.area = this.destinoInicial; this.atualizarEndereco(this.area, true); if (this.area === 'crm') this.carregar(); }
@@ -130,7 +130,7 @@ export class AppComponent implements OnInit {
     this.administracao = caminho === '/administracao';
     if (this.administracao) return;
     this.destinoInicial = this.areaDoCaminho(caminho);
-    if (caminho === '/configuracao' || this.onboardingPendente) { this.verificarOnboarding(); return; }
+    if (['/configuracao', '/onboarding'].includes(caminho) || this.onboardingPendente) { this.verificarOnboarding(); return; }
     this.area = this.destinoInicial;
     if (this.area === 'crm' && !this.selecionandoFilial) this.carregar();
   }

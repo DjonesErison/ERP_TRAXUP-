@@ -59,6 +59,14 @@ class OnboardingIntegrationTest {
             .andExpect(status().isOk()).andExpect(jsonPath("$.empresa.empresaRevisada").value(true))
             .andExpect(jsonPath("$.empresa.endereco").value("Rua do Comércio"))
             .andExpect(jsonPath("$.filial.nome").value("Loja Matriz"));
+        mvc.perform(put("/api/v1/onboarding/configuracao/empresa/dados").header("Authorization", bearer)
+            .contentType(MediaType.APPLICATION_JSON).content("""
+            {"razaoSocial":"Loja LTDA","nomeFantasia":"Loja Nova","cep":"56000-000",
+             "endereco":"Rua Nova","numero":"42","complemento":"","bairro":"Centro",
+             "cidade":"Salgueiro","uf":"PE","nomeFilial":"Não deve alterar filial"}
+            """))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.empresa.nomeFantasia").value("Loja Nova"))
+            .andExpect(jsonPath("$.filial.nome").value("Loja Matriz"));
         mvc.perform(post("/api/v1/onboarding/configuracao/adiar").header("Authorization", bearer))
             .andExpect(status().isOk());
         mvc.perform(get("/api/v1/onboarding").header("Authorization", bearer))
@@ -121,5 +129,19 @@ class OnboardingIntegrationTest {
             .andExpect(jsonPath("$[0].fiscalCompleto").value(true))
             .andExpect(jsonPath("$[0].usuariosCompletos").value(false))
             .andExpect(jsonPath("$[0].pdvCompleto").value(false));
+        String filialId = jdbc.queryForObject("select id::text from filiais where tenant_id=? and nome='Filial Recife'", String.class, trial.tenantId());
+        String alteracao = """
+            {"nome":"Filial Recife Nova","cep":"50000-000","endereco":"Rua Recife",
+             "numero":"2","complemento":"","bairro":"Centro","cidade":"Recife","uf":"PE"}
+            """;
+        mvc.perform(put("/api/v1/onboarding/configuracao/filiais/{id}/dados", filialId)
+            .header("Authorization", bearer).contentType(MediaType.APPLICATION_JSON).content(alteracao))
+            .andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("select nome from filiais where id=?::uuid", String.class, filialId)).isEqualTo("Filial Recife Nova");
+        jdbc.update("delete from usuario_filiais where tenant_id=? and filial_id=?::uuid", trial.tenantId(), filialId);
+        mvc.perform(put("/api/v1/onboarding/configuracao/filiais/{id}/dados", filialId)
+            .header("Authorization", bearer).contentType(MediaType.APPLICATION_JSON).content(alteracao.replace("Nova", "Sem Acesso")))
+            .andExpect(status().isNotFound());
+        assertThat(jdbc.queryForObject("select nome from filiais where id=?::uuid", String.class, filialId)).isEqualTo("Filial Recife Nova");
     }
 }

@@ -9,7 +9,7 @@ try {
  for (const viewport of [{ width: 1536, height: 1024 }, { width: 390, height: 844 }]) {
   const page = await browser.newPage({ viewport });
   const errors = []; page.on('pageerror', e => errors.push(e.message));
-  let empresa = { id: 'empresa-test', responsavel: 'Ana Trial', razaoSocial: 'Trial LTDA', nomeFantasia: 'Trial Loja', cnpj: '12345678000199', email: 'ana@example.test', telefone: '87999999999', segmento: 'Varejo', quantidadeLojas: 2, cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '', empresaRevisada: false, equipeRevisada: false };
+  let empresa = { id: 'empresa-test', codigoEmpresa: '0042', responsavel: 'Ana Trial', razaoSocial: 'Trial LTDA', nomeFantasia: 'Trial Loja', cnpj: '12345678000199', email: 'ana@example.test', telefone: '87999999999', segmento: 'Varejo', quantidadeLojas: 2, cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '', empresaRevisada: false, equipeRevisada: false };
   let unidades = []; let concluido = false;
   const dados = () => ({ nomeUsuario: 'Ana Trial', empresa, filial: unidades[0] || null, unidades, fiscalConfigurado: false, vendasConfiguradas: false });
   await page.route('**/api/**', async route => {
@@ -45,6 +45,7 @@ try {
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await page.getByRole('heading', { name: 'Prepare sua empresa para começar.' }).waitFor();
   await page.getByRole('heading', { name: 'Dados da empresa' }).waitFor();
+  assert.equal(await page.locator('.company-code strong').innerText(), '0042', 'Código exibido deve ser o da empresa autenticada');
   assert.equal(new URL(page.url()).pathname, '/onboarding');
   assert.deepEqual(await page.locator('.step small').allTextContents(), ['Empresa', 'Lojas', 'Unidade', 'Revisão', 'Acesso']);
   await page.locator('.brand').evaluate(image => image.decode());

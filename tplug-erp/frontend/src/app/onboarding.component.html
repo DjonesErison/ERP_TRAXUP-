@@ -8,7 +8,7 @@
    <p class="kicker">CONFIGURAÇÃO INICIAL</p>
    <h1>Prepare sua empresa para começar.</h1>
    <p>Cadastre a matriz e as filiais informadas no trial. Você poderá revisar tudo antes de entrar no ERP.</p>
-   <div class="company-code"><small>EMPRESA</small><strong>0001</strong><span>{{ dados?.empresa?.nomeFantasia || 'Sua empresa' }}</span></div>
+   <div class="company-code"><small>EMPRESA</small><strong>{{ dados?.empresa?.codigoEmpresa || '—' }}</strong><span>{{ dados?.empresa?.nomeFantasia || 'Sua empresa' }}</span></div>
    <div class="support"><app-icon name="help"></app-icon><span>Precisa de ajuda?<br><b>Falar com suporte</b></span></div>
   </aside>
   <section class="content-card">

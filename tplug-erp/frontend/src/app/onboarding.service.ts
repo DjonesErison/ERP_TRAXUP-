@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 export interface OnboardingStatus { concluido: boolean; empresaConfigurada: boolean; filialConfigurada: boolean; }
 export interface EmpresaInicial {
- id: string; razaoSocial: string; nomeFantasia: string; cnpj: string; email: string;
+ id: string; codigoEmpresa: string; razaoSocial: string; nomeFantasia: string; cnpj: string; email: string;
  telefone: string; segmento: string; quantidadeLojas: number; responsavel: string;
  cep: string; endereco: string; numero: string; complemento: string; bairro: string; cidade: string; uf: string;
  empresaRevisada: boolean; equipeRevisada: boolean;

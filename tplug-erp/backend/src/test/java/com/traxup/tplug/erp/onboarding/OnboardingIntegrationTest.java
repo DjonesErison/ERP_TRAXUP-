@@ -42,6 +42,7 @@ class OnboardingIntegrationTest {
             "outra@example.test", "Serviços", 2, true, "2026-09", UUID.randomUUID().toString()));
         mvc.perform(get("/api/v1/onboarding/configuracao").header("Authorization", bearer))
             .andExpect(status().isOk()).andExpect(jsonPath("$.nomeUsuario").value("Ana"))
+            .andExpect(jsonPath("$.empresa.codigoEmpresa").value(trial.codigoEmpresa()))
             .andExpect(jsonPath("$.empresa.razaoSocial").value("Loja LTDA"))
             .andExpect(jsonPath("$.empresa.nomeFantasia").value("Loja"))
             .andExpect(jsonPath("$.empresa.email").value("ana@example.test"))

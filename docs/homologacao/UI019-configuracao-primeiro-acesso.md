@@ -41,3 +41,5 @@ Migration V112 atribui ADMIN ao administrador registrado do trial quando ele ain
 não possui nenhum perfil, dentro do tenant correspondente. Novos trials usam o
 mesmo bootstrap. Vínculos de perfil existentes são preservados. O login precisa
 ser renovado para carregar permissões adicionadas a trials anteriores.
+
+O código de empresa apresentado na configuração inicial vem do tenant autenticado; não é um valor fixo.

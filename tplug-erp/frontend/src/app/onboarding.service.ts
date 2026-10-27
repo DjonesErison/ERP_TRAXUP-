@@ -18,6 +18,7 @@ export interface ConfiguracaoInicial {
  nomeUsuario: string; empresa: EmpresaInicial; filial: { id: string; nome: string; cnpj: string } | null;
  unidades: UnidadeOnboarding[]; fiscalConfigurado: boolean; vendasConfiguradas: boolean;
 }
+export interface EnderecoCep { cep: string; logradouro: string; complemento: string; bairro: string; localidade: string; uf: string; erro?: boolean; }
 
 @Injectable({ providedIn: 'root' })
 export class OnboardingService {
@@ -27,5 +28,6 @@ export class OnboardingService {
  dados(): Observable<ConfiguracaoInicial> { return this.http.get<ConfiguracaoInicial>('/api/v1/onboarding/configuracao'); }
  salvarEmpresa(dados: object): Observable<ConfiguracaoInicial> { return this.http.put<ConfiguracaoInicial>('/api/v1/onboarding/configuracao/empresa', dados); }
  salvarUnidades(unidades: UnidadeOnboarding[]): Observable<ConfiguracaoInicial> { return this.http.put<ConfiguracaoInicial>('/api/v1/onboarding/configuracao/unidades', { unidades }); }
+ buscarCep(cep: string): Observable<EnderecoCep> { return this.http.get<EnderecoCep>(`/api/v1/cep/${cep.replace(/\D/g, '')}`); }
  adiar(): Observable<void> { return this.http.post<void>('/api/v1/onboarding/configuracao/adiar', {}); }
 }

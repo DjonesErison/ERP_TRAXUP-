@@ -19,7 +19,8 @@ class TrialActivationMailTest {
         var d=delivery(); var message=service.message(d);
         assertThat(message.getTo()).containsExactly(d.email());
         assertThat(message.getFrom()).isEqualTo("naoresponda@traxup.com.br");
-        assertThat(message.getText()).contains("https://apphomologacao.traxup.com.br/ativar#token=personal-token&empresa="+d.codigoEmpresa(),"email=ana%2Bteste%40example.test","https://apphomologacao.traxup.com.br/entrar#empresa=", "30/09/2026 às 12:00", "crie sua senha").doesNotContain("Senha:","smtp-password",d.tenantId().toString());
+        assertThat(message.getText()).contains("https://apphomologacao.traxup.com.br/ativar#token=personal-token&empresa="+d.codigoEmpresa(),"email=ana%2Bteste%40example.test", "30/09/2026 às 12:00", "crie sua senha").doesNotContain("/entrar", "Senha:","smtp-password",d.tenantId().toString());
+        assertThat(message.getText().split("https://", -1)).hasSize(2);
         service.send(d);verify(sender).send(message);
     }
     @Test void rejeitaUrlInsegura() {

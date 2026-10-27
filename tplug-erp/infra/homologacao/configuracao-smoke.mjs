@@ -12,14 +12,11 @@ try {
   let empresa = { id: 'empresa-test', responsavel: 'Ana Trial', razaoSocial: 'Trial LTDA', nomeFantasia: 'Trial Loja', cnpj: '12345678000199', email: 'ana@example.test', telefone: '87999999999', segmento: 'Varejo', quantidadeLojas: 2, cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '', empresaRevisada: false, equipeRevisada: false };
   let unidades = []; let concluido = false;
   const dados = () => ({ nomeUsuario: 'Ana Trial', empresa, filial: unidades[0] || null, unidades, fiscalConfigurado: false, vendasConfiguradas: false });
-  await page.route('https://viacep.com.br/**', route => {
-   const cep = new URL(route.request().url()).pathname.split('/')[2];
-   return route.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: cep === '56000000'
-    ? { cep: '56000-000', logradouro: 'Rua Comércio', complemento: '', bairro: 'Centro', localidade: 'Salgueiro', uf: 'PE' }
-    : { cep: '50000-000', logradouro: 'Rua Recife', complemento: '', bairro: 'Boa Vista', localidade: 'Recife', uf: 'PE' } });
-  });
   await page.route('**/api/**', async route => {
    const p = new URL(route.request().url()).pathname;
+   if (p.startsWith('/api/v1/cep/')) return route.fulfill({ json: p.endsWith('56000000')
+    ? { cep: '56000-000', logradouro: 'Rua Comércio', complemento: '', bairro: 'Centro', localidade: 'Salgueiro', uf: 'PE' }
+    : { cep: '50000-000', logradouro: 'Rua Recife', complemento: '', bairro: 'Boa Vista', localidade: 'Recife', uf: 'PE' } });
    if (p === '/api/v1/auth/login') return route.fulfill({ json: { accessToken: 'ui030-fixture', refreshToken: 'ui030-fixture' } });
    if (p === '/api/v1/onboarding') return route.fulfill({ json: { concluido, empresaConfigurada: true, filialConfigurada: unidades.length > 0 } });
    if (p === '/api/v1/onboarding/configuracao' && route.request().method() === 'GET') return route.fulfill({ json: dados() });

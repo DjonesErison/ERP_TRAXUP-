@@ -81,4 +81,40 @@ class OnboardingIntegrationTest {
         assertThat(jdbc.queryForObject("select count(*) from usuario_filiais uf join trials_saas t on t.tenant_id=uf.tenant_id and t.administrador_id=uf.usuario_id where t.id=?", Integer.class, trial.trialId())).isEqualTo(1);
         assertThat(jdbc.queryForObject("select onboarding_status from trials_saas where id=?", String.class, trial.trialId())).isEqualTo("CONCLUIDO");
     }
+
+    @Test void onboardingMultilojaPersisteMatrizFiliaisEAcessoDoAdministrador() throws Exception {
+        var trial = provisioning.provisionar(new TrialCadastroRequest(
+            "Bruno", "Rede Teste", "Rede Teste LTDA", "45723111000188", "87977777777",
+            "bruno.multiloja@example.test", "Varejo", 3, true, "2026-10", UUID.randomUUID().toString()));
+        mvc.perform(post("/api/v1/auth/ativacao-admin/confirmar").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"token\":\"" + trial.ativacaoToken() + "\",\"novaSenha\":\"SenhaTeste123!\"}"))
+            .andExpect(status().isNoContent());
+        var login = mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"tenantId\":\"" + trial.tenantId() + "\",\"email\":\"bruno.multiloja@example.test\",\"senha\":\"SenhaTeste123!\"}"))
+            .andExpect(status().isOk()).andReturn();
+        String bearer = "Bearer " + mapper.readTree(login.getResponse().getContentAsString()).get("accessToken").asText();
+        mvc.perform(put("/api/v1/onboarding/configuracao/empresa").header("Authorization", bearer)
+            .contentType(MediaType.APPLICATION_JSON).content("""
+            {"razaoSocial":"Rede Teste LTDA","nomeFantasia":"Rede Teste","cep":"56000-000",
+             "endereco":"Rua Matriz","numero":"1","complemento":"","bairro":"Centro",
+             "cidade":"Salgueiro","uf":"PE","nomeFilial":"Matriz"}
+            """))
+            .andExpect(status().isOk());
+        String matrizId = jdbc.queryForObject("select id::text from filiais where tenant_id=?", String.class, trial.tenantId());
+        mvc.perform(put("/api/v1/onboarding/configuracao/unidades").header("Authorization", bearer)
+            .contentType(MediaType.APPLICATION_JSON).content("""
+            {"unidades":[
+             {"id":"%s","codigo":"001","nome":"Matriz","cnpj":"45723111000188","matriz":true,"cep":"56000-000","endereco":"Rua Matriz","numero":"1","complemento":"","bairro":"Centro","cidade":"Salgueiro","uf":"PE","estoqueAtivo":true,"pdvAtivo":true,"fiscalAtivo":true},
+             {"codigo":"002","nome":"Filial Recife","cnpj":"","matriz":false,"cep":"50000-000","endereco":"Rua Recife","numero":"2","complemento":"","bairro":"Centro","cidade":"Recife","uf":"PE","estoqueAtivo":true,"pdvAtivo":true,"fiscalAtivo":false},
+             {"codigo":"003","nome":"Filial Petrolina","cnpj":"","matriz":false,"cep":"56300-000","endereco":"Rua Petrolina","numero":"3","complemento":"","bairro":"Centro","cidade":"Petrolina","uf":"PE","estoqueAtivo":true,"pdvAtivo":true,"fiscalAtivo":false}
+            ]}
+            """.formatted(matrizId)))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.unidades.length()").value(3));
+        assertThat(jdbc.queryForObject("select count(*) from filiais where tenant_id=? and ativo=true", Integer.class, trial.tenantId())).isEqualTo(3);
+        assertThat(jdbc.queryForObject("select count(*) from filiais where tenant_id=? and matriz=true", Integer.class, trial.tenantId())).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from usuario_filiais where tenant_id=?", Integer.class, trial.tenantId())).isEqualTo(3);
+        mvc.perform(get("/api/v1/me/filiais").header("Authorization", bearer))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(3))
+            .andExpect(jsonPath("$[0].empresaNome").value("Rede Teste"));
+    }
 }

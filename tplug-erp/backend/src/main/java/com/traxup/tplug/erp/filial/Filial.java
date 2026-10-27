@@ -39,6 +39,12 @@ public class Filial {
     @Column(name = "cnpj", length = 14)
     private String cnpj;
 
+    @Column(name = "codigo", nullable = false, length = 20)
+    private String codigo = "001";
+
+    @Column(name = "matriz", nullable = false)
+    private boolean matriz = true;
+
     @Column(name = "ativo", nullable = false)
     private boolean ativo = true;
 
@@ -56,6 +62,8 @@ public class Filial {
         this.empresa = empresa;
         this.nome = nome;
         this.cnpj = cnpj;
+        this.codigo = "001";
+        this.matriz = true;
         this.ativo = true;
     }
 

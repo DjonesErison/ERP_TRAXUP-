@@ -8,6 +8,10 @@ export interface FilialPermitida {
   empresaNome?: string | null;
   nome: string;
   cnpj?: string | null;
+  codigo?: string | null;
+  matriz?: boolean;
+  cidade?: string | null;
+  uf?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

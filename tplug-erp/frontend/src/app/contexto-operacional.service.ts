@@ -12,6 +12,10 @@ export interface FilialPermitida {
   matriz?: boolean;
   cidade?: string | null;
   uf?: string | null;
+  dadosEmpresaCompletos?: boolean;
+  fiscalCompleto?: boolean;
+  usuariosCompletos?: boolean;
+  pdvCompleto?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

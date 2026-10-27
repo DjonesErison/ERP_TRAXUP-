@@ -8,11 +8,13 @@ await mkdir(out, { recursive: true });
 try {
   for (const viewport of [{ width: 1536, height: 1024 }, { width: 390, height: 844 }]) {
     const page = await browser.newPage({ viewport });
+    await page.addInitScript(() => localStorage.setItem('traxup_aparencia', 'escuro'));
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => { if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) errors.push(message.text()); });
     await page.goto(process.argv[2]);
     await page.getByRole('heading', { name: 'Acesse seu ERP' }).waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.traxupTheme), 'light', 'Login deve permanecer no tema claro oficial');
     const logo = page.locator('.login-shell img:visible').first();
     await logo.evaluate(image => image.decode());
     assert.match(await logo.getAttribute('src'), /^assets\/Logo\.png$/, 'Usar a logomarca oficial TRAXUP 2.0');
@@ -23,9 +25,11 @@ try {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no login');
     await page.screenshot({ path: `${out}/login-${viewport.width}.png`, fullPage: true });
     const trialPage = await browser.newPage({ viewport });
+    await trialPage.addInitScript(() => localStorage.setItem('traxup_aparencia', 'escuro'));
     await trialPage.goto(`${process.argv[2]}/teste`);
     await trialPage.getByRole('heading', { name: /Seu negócio mais simples, mais eficiente/ }).waitFor({ state: 'attached' });
     await trialPage.getByRole('heading', { name: 'Comece seu teste gratuito' }).waitFor();
+    assert.equal(await trialPage.evaluate(() => document.documentElement.dataset.traxupTheme), 'light', 'Trial deve permanecer no tema claro oficial');
     await trialPage.getByText('PDV completo', { exact: true }).waitFor({ state: 'attached' });
     await trialPage.getByText('Gestão integrada', { exact: true }).waitFor({ state: 'attached' });
     await trialPage.getByText('Acesso em qualquer lugar', { exact: true }).waitFor({ state: 'attached' });
@@ -50,6 +54,12 @@ try {
     assert.equal(await trialPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow no trial');
     await trialPage.screenshot({ path: `${out}/trial-${viewport.width}.png`, fullPage: true });
     await trialPage.close();
+    const activationPage = await browser.newPage({ viewport });
+    await activationPage.addInitScript(() => localStorage.setItem('traxup_aparencia', 'escuro'));
+    await activationPage.goto(`${process.argv[2]}/ativar#empresa=0042&email=visual%40example.test&token=${'a'.repeat(43)}`);
+    await activationPage.locator('app-ativacao-admin').waitFor();
+    assert.equal(await activationPage.evaluate(() => document.documentElement.dataset.traxupTheme), 'light', 'Ativação deve permanecer no tema claro oficial');
+    await activationPage.close();
     await page.getByLabel('Empresa (4 dígitos)', { exact: true }).fill('0042');
     await page.getByLabel('E-mail', { exact: true }).fill('visual@example.test');
     await page.getByLabel('Senha', { exact: true }).fill('somente-teste-visual');
@@ -120,6 +130,7 @@ try {
     assert.match(pendingText, /Usuários e permissões/);
     await pendingDialog.getByRole('button', { name: 'Agora não' }).click();
     await page.getByRole('heading', { name: 'Olá, boas-vindas!' }).waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.traxupTheme), 'dark', 'Tema escuro salvo só deve ser aplicado após entrar no ERP');
     await page.getByText('TESTE-001', { exact: true }).waitFor();
     assert.equal(await page.locator('.summary-card').nth(1).locator('strong').innerText(), '21');
     assert.equal(await page.locator('.summary-card').nth(0).locator('strong').innerText(), '—');

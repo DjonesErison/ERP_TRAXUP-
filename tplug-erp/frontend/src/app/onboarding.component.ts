@@ -10,6 +10,7 @@ export class OnboardingComponent implements OnInit {
  @Output() sair = new EventEmitter<void>();
  dados?: ConfiguracaoInicial;
  etapa = 1; loading = false; error = ''; mensagem = ''; unidadeAtual = 0;
+ cepEmpresaLoading = false; cepUnidadeLoading = false; cepEmpresaError = ''; cepUnidadeError = '';
  unidades: UnidadeOnboarding[] = [];
  readonly ufs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
  readonly etapas = ['Empresa','Lojas','Unidade','Revisão','Acesso'];
@@ -43,6 +44,16 @@ export class OnboardingComponent implements OnInit {
   this.service.salvarEmpresa({ ...e, nomeFilial: this.unidades[0]?.nome || 'Matriz' }).subscribe({ next: d => { this.dados = d; this.prepararUnidades(d); this.loading = false; this.etapa = 2; }, error: err => this.falha(err) });
  }
  abrirUnidade(index: number): void { this.unidadeAtual = index; this.etapa = 3; this.error = ''; this.mensagem = ''; }
+ buscarCepEmpresa(): void {
+  if (!this.dados || this.cepEmpresaLoading) return; const cep = this.dados.empresa.cep.replace(/\D/g, '');
+  this.cepEmpresaError = ''; if (cep.length !== 8) return; this.cepEmpresaLoading = true;
+  this.service.buscarCep(cep).subscribe({ next: endereco => { this.cepEmpresaLoading = false; if (endereco.erro) { this.cepEmpresaError = 'CEP não encontrado.'; return; } const e = this.dados!.empresa; e.cep = endereco.cep; e.endereco = endereco.logradouro || e.endereco; e.bairro = endereco.bairro || e.bairro; e.cidade = endereco.localidade || e.cidade; e.uf = endereco.uf || e.uf; if (!e.complemento && endereco.complemento) e.complemento = endereco.complemento; }, error: () => { this.cepEmpresaLoading = false; this.cepEmpresaError = 'Não foi possível consultar o CEP. Preencha o endereço manualmente.'; } });
+ }
+ buscarCepUnidade(): void {
+  if (!this.atual || this.cepUnidadeLoading) return; const cep = this.atual.cep.replace(/\D/g, '');
+  this.cepUnidadeError = ''; if (cep.length !== 8) return; this.cepUnidadeLoading = true;
+  this.service.buscarCep(cep).subscribe({ next: endereco => { this.cepUnidadeLoading = false; if (endereco.erro) { this.cepUnidadeError = 'CEP não encontrado.'; return; } const u = this.atual; u.cep = endereco.cep; u.endereco = endereco.logradouro || u.endereco; u.bairro = endereco.bairro || u.bairro; u.cidade = endereco.localidade || u.cidade; u.uf = endereco.uf || u.uf; if (!u.complemento && endereco.complemento) u.complemento = endereco.complemento; }, error: () => { this.cepUnidadeLoading = false; this.cepUnidadeError = 'Não foi possível consultar o CEP. Preencha o endereço manualmente.'; } });
+ }
  copiarMatriz(): void {
   if (this.unidadeAtual === 0) return; const m = this.unidades[0]; const u = this.atual;
   Object.assign(u, { estoqueAtivo: m.estoqueAtivo, pdvAtivo: m.pdvAtivo, fiscalAtivo: m.fiscalAtivo });

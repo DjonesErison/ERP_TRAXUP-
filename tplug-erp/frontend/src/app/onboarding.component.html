@@ -30,7 +30,7 @@
      <label>Razão social<input name="razao" [(ngModel)]="d.empresa.razaoSocial" required maxlength="200"></label>
      <label>Nome fantasia<input name="fantasia" [(ngModel)]="d.empresa.nomeFantasia" required maxlength="200"></label>
      <label>CNPJ<input [value]="d.empresa.cnpj" readonly></label><label>E-mail do responsável<input [value]="d.empresa.email" readonly></label>
-     <label>CEP da matriz<input name="cep" [(ngModel)]="d.empresa.cep" required pattern="[0-9]{5}-?[0-9]{3}"></label>
+     <label>CEP da matriz<input name="cep" [(ngModel)]="d.empresa.cep" (blur)="buscarCepEmpresa()" required pattern="[0-9]{5}-?[0-9]{3}" inputmode="numeric" autocomplete="postal-code"><small class="cep-feedback" *ngIf="cepEmpresaLoading">Consultando CEP…</small><small class="cep-feedback invalid" *ngIf="cepEmpresaError">{{cepEmpresaError}}</small></label>
      <label>Endereço<input name="endereco" [(ngModel)]="d.empresa.endereco" required maxlength="200"></label>
      <label>Número<input name="numero" [(ngModel)]="d.empresa.numero" required maxlength="20"></label>
      <label>Complemento<input name="complemento" [(ngModel)]="d.empresa.complemento" maxlength="100"></label>
@@ -60,7 +60,7 @@
      <label class="wide">CNPJ <small>{{u.matriz?'CNPJ principal':'Opcional durante o trial'}}</small><input name="cnpj" [(ngModel)]="u.cnpj" maxlength="18" [readonly]="u.matriz"></label>
     </div>
     <div class="section-title">Endereço</div><div class="fields">
-     <label>CEP<input name="uCep" [(ngModel)]="u.cep" required pattern="[0-9]{5}-?[0-9]{3}"></label><label>Endereço<input name="uEndereco" [(ngModel)]="u.endereco" required maxlength="200"></label>
+     <label>CEP<input name="uCep" [(ngModel)]="u.cep" (blur)="buscarCepUnidade()" required pattern="[0-9]{5}-?[0-9]{3}" inputmode="numeric" autocomplete="postal-code"><small class="cep-feedback" *ngIf="cepUnidadeLoading">Consultando CEP…</small><small class="cep-feedback invalid" *ngIf="cepUnidadeError">{{cepUnidadeError}}</small></label><label>Endereço<input name="uEndereco" [(ngModel)]="u.endereco" required maxlength="200"></label>
      <label>Número<input name="uNumero" [(ngModel)]="u.numero" required maxlength="20"></label><label>Complemento<input name="uComplemento" [(ngModel)]="u.complemento" maxlength="100"></label>
      <label>Bairro<input name="uBairro" [(ngModel)]="u.bairro" required maxlength="100"></label><label>Cidade<input name="uCidade" [(ngModel)]="u.cidade" required maxlength="100"></label>
      <label>UF<select name="uUf" [(ngModel)]="u.uf" required><option value="">Selecione</option><option *ngFor="let uf of ufs" [value]="uf">{{uf}}</option></select></label>

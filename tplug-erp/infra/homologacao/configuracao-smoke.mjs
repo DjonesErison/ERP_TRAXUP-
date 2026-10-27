@@ -51,7 +51,7 @@ try {
   assert.equal(await page.getByLabel('E-mail do responsável', { exact: true }).inputValue(), 'ana@example.test');
   assert.equal(await page.getByRole('button', { name: 'Salvar e continuar' }).isDisabled(), true);
   for (const [label, value] of Object.entries({ 'CEP da matriz': '56000-000', Endereço: 'Rua Comércio', Número: '42', Bairro: 'Centro', Cidade: 'Salgueiro' })) await page.getByLabel(label, { exact: true }).fill(value);
-  await page.getByLabel('UF', { exact: true }).selectOption('PE');
+  await page.locator('select[name="uf"]').selectOption('PE');
   await page.getByRole('button', { name: 'Salvar e continuar' }).click();
   await page.getByRole('heading', { name: 'Configuração das lojas' }).waitFor();
   assert.equal(await page.locator('.units article').count(), 2);
@@ -61,7 +61,7 @@ try {
   await page.locator('.units article').nth(1).getByRole('button').click();
   await page.getByRole('heading', { name: 'Configure a filial' }).waitFor();
   for (const [label, value] of Object.entries({ CEP: '50000-000', Endereço: 'Rua Recife', Número: '100', Bairro: 'Boa Vista', Cidade: 'Recife' })) await page.getByLabel(label, { exact: true }).fill(value);
-  await page.getByLabel('UF', { exact: true }).selectOption('PE');
+  await page.locator('select[name="uUf"]').selectOption('PE');
   await page.getByRole('button', { name: 'Salvar unidade' }).click();
   await page.getByRole('button', { name: 'Revisar unidades' }).click();
   await page.getByRole('heading', { name: 'Revise suas unidades' }).waitFor();

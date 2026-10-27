@@ -19,10 +19,11 @@ import { TrialComponent } from './trial.component';
 import { AtivacaoAdminComponent } from './ativacao-admin.component';
 import { OnboardingComponent } from './onboarding.component';
 import { OnboardingService } from './onboarding.service';
+import { ConfiguracoesComponent } from './configuracoes.component';
 
 type PreferenciaAparencia = 'claro' | 'escuro' | 'automatico';
 
-@Component({ selector: 'app-root', standalone: true, imports: [AdministracaoComponent, ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, ProdutosComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
+@Component({ selector: 'app-root', standalone: true, imports: [ConfiguracoesComponent, AdministracaoComponent, ReenviarAtivacaoComponent, CommonModule, FormsModule, InventarioMobileComponent, ContabilidadeComponent, ConciliacaoFinanceiraComponent, VendasComponent, ComprasComponent, ProdutosComponent, DashboardComponent, UiIconComponent, TrialComponent, AtivacaoAdminComponent, OnboardingComponent], templateUrl: './app.component.html', styleUrl: './app.component.css' })
 export class AppComponent implements OnInit {
   acessoAdministracao = false;
   administracao = window.location.pathname.replace(/\/+$/, '') === '/administracao';
@@ -143,7 +144,7 @@ export class AppComponent implements OnInit {
     });
   }
 
-  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { if (!s.empresaConfigurada) { this.auth.limparSessao(); this.contexto.limpar(); this.autenticado = false; this.onboardingPendente = false; this.loginError = 'Esta sessão não possui uma empresa cadastrada. Entre pelo link de acesso do e-mail de confirmação do seu cadastro.'; return; } this.onboardingPendente = !s.concluido || ['/configuracao', '/onboarding'].includes(window.location.pathname); if (this.onboardingPendente) window.history.replaceState(null, '', window.location.pathname === '/configuracao' && s.concluido ? '/configuracao' : '/onboarding'); if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = true; window.history.replaceState(null, '', window.location.pathname === '/configuracao' ? '/configuracao' : '/onboarding'); } }); }
+  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { if (!s.empresaConfigurada) { this.auth.limparSessao(); this.contexto.limpar(); this.autenticado = false; this.onboardingPendente = false; this.loginError = 'Esta sessão não possui uma empresa cadastrada. Entre pelo link de acesso do e-mail de confirmação do seu cadastro.'; return; } this.onboardingPendente = !s.concluido || window.location.pathname === '/onboarding'; if (this.onboardingPendente) window.history.replaceState(null, '', '/onboarding'); if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = true; window.history.replaceState(null, '', '/onboarding'); } }); }
   onboardingConcluido(filialId = ''): void { this.destinoInicial = 'dashboard'; this.area = 'dashboard'; this.filialPosOnboardingId = filialId; window.history.replaceState(null, '', '/dashboard'); this.onboardingPendente = false; this.selecionandoFilial = true; this.carregarFiliais(); }
 
   carregarFiliais(): void { if (!this.auth.autenticado || this.filiaisLoading) return; this.filiaisLoading = true; this.filiaisError = ''; this.contexto.listarFiliais().subscribe({ next: filiais => { this.filiais = filiais; this.filiaisLoading = false; const escolhida = this.filialPosOnboardingId ? filiais.find(f => f.id === this.filialPosOnboardingId) : undefined; this.filialPosOnboardingId = ''; if (escolhida) this.escolherFilial(escolhida); else if (filiais.length === 1) this.escolherFilial(filiais[0]); }, error: () => { this.filiaisLoading = false; this.filiaisError = 'Não foi possível carregar as filiais permitidas para este usuário.'; } }); }
@@ -158,7 +159,7 @@ export class AppComponent implements OnInit {
     const filial = this.filialSelecionada;
     this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id;
     this.configuracaoPendenteAberta = false; this.selecionandoFilial = false;
-    this.destinoInicial = 'configuracao'; this.area = 'configuracao'; this.onboardingPendente = true;
+    this.destinoInicial = 'configuracao'; this.area = 'configuracao'; this.onboardingPendente = false;
     window.history.pushState(null, '', '/configuracao');
   }
   fecharPendencias(): void { this.configuracaoPendenteAberta = false; this.filialSelecionada = null; }
@@ -201,7 +202,6 @@ export class AppComponent implements OnInit {
     if (!this.rotas[area] || !this.autenticado || this.selecionandoFilial) return;
     this.destinoInicial = area;
     this.atualizarEndereco(area);
-    if (area === 'configuracao') { this.onboardingPendente = true; return; }
     this.area = area; if (area === 'crm') this.carregar();
   }
   @HostListener('window:popstate')
@@ -211,7 +211,7 @@ export class AppComponent implements OnInit {
     this.administracao = caminho === '/administracao';
     if (this.administracao) return;
     this.destinoInicial = this.areaDoCaminho(caminho);
-    if (['/configuracao', '/onboarding'].includes(caminho) || this.onboardingPendente) { this.verificarOnboarding(); return; }
+    if (caminho === '/onboarding' || this.onboardingPendente) { this.verificarOnboarding(); return; }
     this.area = this.destinoInicial;
     if (this.area === 'crm' && !this.selecionandoFilial) this.carregar();
   }

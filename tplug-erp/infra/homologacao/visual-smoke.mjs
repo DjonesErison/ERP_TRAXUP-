@@ -74,6 +74,9 @@ try {
       if (url.endsWith('/auth/logout')) return route.fulfill({ status: 204 });
       const path = new URL(url).pathname;
       if (path === '/api/v1/onboarding') return route.fulfill({ json: { concluido: true, empresaConfigurada: true, filialConfigurada: true } });
+      if (path === '/api/v1/onboarding/configuracao') return route.fulfill({ json: {
+        empresa: { codigoEmpresa:'0042', cnpj:'00000000000100', razaoSocial:'Empresa Visual LTDA', nomeFantasia:'Empresa Visual', email:'visual@example.test', telefone:'00000000000', cep:'56000-000', endereco:'Rua Visual', numero:'1', complemento:'', bairro:'Centro', cidade:'Petrolina', uf:'PE' }, unidades: [], filial: null
+      } });
       if (path === '/api/v1/me/filiais') return route.fulfill({ json: [
         { id: '00000000-0000-4000-8000-000000000101', nome: 'Matriz Visual', cnpj: '00000000000100', empresaId: '00000000-0000-4000-8000-000000000201', empresaNome: 'Empresa Visual', matriz: true, cidade: 'Petrolina', uf: 'PE', dadosEmpresaCompletos: true, fiscalCompleto: true, usuariosCompletos: true, pdvCompleto: true },
         { id: '00000000-0000-4000-8000-000000000102', nome: 'Filial Visual', cnpj: '00000000000200', empresaId: '00000000-0000-4000-8000-000000000201', empresaNome: 'Empresa Visual', matriz: false, cidade: 'Salvador', uf: 'BA', dadosEmpresaCompletos: true, fiscalCompleto: false, usuariosCompletos: false, pdvCompleto: true }
@@ -106,6 +109,7 @@ try {
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
     await page.getByRole('navigation', { name: 'Menu principal' }).waitFor();
     await page.getByRole('heading', { name: 'Escolha onde deseja trabalhar' }).waitFor();
+    await page.locator('.branch-card').nth(1).waitFor();
     assert.equal(await page.locator('.branch-card').count(), 2);
     assert.match(await page.locator('.branch-card').nth(1).innerText(), /Configuração 50%/);
     await page.locator('.branch-card').nth(1).getByRole('button', { name: 'Selecionar' }).click();
@@ -123,6 +127,15 @@ try {
     assert.equal(await page.getByRole('button', { name: 'Baixar PDV indisponível' }).isDisabled(), true);
     assert.equal(new URL(page.url()).pathname, '/dashboard', 'Login leva ao endereço do dashboard');
     assert.equal(await page.getByRole('navigation').getByRole('link', {name:'Visão Geral',exact:true}).getAttribute('href'), '/dashboard');
+    await page.getByRole('navigation', { name: 'Menu principal' }).getByRole('link', { name: 'Configurações', exact: true }).click();
+    await page.getByRole('heading', { name: 'Dados da empresa', exact: true }).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/configuracao', 'Configurações do dashboard não devem abrir o onboarding');
+    assert.equal(await page.getByLabel('Nome fantasia').inputValue(), 'Empresa Visual');
+    await page.getByRole('navigation', { name: 'Categorias de configurações' }).getByRole('button', { name: /Usuários e permissões/ }).click();
+    await page.getByRole('heading', { name: 'Usuários e permissões', exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Overflow nas configurações');
+    await page.getByRole('navigation', { name: 'Menu principal' }).getByRole('link', { name: 'Visão Geral', exact: true }).click();
+    await page.getByRole('heading', { name: 'Olá, boas-vindas!' }).waitFor();
     const appearanceButton = page.getByRole('button', { name: 'Aparência', exact: true });
     assert.equal(await appearanceButton.count(), 1, 'Aparência deve existir uma vez no menu lateral');
     assert.equal(await appearanceButton.evaluate(button => getComputedStyle(button).backgroundColor), 'rgba(0, 0, 0, 0)', 'Aparência deve usar o padrão compacto do menu, sem botão laranja');

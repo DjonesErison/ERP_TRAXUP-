@@ -93,6 +93,36 @@ public class ConfiguracaoController {
   jdbc.update("update filiais set nome=?,atualizado_em=now() where tenant_id=? and id=?",r.nomeFilial().trim(),t,filialId);
   return dados();
  }
+ @PutMapping("/empresa/dados") @PreAuthorize("hasAuthority('RBAC_GERENCIAR')") @Transactional
+ public Map<String,Object> atualizarDadosEmpresa(@Valid @RequestBody EmpresaRequest r) {
+  UUID t=context.tenantId();
+  int n=jdbc.update("update empresas set razao_social=?,nome_fantasia=?,atualizado_em=now() where tenant_id=? and id=(select id from empresas where tenant_id=? order by criado_em,id limit 1)",r.razaoSocial().trim(),r.nomeFantasia().trim(),t,t);
+  if(n!=1) throw new IllegalArgumentException("Empresa não encontrada.");
+  jdbc.update("""
+   insert into onboarding_configuracoes(tenant_id,cep,endereco,numero,complemento,bairro,cidade,uf,empresa_revisada)
+   values (?,?,?,?,?,?,?,?,true) on conflict(tenant_id) do update set cep=excluded.cep,
+   endereco=excluded.endereco,numero=excluded.numero,complemento=excluded.complemento,bairro=excluded.bairro,
+   cidade=excluded.cidade,uf=excluded.uf,empresa_revisada=true,atualizado_em=now()
+   """,t,r.cep(),r.endereco().trim(),r.numero().trim(),r.complemento(),r.bairro().trim(),r.cidade().trim(),r.uf());
+  return dados();
+ }
+ @PutMapping("/filiais/{filialId}/dados") @PreAuthorize("hasAuthority('RBAC_GERENCIAR')") @Transactional
+ public Map<String,Object> atualizarFilial(@PathVariable UUID filialId,@Valid @RequestBody FilialDadosRequest r) {
+  UUID tenant=context.tenantId(); UUID usuario=context.usuarioIdOuNulo();
+  int n=jdbc.update("""
+   update filiais set nome=?,cep=?,endereco=?,numero=?,complemento=?,bairro=?,cidade=?,uf=?,atualizado_em=now()
+    where tenant_id=? and id=? and ativo=true and exists
+      (select 1 from usuario_filiais where tenant_id=? and usuario_id=? and filial_id=?)
+   """,r.nome().trim(),r.cep(),r.endereco().trim(),r.numero().trim(),r.complemento(),r.bairro().trim(),r.cidade().trim(),r.uf(),tenant,filialId,tenant,usuario,filialId);
+  if(n!=1) throw new com.traxup.tplug.erp.shared.exception.RecursoNaoEncontradoException("Filial não encontrada ou sem acesso.");
+  return dados();
+ }
+ public record FilialDadosRequest(@NotBlank @Size(max=200) String nome,
+   @NotBlank @Pattern(regexp="[0-9]{5}-?[0-9]{3}") String cep,
+   @NotBlank @Size(max=200) String endereco,@NotBlank @Size(max=20) String numero,
+   @Size(max=100) String complemento,@NotBlank @Size(max=100) String bairro,
+   @NotBlank @Size(max=100) String cidade,
+   @NotBlank @Pattern(regexp="AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO") String uf) {}
  @PutMapping("/equipe-revisada") @PreAuthorize("hasAuthority('RBAC_GERENCIAR')")
  public Map<String,Object> revisarEquipe() {
   jdbc.update("insert into onboarding_configuracoes(tenant_id,equipe_revisada) values (?,true) on conflict(tenant_id) do update set equipe_revisada=true,atualizado_em=now()",context.tenantId());

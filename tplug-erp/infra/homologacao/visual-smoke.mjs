@@ -133,13 +133,16 @@ try {
     await page.locator('app-vendas').waitFor();
     await page.goForward();
     await page.locator('app-dashboard').waitFor();
-    await page.getByLabel('Buscar pedido', {exact:true}).fill('TESTE-001');
+    assert.equal(await page.getByLabel('Buscar pedido', {exact:true}).count(), 0);
+    assert.equal(await page.locator('.brand img').getAttribute('src'), 'assets/Logo.png');
+    assert.match(await page.locator('.workspace-scope').innerText(), /CNPJ: 00\.000\.000\/0002-00/);
     await page.getByLabel('Período', {exact:true}).selectOption({label:'Últimos 7 dias'});
     const [pedidoRequest] = await Promise.all([
-      page.waitForRequest(request => request.url().includes('/vendas/pedidos/recentes') && new URL(request.url()).searchParams.get('numero') === 'TESTE-001'),
+      page.waitForRequest(request => request.url().includes('/vendas/pedidos/recentes') && new URL(request.url()).searchParams.has('inicio')),
       page.getByRole('button',{name:'Atualizar dashboard',exact:true}).click()
     ]);
     const filtro = new URL(pedidoRequest.url()).searchParams;
+    assert.equal(filtro.has('numero'), false);
     assert.equal(filtro.get('filialId'), '00000000-0000-4000-8000-000000000102');
     assert.match(filtro.get('inicio'), /^\d{4}-\d{2}-\d{2}T00:00:00Z$/);
     assert.match(filtro.get('fim'), /^\d{4}-\d{2}-\d{2}T23:59:59Z$/);
@@ -185,6 +188,7 @@ try {
     await page.getByRole('heading', { name: 'Escolha onde deseja trabalhar' }).waitFor();
     await page.locator('.branch-card').first().getByRole('button', { name: 'Selecionar' }).click();
     await page.getByText('TESTE-001', { exact: true }).waitFor();
+    assert.match(await page.locator('.workspace-scope').innerText(), /CNPJ: 00\.000\.000\/0001-00/);
     assert.equal(refreshCount, 1, 'A renovação da sessão deve ocorrer uma vez');
     assert.equal(await page.evaluate(() => localStorage.getItem('traxup_login_hint')), null);
     salesMode = 'expired';

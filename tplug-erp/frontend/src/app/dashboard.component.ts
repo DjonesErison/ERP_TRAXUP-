@@ -19,7 +19,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   @Output() sessaoExpirada = new EventEmitter<void>();
   readonly hoje = new Date();
   periodo = 0;
-  busca = '';
   atualizadoEm?: Date;
   vendas: VendaRecente[] = [];
   totalPedidos: number | null = null;
@@ -39,7 +38,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.totalPedidos = null; this.vendas = [];
     const fim = new Date(); const inicio = new Date(fim);
     inicio.setUTCDate(inicio.getUTCDate() - Math.max(0, this.periodo - 1));
-    const filtros = {filialId: this.contexto.filialAtiva?.id, numero: this.busca.trim(),
+    const filtros = {filialId: this.contexto.filialAtiva?.id,
       ...(this.periodo ? {inicio: inicio.toISOString().slice(0,10), fim: fim.toISOString().slice(0,10)} : {})};
     this.request = this.service.listarRecentes(0, 5, filtros).subscribe({
       next: pagina => {

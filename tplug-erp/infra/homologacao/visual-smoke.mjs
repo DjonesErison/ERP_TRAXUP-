@@ -125,6 +125,8 @@ try {
     assert.equal(await page.getByRole('navigation').getByRole('link', {name:'Visão Geral',exact:true}).getAttribute('href'), '/dashboard');
     const appearanceButton = page.getByRole('button', { name: 'Aparência', exact: true });
     assert.equal(await appearanceButton.count(), 1, 'Aparência deve existir uma vez no menu lateral');
+    assert.equal(await appearanceButton.evaluate(button => getComputedStyle(button).backgroundColor), 'rgba(0, 0, 0, 0)', 'Aparência deve usar o padrão compacto do menu, sem botão laranja');
+    assert.equal(await appearanceButton.evaluate(button => button.getBoundingClientRect().height < 60), true, 'Aparência não deve ficar superdimensionada');
     assert.equal(await page.evaluate(() => {
       const settings = [...document.querySelectorAll('.nav-link')].find(el => el.textContent?.includes('Configurações'));
       const appearance = document.querySelector('.appearance-menu');
@@ -144,6 +146,9 @@ try {
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.waitForFunction(() => document.documentElement.dataset.traxupTheme === 'dark');
     assert.equal(await page.evaluate(() => localStorage.getItem('traxup_aparencia')), 'automatico');
+    assert.equal(await page.locator('.workspace-profile').count(), 1, 'Cabeçalho deve exibir usuário e perfil');
+    assert.equal(await page.getByRole('button', { name: 'Notificações', exact: true }).count(), 1, 'Cabeçalho deve exibir notificações');
+    assert.match(await page.locator('.workspace-context').innerText(), /Minha operação[\s\S]*Empresa Visual · Filial Visual[\s\S]*CNPJ:/);
     await page.getByRole('navigation').getByRole('link', {name:'Vendas',exact:true}).click();
     assert.equal(new URL(page.url()).pathname, '/vendas');
     await page.reload();

@@ -37,6 +37,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offs
 :root[data-traxup-theme="dark"] .workspace-bar{background:#061f40!important;border-color:#174a79!important;box-shadow:0 2px 14px #0005!important}
 :root[data-traxup-theme="dark"] .workspace-context,:root[data-traxup-theme="dark"] .menu-toggle{background:#0a315c!important;color:#dcecff!important}
 :root[data-traxup-theme="dark"] .workspace-scope,:root[data-traxup-theme="dark"] .workspace-scope small{color:#b6cbea!important}
+:root[data-traxup-theme="dark"] .workspace-scope strong,:root[data-traxup-theme="dark"] .profile-copy strong{color:#eaf4ff!important}
+:root[data-traxup-theme="dark"] .branch-switch{background:#0a315c!important;color:#dcecff!important}
+:root[data-traxup-theme="dark"] .notification-button{color:#dcecff!important}:root[data-traxup-theme="dark"] .notification-button:hover{background:#0a315c!important}:root[data-traxup-theme="dark"] .notification-dot{box-shadow:0 0 0 2px #061f40}
+:root[data-traxup-theme="dark"] .profile-copy small{color:#a9c1df!important}
 :root[data-traxup-theme="dark"] .environment-badge{background:#18385b!important;color:#ffbd78!important}
 :root[data-traxup-theme="dark"] app-dashboard,:root[data-traxup-theme="dark"] app-produtos,:root[data-traxup-theme="dark"] app-vendas,:root[data-traxup-theme="dark"] app-compras,:root[data-traxup-theme="dark"] app-contabilidade,:root[data-traxup-theme="dark"] app-conciliacao-financeira,:root[data-traxup-theme="dark"] app-inventario-mobile{color:#eaf4ff!important}
 :root[data-traxup-theme="dark"] .card,:root[data-traxup-theme="dark"] .panel,:root[data-traxup-theme="dark"] .summary-card,:root[data-traxup-theme="dark"] .branch-selector,:root[data-traxup-theme="dark"] .branch-card,:root[data-traxup-theme="dark"] .configuration-dialog,:root[data-traxup-theme="dark"] .modal{background:#07264a!important;border-color:#174a79!important;color:#eaf4ff!important;box-shadow:0 3px 16px #0004!important}

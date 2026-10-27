@@ -15,11 +15,11 @@ class TrialActivationMailTest {
     }
     @Test void linkTemContextoEFragmentoSemSenha() {
         var sender=mock(JavaMailSender.class);
-        var service=new TrialActivationMail(sender,"naoresponda@traxup.com.br","https://captacaoclientes.traxup.com.br/");
+        var service=new TrialActivationMail(sender,"naoresponda@traxup.com.br","https://apphomologacao.traxup.com.br/");
         var d=delivery(); var message=service.message(d);
         assertThat(message.getTo()).containsExactly(d.email());
         assertThat(message.getFrom()).isEqualTo("naoresponda@traxup.com.br");
-        assertThat(message.getText()).contains("/ativar#token=personal-token&empresa="+d.codigoEmpresa(),"email=ana%2Bteste%40example.test","/entrar#empresa=", "30/09/2026 às 12:00", "crie sua senha").doesNotContain("Senha:","smtp-password",d.tenantId().toString());
+        assertThat(message.getText()).contains("https://apphomologacao.traxup.com.br/ativar#token=personal-token&empresa="+d.codigoEmpresa(),"email=ana%2Bteste%40example.test","https://apphomologacao.traxup.com.br/entrar#empresa=", "30/09/2026 às 12:00", "crie sua senha").doesNotContain("Senha:","smtp-password",d.tenantId().toString());
         service.send(d);verify(sender).send(message);
     }
     @Test void rejeitaUrlInsegura() {

@@ -39,7 +39,7 @@ try {
   await page.getByLabel('Senha', { exact: true }).fill('SenhaVisual123!');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await page.getByRole('heading', { name: 'Bem-vindo ao TraxUp ERP!' }).waitFor();
-  assert.equal(new URL(page.url()).pathname, '/configuracao');
+  assert.equal(new URL(page.url()).pathname, '/onboarding');
   await page.getByText('Olá, Ana Trial').waitFor();
   assert.deepEqual(await page.locator('.step-copy strong').allTextContents(), ['1. Dados da empresa', '2. Configuração fiscal', '3. Usuários e permissões', '4. Vendas e PDV']);
   assert.equal(await page.locator('[role=progressbar]').getAttribute('aria-valuenow'), '0');
@@ -73,6 +73,7 @@ try {
   await page.getByRole('button', { name: 'Continuar depois' }).click();
   assert.equal(skipped, true);
   await page.locator('app-onboarding').waitFor({ state: 'detached' });
+  assert.equal(new URL(page.url()).pathname, '/dashboard');
   assert.deepEqual(errors, []);
   await page.close();
  }

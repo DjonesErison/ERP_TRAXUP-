@@ -109,6 +109,7 @@ try {
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
     await page.getByRole('navigation', { name: 'Menu principal' }).waitFor();
     await page.getByRole('heading', { name: 'Escolha onde deseja trabalhar' }).waitFor();
+    await page.locator('.branch-card').nth(1).waitFor();
     assert.equal(await page.locator('.branch-card').count(), 2);
     assert.match(await page.locator('.branch-card').nth(1).innerText(), /Configuração 50%/);
     await page.locator('.branch-card').nth(1).getByRole('button', { name: 'Selecionar' }).click();

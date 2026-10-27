@@ -19,6 +19,10 @@ export class AuthService {
     return this.http.post<TokenResponse>(`${this.baseUrl}/login`, payload).pipe(tap(tokens => this.salvarTokens(tokens, this.tenantDoToken(tokens.accessToken))));
   }
 
+  trocarUsuario(tenantId: string, email: string, senha: string): Observable<TokenResponse> {
+    return this.http.post<TokenResponse>(`${this.baseUrl}/login`, { tenantId, email, senha }).pipe(tap(tokens => this.salvarTokens(tokens, tenantId)));
+  }
+
   acessoAdministracao(): Observable<boolean> { return this.http.get<{permitido:boolean}>('/api/v1/saas/acesso').pipe(map(r=>r.permitido),catchError(()=>of(false))); }
 
   solicitarRecuperacao(codigoEmpresa: string, email: string): Observable<void> {

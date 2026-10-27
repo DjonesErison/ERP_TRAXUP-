@@ -22,12 +22,12 @@ public class ConfiguracaoController {
  public Map<String,Object> dados() {
   UUID t=context.tenantId();
   var empresas=jdbc.queryForList("""
-   SELECT e.id, e.razao_social AS "razaoSocial", e.nome_fantasia AS "nomeFantasia", coalesce(t.documento,e.cnpj) AS cnpj,
+   SELECT e.id, tenant.codigo_empresa AS "codigoEmpresa", e.razao_social AS "razaoSocial", e.nome_fantasia AS "nomeFantasia", coalesce(t.documento,e.cnpj) AS cnpj,
           t.email, t.telefone, t.segmento, t.quantidade_lojas AS "quantidadeLojas",
           a.nome AS "responsavel", c.cep, c.endereco, c.numero, c.complemento, c.bairro, c.cidade, c.uf,
           coalesce(c.empresa_revisada,false) AS "empresaRevisada",
           coalesce(c.equipe_revisada,false) AS "equipeRevisada"
-   FROM empresas e LEFT JOIN trials_saas t ON t.empresa_id=e.id AND t.tenant_id=e.tenant_id
+   FROM empresas e JOIN tenants tenant ON tenant.id=e.tenant_id LEFT JOIN trials_saas t ON t.empresa_id=e.id AND t.tenant_id=e.tenant_id
    LEFT JOIN usuarios a ON a.id=t.administrador_id AND a.tenant_id=e.tenant_id
    LEFT JOIN onboarding_configuracoes c ON c.tenant_id=e.tenant_id
    WHERE e.tenant_id=? ORDER BY e.criado_em,e.id LIMIT 1

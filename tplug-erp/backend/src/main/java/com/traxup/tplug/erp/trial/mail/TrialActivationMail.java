@@ -23,7 +23,6 @@ public class TrialActivationMail {
     public SimpleMailMessage message(TrialEmailQueue.Delivery d) {
         String context="empresa="+d.codigoEmpresa()+"&email="+URLEncoder.encode(d.email(),StandardCharsets.UTF_8);
         String activation=publicUrl+"/ativar#token="+d.token()+"&"+context;
-        String login=publicUrl+"/entrar#"+context;
         var message=new SimpleMailMessage();
         message.setFrom(from);message.setTo(d.email());
         message.setSubject("TRAXUP | Confirme seu cadastro e crie sua senha");
@@ -39,7 +38,6 @@ public class TrialActivationMail {
             Seus dados de acesso:
             Empresa: %s
             E-mail: %s
-            Acessar a plataforma: %s
             Seu teste grátis termina em: %s (horário de Brasília).
 
             Após criar a senha, entre para configurar sua empresa e começar a usar a TRAXUP.
@@ -48,7 +46,7 @@ public class TrialActivationMail {
 
             Equipe TRAXUP
             Tecnologia que impulsiona negócios
-            """.formatted(d.name(),activation,d.codigoEmpresa(),d.email(),login,DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm").withZone(ZoneId.of("America/Recife")).format(d.expiresAt())));
+            """.formatted(d.name(),activation,d.codigoEmpresa(),d.email(),DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm").withZone(ZoneId.of("America/Recife")).format(d.expiresAt())));
         return message;
     }
     public void send(TrialEmailQueue.Delivery delivery) { sender.send(message(delivery)); }

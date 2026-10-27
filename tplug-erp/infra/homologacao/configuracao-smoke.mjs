@@ -14,7 +14,7 @@ try {
   const dados = () => ({ nomeUsuario: 'Ana Trial', empresa, filial: unidades[0] || null, unidades, fiscalConfigurado: false, vendasConfiguradas: false });
   await page.route('https://viacep.com.br/**', route => {
    const cep = new URL(route.request().url()).pathname.split('/')[2];
-   return route.fulfill({ json: cep === '56000000'
+   return route.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: cep === '56000000'
     ? { cep: '56000-000', logradouro: 'Rua Comércio', complemento: '', bairro: 'Centro', localidade: 'Salgueiro', uf: 'PE' }
     : { cep: '50000-000', logradouro: 'Rua Recife', complemento: '', bairro: 'Boa Vista', localidade: 'Recife', uf: 'PE' } });
   });
@@ -56,7 +56,7 @@ try {
   assert.equal(await page.getByLabel('Razão social', { exact: true }).inputValue(), 'Trial LTDA');
   assert.equal(await page.getByLabel('E-mail do responsável', { exact: true }).inputValue(), 'ana@example.test');
   assert.equal(await page.getByRole('button', { name: 'Salvar e continuar' }).isDisabled(), true);
-  await page.getByLabel('CEP da matriz', { exact: true }).fill('56000-000'); await page.getByLabel('Número', { exact: true }).fill('42');
+  await page.getByLabel('CEP da matriz', { exact: true }).fill('56000-000'); await page.getByLabel('CEP da matriz', { exact: true }).press('Tab'); await page.getByLabel('Número', { exact: true }).fill('42');
   await page.getByLabel('Endereço', { exact: true }).waitFor(); await page.waitForFunction(() => document.querySelector('input[name="endereco"]')?.value === 'Rua Comércio');
   assert.equal(await page.getByLabel('Cidade', { exact: true }).inputValue(), 'Salgueiro'); assert.equal(await page.locator('select[name="uf"]').inputValue(), 'PE');
   await page.getByRole('button', { name: 'Salvar e continuar' }).click();
@@ -67,7 +67,7 @@ try {
   await page.getByRole('button', { name: 'Salvar unidade' }).click();
   await page.locator('.units article').nth(1).getByRole('button').click();
   await page.getByRole('heading', { name: 'Configure a filial' }).waitFor();
-  await page.getByLabel('CEP', { exact: true }).fill('50000-000'); await page.getByLabel('Número', { exact: true }).fill('100');
+  await page.getByLabel('CEP', { exact: true }).fill('50000-000'); await page.getByLabel('CEP', { exact: true }).press('Tab'); await page.getByLabel('Número', { exact: true }).fill('100');
   await page.waitForFunction(() => document.querySelector('input[name="uEndereco"]')?.value === 'Rua Recife');
   assert.equal(await page.getByLabel('Cidade', { exact: true }).inputValue(), 'Recife'); assert.equal(await page.locator('select[name="uUf"]').inputValue(), 'PE');
   await page.getByRole('button', { name: 'Salvar unidade' }).click();

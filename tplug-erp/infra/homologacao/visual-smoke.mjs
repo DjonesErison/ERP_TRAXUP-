@@ -14,6 +14,7 @@ try {
     page.on('console', message => { if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:')) errors.push(message.text()); });
     await page.goto(process.argv[2]);
     await page.getByRole('heading', { name: 'Acesse seu ERP' }).waitFor();
+    assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'), '/assets/Logo.png?v=2', 'A aba deve usar o ícone oficial TRAXUP');
     assert.equal(await page.evaluate(() => document.documentElement.dataset.traxupTheme), 'light', 'Login deve permanecer no tema claro oficial');
     const logo = page.locator('.login-shell img:visible').first();
     await logo.evaluate(image => image.decode());

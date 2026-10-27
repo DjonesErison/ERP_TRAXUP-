@@ -85,6 +85,18 @@ export class AppComponent implements OnInit {
 
   carregarAcessoAdministracao(): void { this.auth.acessoAdministracao().subscribe(ok => this.acessoAdministracao = ok); }
 
+  get nomeUsuario(): string {
+    const claims = this.claimsDoToken();
+    const nome = [claims['name'], claims['nome'], claims['preferred_username']].find(valor => typeof valor === 'string' && valor.trim()) as string | undefined;
+    const base = nome || this.loginEmail.split('@')[0] || 'Usuário';
+    return base.split(/[._-]/).filter(Boolean).map(parte => parte.charAt(0).toLocaleUpperCase('pt-BR') + parte.slice(1)).join(' ');
+  }
+  get perfilUsuario(): string { return this.acessoAdministracao ? 'Administrador' : 'Usuário'; }
+  private claimsDoToken(): Record<string, unknown> {
+    try { const token = this.auth.accessToken || ''; return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); }
+    catch { return {}; }
+  }
+
   alternarAparencia(): void { this.aparenciaAberta = !this.aparenciaAberta; }
   selecionarAparencia(preferencia: PreferenciaAparencia): void {
     this.preferenciaAparencia = preferencia;

@@ -31,6 +31,8 @@ export class AppComponent implements OnInit {
   private destinoInicial = 'dashboard';
   area = 'dashboard'; menuRecolhido = false; lembrarAcesso = false; exibindoTrial = false; ativacaoAdminToken = ''; exibindoAtivacao = false;
   aparenciaAberta = false;
+  seletorFilialAberto = false;
+  menuUsuarioAberto = false; trocaUsuarioAberta = false; trocaUsuarioEmail = ''; trocaUsuarioSenha = ''; trocaUsuarioLoading = false; trocaUsuarioError = '';
   preferenciaAparencia: PreferenciaAparencia = 'automatico';
   private readonly consultaTemaEscuro = window.matchMedia('(prefers-color-scheme: dark)');
   private readonly atualizarTemaAutomatico = () => { if (this.preferenciaAparencia === 'automatico') this.aplicarTema(); };
@@ -123,7 +125,7 @@ export class AppComponent implements OnInit {
   abrirRecuperacao(): void { this.recuperacaoCodigoEmpresa = this.loginCodigoEmpresa.trim(); this.recuperacaoEmail = this.loginEmail.trim(); this.recuperacaoMensagem = ''; this.recuperacaoError = ''; this.recuperacaoAberta = true; }
   fecharRecuperacao(): void { if (!this.recuperacaoLoading) this.recuperacaoAberta = false; }
   @HostListener('document:keydown.escape')
-  fecharRecuperacaoComEscape(): void { if (this.recuperacaoAberta) this.fecharRecuperacao(); }
+  fecharRecuperacaoComEscape(): void { if (this.recuperacaoAberta) this.fecharRecuperacao(); this.seletorFilialAberto = false; this.menuUsuarioAberto = false; if (this.trocaUsuarioAberta && !this.trocaUsuarioLoading) this.fecharTrocaUsuario(); }
   solicitarRecuperacao(): void {
     if (this.recuperacaoLoading || !this.recuperacaoCodigoEmpresa.trim() || !this.recuperacaoEmail.trim()) return;
     this.recuperacaoLoading = true; this.recuperacaoError = ''; this.recuperacaoMensagem = '';
@@ -169,9 +171,22 @@ export class AppComponent implements OnInit {
     return pendencias;
   }
   percentualConfiguracao(filial: FilialPermitida): number { return (4 - this.pendenciasDaFilial(filial).length) * 25; }
-  private confirmarFilial(filial: FilialPermitida): void { this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id; this.filialSelecionada = null; this.configuracaoPendenteAberta = false; this.selecionandoFilial = false; this.area = this.destinoInicial; this.atualizarEndereco(this.area, true); if (this.area === 'crm') this.carregar(); }
+  private confirmarFilial(filial: FilialPermitida): void { this.contexto.selecionarFilial(filial); this.filialAtiva = filial; this.filialId = filial.id; this.filialSelecionada = null; this.configuracaoPendenteAberta = false; this.selecionandoFilial = false; this.seletorFilialAberto = false; this.area = this.destinoInicial; this.atualizarEndereco(this.area, true); if (this.area === 'crm') this.carregar(); }
   formatarCnpj(cnpj: string | null | undefined): string { const d = (cnpj || '').replace(/\D/g, ''); return d.length === 14 ? d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : 'Não informado'; }
-  trocarFilial(): void { this.filialSelecionada = null; this.configuracaoPendenteAberta = false; this.selecionandoFilial = true; this.carregarFiliais(); }
+  alternarSeletorFilial(): void { this.seletorFilialAberto = !this.seletorFilialAberto; if (this.seletorFilialAberto && !this.filiais.length) this.carregarFiliais(); }
+  selecionarFilialDoCabecalho(filial: FilialPermitida): void { this.seletorFilialAberto = false; if (filial.id !== this.filialAtiva?.id) this.escolherFilial(filial); }
+  alternarMenuUsuario(): void { this.menuUsuarioAberto = !this.menuUsuarioAberto; }
+  abrirTrocaUsuario(): void { this.menuUsuarioAberto = false; this.trocaUsuarioEmail = ''; this.trocaUsuarioSenha = ''; this.trocaUsuarioError = ''; this.trocaUsuarioAberta = true; }
+  fecharTrocaUsuario(): void { if (this.trocaUsuarioLoading) return; this.trocaUsuarioAberta = false; this.trocaUsuarioSenha = ''; this.trocaUsuarioError = ''; }
+  trocarUsuario(): void {
+    const tenantId = this.auth.tenantId;
+    if (this.trocaUsuarioLoading || !tenantId || !this.trocaUsuarioEmail.trim() || !this.trocaUsuarioSenha) { if (!tenantId) this.trocaUsuarioError = 'Não foi possível identificar a empresa atual. Entre novamente.'; return; }
+    this.trocaUsuarioLoading = true; this.trocaUsuarioError = '';
+    this.auth.trocarUsuario(tenantId, this.trocaUsuarioEmail.trim(), this.trocaUsuarioSenha).subscribe({
+      next: () => { this.trocaUsuarioLoading = false; this.trocaUsuarioAberta = false; this.loginEmail = this.trocaUsuarioEmail.trim(); this.trocaUsuarioSenha = ''; this.acessoAdministracao = false; this.carregarAcessoAdministracao(); this.contexto.limpar(); this.filialAtiva = null; this.filialId = ''; this.filiais = []; this.filialSelecionada = null; this.selecionandoFilial = true; this.carregarFiliais(); },
+      error: err => { this.trocaUsuarioLoading = false; this.trocaUsuarioSenha = ''; this.trocaUsuarioError = err?.status === 401 || err?.status === 403 ? 'Login ou senha inválidos.' : 'Não foi possível trocar o usuário agora.'; }
+    });
+  }
   sair(): void { if (this.logoutLoading) return; this.logoutLoading = true; this.auth.logout().subscribe({ next: () => this.finalizarLogout(), error: () => this.finalizarLogout() }); }
   carregar(): void { if (!this.auth.autenticado) { this.autenticado = false; return; } this.loading = true; this.error = ''; const filial = this.filialAtiva?.id || this.filialId.trim() || undefined; this.crm.carregarPainel(filial, this.diasInatividade).subscribe({ next: dados => { this.inativos = dados.inativos; this.rfv = dados.rfv; this.followups = dados.followups; this.interacoes = dados.interacoes; this.loading = false; }, error: () => { this.loading = false; if (!this.auth.autenticado) { this.autenticado = false; this.loginError = 'Sua sessão expirou. Entre novamente.'; return; } this.error = 'Não foi possível carregar o CRM. Verifique a API e os filtros informados.'; } }); }
   private areaDoCaminho(caminho: string): string { return Object.keys(this.rotas).find(area => this.rotas[area] === caminho) || 'dashboard'; }
@@ -202,5 +217,5 @@ export class AppComponent implements OnInit {
   }
   expirarSessao(): void { this.contexto.limpar(); this.filialAtiva = null; this.autenticado = false; window.history.replaceState(null, '', '/entrar'); this.loginError = 'Sua sessão expirou. Entre novamente.'; }
   trackId(_: number, item: { id: string }): string { return item.id; } trackCliente(_: number, item: { clienteId: string }): string { return item.clienteId; }
-  private finalizarLogout(): void { this.acessoAdministracao = false; this.onboardingPendente = false; window.history.replaceState(null, '', this.administracao ? '/administracao' : '/entrar'); this.contexto.limpar(); this.filialAtiva = null; this.filiais = []; this.selecionandoFilial = false; this.logoutLoading = false; this.area = 'dashboard'; this.destinoInicial = 'dashboard'; this.menuRecolhido = false; this.autenticado = false; this.inativos = []; this.rfv = []; this.followups = []; this.interacoes = []; }
+  private finalizarLogout(): void { this.acessoAdministracao = false; this.onboardingPendente = false; window.history.replaceState(null, '', this.administracao ? '/administracao' : '/entrar'); this.contexto.limpar(); this.filialAtiva = null; this.filiais = []; this.selecionandoFilial = false; this.seletorFilialAberto = false; this.menuUsuarioAberto = false; this.trocaUsuarioAberta = false; this.logoutLoading = false; this.area = 'dashboard'; this.destinoInicial = 'dashboard'; this.menuRecolhido = false; this.autenticado = false; this.inativos = []; this.rfv = []; this.followups = []; this.interacoes = []; }
 }

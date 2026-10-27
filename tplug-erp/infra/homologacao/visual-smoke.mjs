@@ -111,8 +111,9 @@ try {
     await page.locator('.branch-card').nth(1).getByRole('button', { name: 'Selecionar' }).click();
     const pendingDialog = page.getByRole('dialog', { name: 'Configuração incompleta' });
     await pendingDialog.waitFor();
-    await pendingDialog.getByText('Configurações fiscais', { exact: true }).waitFor();
-    await pendingDialog.getByText('Usuários e permissões', { exact: true }).waitFor();
+    const pendingText = await pendingDialog.innerText();
+    assert.match(pendingText, /Configurações fiscais/);
+    assert.match(pendingText, /Usuários e permissões/);
     await pendingDialog.getByRole('button', { name: 'Agora não' }).click();
     await page.getByRole('heading', { name: 'Olá, boas-vindas!' }).waitFor();
     await page.getByText('TESTE-001', { exact: true }).waitFor();

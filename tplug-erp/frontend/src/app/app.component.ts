@@ -68,6 +68,7 @@ export class AppComponent implements OnInit {
     this.loginCodigoEmpresa = ''; this.autenticado = this.auth.autenticado;
     if (this.autenticado) this.carregarAcessoAdministracao(); this.filialAtiva = this.contexto.filialAtiva;
     this.selecionandoFilial = this.autenticado && !this.filialAtiva && !this.administracao; if (this.autenticado && !this.administracao) this.verificarOnboarding(); else if (this.selecionandoFilial) this.carregarFiliais();
+    if (this.autenticado && this.administracao) this.aplicarTema();
     try { const salvo = JSON.parse(localStorage.getItem('traxup_login_hint') || 'null'); if (salvo && typeof salvo.codigoEmpresa === 'string' && /^[0-9]{4}$/.test(salvo.codigoEmpresa) && typeof salvo.email === 'string') { this.loginCodigoEmpresa = salvo.codigoEmpresa; this.loginEmail = salvo.email; this.lembrarAcesso = true; } } catch { localStorage.removeItem('traxup_login_hint'); }
     if ((publicPath === '/ativar' || publicPath === '/recuperar') || publicPath === '/entrar') {
       const params = new URLSearchParams(window.location.hash.slice(1));
@@ -114,7 +115,8 @@ export class AppComponent implements OnInit {
     this.consultaTemaEscuro.addEventListener('change', this.atualizarTemaAutomatico);
   }
   private aplicarTema(): void {
-    const tema = this.preferenciaAparencia === 'automatico' ? (this.consultaTemaEscuro.matches ? 'dark' : 'light') : (this.preferenciaAparencia === 'escuro' ? 'dark' : 'light');
+    const areaInterna = this.autenticado && !this.onboardingPendente && !this.exibindoTrial && !this.exibindoAtivacao && !this.redefinindoSenha;
+    const tema = !areaInterna ? 'light' : this.preferenciaAparencia === 'automatico' ? (this.consultaTemaEscuro.matches ? 'dark' : 'light') : (this.preferenciaAparencia === 'escuro' ? 'dark' : 'light');
     document.documentElement.dataset['traxupTheme'] = tema;
     document.documentElement.style.colorScheme = tema;
     document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', tema === 'dark' ? '#041b3f' : '#075fd8');
@@ -139,13 +141,13 @@ export class AppComponent implements OnInit {
   entrar(): void {
     if (this.loginLoading || !/^[0-9]{4}$/.test(this.loginCodigoEmpresa)) return; this.loginLoading = true; this.loginError = '';
     this.auth.login({ codigoEmpresa: this.loginCodigoEmpresa.trim(), email: this.loginEmail.trim(), senha: this.loginSenha }).subscribe({
-      next: () => { this.loginLoading = false; this.loginSenha = ''; this.mostrarSenha = false; this.area = 'dashboard'; this.autenticado = true; this.carregarAcessoAdministracao(); this.contexto.limpar(); this.filialAtiva = null; this.selecionandoFilial = !this.administracao; if (!this.administracao) this.verificarOnboarding(); if (this.lembrarAcesso) localStorage.setItem('traxup_login_hint', JSON.stringify({ codigoEmpresa: this.loginCodigoEmpresa.trim(), email: this.loginEmail.trim() })); else localStorage.removeItem('traxup_login_hint'); },
+      next: () => { this.loginLoading = false; this.loginSenha = ''; this.mostrarSenha = false; this.area = 'dashboard'; this.autenticado = true; this.carregarAcessoAdministracao(); this.contexto.limpar(); this.filialAtiva = null; this.selecionandoFilial = !this.administracao; if (!this.administracao) this.verificarOnboarding(); else this.aplicarTema(); if (this.lembrarAcesso) localStorage.setItem('traxup_login_hint', JSON.stringify({ codigoEmpresa: this.loginCodigoEmpresa.trim(), email: this.loginEmail.trim() })); else localStorage.removeItem('traxup_login_hint'); },
       error: err => { this.loginLoading = false; this.loginError = err?.status === 401 || err?.status === 403 ? 'Empresa, e-mail ou senha inválidos.' : 'Não foi possível entrar. Verifique os dados e a disponibilidade do sistema.'; }
     });
   }
 
-  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { if (!s.empresaConfigurada) { this.auth.limparSessao(); this.contexto.limpar(); this.autenticado = false; this.onboardingPendente = false; this.loginError = 'Esta sessão não possui uma empresa cadastrada. Entre pelo link de acesso do e-mail de confirmação do seu cadastro.'; return; } this.onboardingPendente = !s.concluido || window.location.pathname === '/onboarding'; if (this.onboardingPendente) window.history.replaceState(null, '', '/onboarding'); if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = true; window.history.replaceState(null, '', '/onboarding'); } }); }
-  onboardingConcluido(filialId = ''): void { this.destinoInicial = 'dashboard'; this.area = 'dashboard'; this.filialPosOnboardingId = filialId; window.history.replaceState(null, '', '/dashboard'); this.onboardingPendente = false; this.selecionandoFilial = true; this.carregarFiliais(); }
+  verificarOnboarding(): void { this.onboarding.status().subscribe({ next: s => { if (!s.empresaConfigurada) { this.auth.limparSessao(); this.contexto.limpar(); this.autenticado = false; this.onboardingPendente = false; this.aplicarTema(); this.loginError = 'Esta sessão não possui uma empresa cadastrada. Entre pelo link de acesso do e-mail de confirmação do seu cadastro.'; return; } this.onboardingPendente = !s.concluido || window.location.pathname === '/onboarding'; this.aplicarTema(); if (this.onboardingPendente) window.history.replaceState(null, '', '/onboarding'); if (!this.onboardingPendente) this.carregarFiliais(); }, error: () => { this.onboardingPendente = true; this.aplicarTema(); window.history.replaceState(null, '', '/onboarding'); } }); }
+  onboardingConcluido(filialId = ''): void { this.destinoInicial = 'dashboard'; this.area = 'dashboard'; this.filialPosOnboardingId = filialId; window.history.replaceState(null, '', '/dashboard'); this.onboardingPendente = false; this.aplicarTema(); this.selecionandoFilial = true; this.carregarFiliais(); }
 
   carregarFiliais(): void { if (!this.auth.autenticado || this.filiaisLoading) return; this.filiaisLoading = true; this.filiaisError = ''; this.contexto.listarFiliais().subscribe({ next: filiais => { this.filiais = filiais; this.filiaisLoading = false; const escolhida = this.filialPosOnboardingId ? filiais.find(f => f.id === this.filialPosOnboardingId) : undefined; this.filialPosOnboardingId = ''; if (escolhida) this.escolherFilial(escolhida); else if (filiais.length === 1) this.escolherFilial(filiais[0]); }, error: () => { this.filiaisLoading = false; this.filiaisError = 'Não foi possível carregar as filiais permitidas para este usuário.'; } }); }
   escolherFilial(filial: FilialPermitida): void {
@@ -215,7 +217,7 @@ export class AppComponent implements OnInit {
     this.area = this.destinoInicial;
     if (this.area === 'crm' && !this.selecionandoFilial) this.carregar();
   }
-  expirarSessao(): void { this.contexto.limpar(); this.filialAtiva = null; this.autenticado = false; window.history.replaceState(null, '', '/entrar'); this.loginError = 'Sua sessão expirou. Entre novamente.'; }
+  expirarSessao(): void { this.contexto.limpar(); this.filialAtiva = null; this.autenticado = false; this.aplicarTema(); window.history.replaceState(null, '', '/entrar'); this.loginError = 'Sua sessão expirou. Entre novamente.'; }
   trackId(_: number, item: { id: string }): string { return item.id; } trackCliente(_: number, item: { clienteId: string }): string { return item.clienteId; }
-  private finalizarLogout(): void { this.acessoAdministracao = false; this.onboardingPendente = false; window.history.replaceState(null, '', this.administracao ? '/administracao' : '/entrar'); this.contexto.limpar(); this.filialAtiva = null; this.filiais = []; this.selecionandoFilial = false; this.seletorFilialAberto = false; this.menuUsuarioAberto = false; this.trocaUsuarioAberta = false; this.logoutLoading = false; this.area = 'dashboard'; this.destinoInicial = 'dashboard'; this.menuRecolhido = false; this.autenticado = false; this.inativos = []; this.rfv = []; this.followups = []; this.interacoes = []; }
+  private finalizarLogout(): void { this.acessoAdministracao = false; this.onboardingPendente = false; window.history.replaceState(null, '', this.administracao ? '/administracao' : '/entrar'); this.contexto.limpar(); this.filialAtiva = null; this.filiais = []; this.selecionandoFilial = false; this.seletorFilialAberto = false; this.menuUsuarioAberto = false; this.trocaUsuarioAberta = false; this.logoutLoading = false; this.area = 'dashboard'; this.destinoInicial = 'dashboard'; this.menuRecolhido = false; this.autenticado = false; this.aplicarTema(); this.inativos = []; this.rfv = []; this.followups = []; this.interacoes = []; }
 }

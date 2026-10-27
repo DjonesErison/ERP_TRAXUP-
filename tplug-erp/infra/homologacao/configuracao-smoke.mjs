@@ -8,6 +8,7 @@ await mkdir(out, { recursive: true });
 try {
  for (const viewport of [{ width: 1536, height: 1024 }, { width: 390, height: 844 }]) {
   const page = await browser.newPage({ viewport });
+  await page.addInitScript(() => localStorage.setItem('traxup_aparencia', 'escuro'));
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   let empresa = { id: 'empresa-test', codigoEmpresa: '0042', responsavel: 'Ana Trial', razaoSocial: 'Trial LTDA', nomeFantasia: 'Trial Loja', cnpj: '12345678000199', email: 'ana@example.test', telefone: '87999999999', segmento: 'Varejo', quantidadeLojas: 2, cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '', empresaRevisada: false, equipeRevisada: false };
   let unidades = []; let concluido = false;
@@ -38,12 +39,14 @@ try {
   });
   await page.goto(`${process.argv[2]}/configuracao`);
   await page.getByRole('heading', { name: 'Acesse seu ERP' }).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.traxupTheme), 'light', 'Entrada deve permanecer no tema claro');
   assert.equal(await page.locator('app-onboarding').count(), 0);
   await page.getByLabel('Empresa (4 dígitos)', { exact: true }).fill('0042');
   await page.getByLabel('E-mail', { exact: true }).fill('ana@example.test');
   await page.getByLabel('Senha', { exact: true }).fill('SenhaVisual123!');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await page.getByRole('heading', { name: 'Prepare sua empresa para começar.' }).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.traxupTheme), 'light', 'Configuração inicial deve permanecer no tema claro');
   await page.getByRole('heading', { name: 'Dados da empresa' }).waitFor();
   assert.equal(await page.locator('.company-code strong').innerText(), '0042', 'Código exibido deve ser o da empresa autenticada');
   assert.equal(new URL(page.url()).pathname, '/onboarding');
@@ -76,6 +79,7 @@ try {
   await page.getByRole('heading', { name: 'Em qual unidade você quer entrar?' }).waitFor();
   await page.locator('.access-grid button').first().click();
   await page.locator('app-dashboard').waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.traxupTheme), 'dark', 'Tema salvo deve começar no dashboard');
   assert.equal(new URL(page.url()).pathname, '/dashboard');
   assert.deepEqual(errors, []);
   await page.close();

@@ -7,6 +7,7 @@ Este índice conecta as fontes oficiais do projeto sem duplicar requisitos.
 | Assunto | Fonte oficial |
 |---|---|
 | Produto, jornadas e roadmap | [Documento Mestre](TRAXUP-DOCUMENTO-MESTRE.md) |
+| Versão atualizada somente texto (09/10/2026) | [Documento Mestre — sem imagens](TRAXUP-DOCUMENTO-MESTRE-SEM-IMAGENS.md) |
 | Projeto Visual / telas aprovadas | [Catálogo visual](design/README.md) |
 | Evidência de implementação | [Evidências](status/EVIDENCIAS-IMPLEMENTACAO.md) + código, migrations, testes e PRs |
 | Governança Git e ambientes | [Etapa 0 — Governança Git](ETAPA-0-GOVERNANCA-GIT.md) |
